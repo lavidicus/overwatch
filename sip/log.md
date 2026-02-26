@@ -1,5 +1,15 @@
 # SIP Log
 
+## 2026-02-26 – Token spend optimization sprint
+- **Idea:** Launch a continuous token-reduction program (SIP) focusing on prompt hygiene, model routing, and heartbeat/cron efficiency.
+- **Why:** Lower OpenAI + Ollama usage costs while keeping responses high quality.
+- **Plan:**
+  1. Audit top token sinks (sessions.json stats, model logs) and rank by daily spend.
+  2. Ship quick wins: trim system prompt cruft, enforce compact replies for heartbeats, limit reasoning verbosity, dedupe repeated diffs/logs.
+  3. Longer term: add auto-summarized context windows, use lower-cost local models for prep work, schedule periodic cleanup of session history.
+- **Status:** proposed
+- **Notes:** First actions: pull 24h token report, identify >10k token runs, and draft per-surface guidance (Signal vs README vs SIP docs) to keep output lean.
+
 ## 2026-02-26 – Heartbeat delivery mismatch (Signal)
 - **Idea/Issue:** Heartbeat runs show as delivered in logs (OpenClaw TUI) but no actual message arrives in Signal chat.
 - **Why:** Need reliable heartbeat visibility; log-only delivery defeats the purpose.
