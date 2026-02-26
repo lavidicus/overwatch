@@ -1,5 +1,12 @@
 # SIP Log
 
+## 2026-02-26 – OpenAI fallback + heartbeat target
+- **Idea:** Ensure OAuth-backed GPT-5.1 rolls over to prepaid API key models, and align heartbeat delivery with Signal.
+- **Why:** Prevent outages when the OAuth quota caps out, and make heartbeat outputs show up where we actually monitor them.
+- **Plan:** Reorder `agents.defaults.model` so primary=`openai-codex/gpt-5.1-codex` with `openai/gpt-5.1-codex` first in fallbacks, then update heartbeat `target` to `signal` and restart gateway.
+- **Status:** done (config updated + gateway healthy)
+- **Notes:** Follow-up: document this in future change-management template once finalized.
+
 ## 2026-02-26 – Change & issue management framework
 - **Idea:** Stand up a lightweight change-management + issue-tracking loop (ticket template, approval + verification steps, commit linkage).
 - **Why:** Gives every config or process tweak traceability, makes rollback safer, and prioritizes fixes/improvements.
