@@ -1,5 +1,12 @@
 # SIP Log
 
+## 2026-02-26 – Heartbeat delivery mismatch (Signal)
+- **Idea/Issue:** Heartbeat runs show as delivered in logs (OpenClaw TUI) but no actual message arrives in Signal chat.
+- **Why:** Need reliable heartbeat visibility; log-only delivery defeats the purpose.
+- **Plan:** Investigate channel routing (Signal CLI profile, pairing status, heartbeat target) and capture root cause + fix. Track as an issue in change-management workbook once template exists.
+- **Status:** in-progress
+- **Notes:** Repro: manual heartbeat run 18:34Z appears in TUI but not on device. Logs show `delivered reply` despite missing message.
+
 ## 2026-02-26 – OpenAI fallback + heartbeat target
 - **Idea:** Ensure OAuth-backed GPT-5.1 rolls over to prepaid API key models, and align heartbeat delivery with Signal.
 - **Why:** Prevent outages when the OAuth quota caps out, and make heartbeat outputs show up where we actually monitor them.
