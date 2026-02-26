@@ -1,5 +1,5 @@
 # HEARTBEAT.md
 
-# Keep this file empty (or with only comments) to skip heartbeat API calls.
-
-# Add tasks below when you want the agent to check something periodically.
+- Quick scan: SIP log, recent commits, pending tasks.
+- Report only new blockers/opportunities. Keep under 240 chars.
+- If nothing urgent, reply `No blockers — <UTC time>` (e.g., `No blockers — 18:45Z`).
