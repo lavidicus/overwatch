@@ -5,7 +5,7 @@
 - **Why:** Need reliable heartbeat visibility; log-only delivery defeats the purpose.
 - **Plan:** Investigate channel routing (Signal CLI profile, pairing status, heartbeat target) and capture root cause + fix. Track as an issue in change-management workbook once template exists.
 - **Status:** in-progress
-- **Notes:** Repro: manual heartbeat run 18:34Z appears in TUI but not on device. Logs show `delivered reply` despite missing message.
+- **Notes:** Repro: manual heartbeat run 18:34Z appears in TUI but not on device. Logs show `delivered reply` despite missing message. Direct `openclaw message send` test succeeded instantly, so channel + account are fine. Suspect heartbeats returning only `HEARTBEAT_OK`, which OpenClaw drops per ack rules. Next step: adjust heartbeat prompt/ack settings so “no update” messages still send (or ensure heartbeats include actual summaries).
 
 ## 2026-02-26 – OpenAI fallback + heartbeat target
 - **Idea:** Ensure OAuth-backed GPT-5.1 rolls over to prepaid API key models, and align heartbeat delivery with Signal.
