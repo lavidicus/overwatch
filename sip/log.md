@@ -29,7 +29,7 @@
 - **Why:** Gives every config or process tweak traceability, makes rollback safer, and prioritizes fixes/improvements.
 - **Plan:** Draft process doc (likely `sip/change-management.md`), define templates for change requests + issues, integrate with commits (require ticket IDs) and SIP reviews.
 - **Status:** in-progress
-- **Notes:** Forgot to log some model/provider updates; action item to create change tickets retroactively and enforce future tracking. Candidate tooling: markdown tickets in `sip/issues/` or GitHub Issues. Pilot with sandbox-policy + heartbeat improvements once template is ready.
+- **Notes:** Forgot to log some model/provider updates and failed to surface Anthropic credit errors leading to silent OpenAI fallback. Action items: retroactively ticket model/provider changes and add monitoring so auth failures trigger immediate alerts. Candidate tooling: markdown tickets in `sip/issues/` or GitHub Issues. Pilot with sandbox-policy + heartbeat improvements once template is ready.
 
 ## 2026-02-26 – Establish SIP process
 - **Idea:** Create a dedicated self-improvement program to capture optimization ideas and track follow-through.
