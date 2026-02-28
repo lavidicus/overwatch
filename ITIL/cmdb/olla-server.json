@@ -1,0 +1,59 @@
+{
+  "ci_id": "SRV-001",
+  "ci_name": "olla",
+  "ci_type": "Server",
+  "category": "Hardware",
+  "status": "Production",
+  "version": "Proxmox LXC Container",
+  "location": "172.16.254.100",
+  "hostname": "olla.9xc.local",
+  "owner": "ops-team",
+  "description": "Local LLM inference server running Ollama for model hosting",
+  "os": "Debian/Ubuntu",
+  "role": "AI/ML Inference",
+  "relationships": [
+    {
+      "type": "Hosts",
+      "target": "Ollama Service",
+      "ci_id": "SVC-001"
+    },
+    {
+      "type": "Part of",
+      "target": "Inference Infrastructure",
+      "ci_id": "INFRA-001"
+    }
+  ],
+  "services": [
+    {
+      "name": "Ollama",
+      "port": 11434,
+      "protocol": "HTTP",
+      "status": "active"
+    }
+  ],
+  "credentials": {
+    "ssh_user": "localadmin",
+    "ssh_key": "~/.ssh/id_ed25519_olla",
+    "ssh_password": "NAfb_22_lima",
+    "botmaint_key": "~/.ssh/id_ed25519_olla"
+  },
+  "tags": ["production", "llm", "inference", "ollama", "local"],
+  "last_modified": "2026-02-28T17:36:00Z",
+  "last_audit": "2026-02-28T17:36:00Z",
+  "baseline": {
+    "os": "Debian/Ubuntu",
+    "ssh_config": "ed25519 keys enabled",
+    "ollama_version": "latest",
+    "models": ["qwen3.5:latest", "gpt-oss:latest"],
+    "network": "172.16.254.100/24"
+  },
+  "change_history": [
+    {
+      "date": "2026-02-28T17:36:00Z",
+      "change_id": "CR-001",
+      "description": "Initial CMDB entry created",
+      "performed_by": "Sam (ops butler AI)"
+    }
+  ],
+  "notes": "Primary LLM inference server. SSH access via localadmin account with botmaint sub-account. Used for local model hosting and inference."
+}
