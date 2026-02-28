@@ -27,16 +27,24 @@ This document tracks configuration changes to OpenClaw gateway and agent setting
 | `mode` | `safeguard` | Enable auto-compaction protection |
 | `reserveTokens` | `20000` | Headroom before compaction triggers |
 | `keepRecentTokens` | *default* | Tokens to keep unsummarized |
+| `memoryFlush.enabled` | `true` | Pre-compaction memory preservation |
+| `memoryFlush.softThresholdTokens` | `4000` | Buffer before compaction for flush |
 
 **Formula**: Compaction triggers when `contextTokens > contextWindow - reserveTokens`
 
 **Example**: 66k window with 20k reserve = triggers at 46k (70%)
+
+**Pre-Compaction Flush Flow**:
+1. Context reaches **42k tokens** (46k - 4k softThreshold) → Silent memory flush
+2. Context reaches **46k tokens** (70%) → Auto-compaction
+3. **20k reserveTokens** → Headroom for prompts/outputs
 
 #### Change History
 
 | Date | Change ID | Setting | Old Value | New Value | Reason |
 |------|-----------|---------|-----------|-----------|--------|
 | 2026-02-28 | CR-004 | `reserveTokens` | *not set* | `20000` | Prevent overflow at 100% capacity |
+| 2026-02-28 | CR-005 | `memoryFlush` | *not set* | `enabled: true` | Preserve context before compaction |
 
 ### Model Configuration
 
