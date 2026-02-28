@@ -1,0 +1,3 @@
+# cron entry example
+# Every day at 02:00 UTC backup script
+0 2 * * * /home/localadmin/.openclaw/workspace/backup >> /var/log/backup.log 2>&1

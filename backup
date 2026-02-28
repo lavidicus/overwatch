@@ -1,0 +1,32 @@
+#!/usr/bin/env bash
+# backup.sh – daily backup of openclaw.json and workspace tarball
+
+WORKSPACE="/home/localadmin/.openclaw/workspace"
+BACKUP_DIR="$WORKSPACE/backup"
+mkdir -p "$BACKUP_DIR"
+TS=$(date -u +%Y%m%d%H%M%S)
+
+# Backup openclaw.json
+cp /home/localadmin/.openclaw/openclaw.json "$BACKUP_DIR/openclaw_${TS}.json"
+
+# Create compressed tarball of workspace (excluding backup itself and .git)
+# Use proper tar option ordering
+cd "$WORKSPACE"
+
+tar -czf "$BACKUP_DIR/workspace_${TS}.tar.gz" --exclude="backup" --exclude=".git" -C "$WORKSPACE" .
+
+# Commit and push to GitHub
+cd "$WORKSPACE"
+
+git add "$BACKUP_DIR/openclaw_${TS}.json" "$BACKUP_DIR/workspace_${TS}.tar.gz"
+
+git commit -m "Backup ${TS}: openclaw.json + workspace tarball"
+
+git push origin main
+
+# Clean old backups: keep only last 7 days
+find "$BACKUP_DIR" -type f -name "openclaw_*.json" -mtime +7 -delete
+find "$BACKUP_DIR" -type f -name "workspace_*.tar.gz" -mtime +7 -delete
+
+# Log
+echo "[$(date -u +%F %T)Z] Backup ${TS} created and pushed." >> "$WORKSPACE/memory/2026-02-27.md"
