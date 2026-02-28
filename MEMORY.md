@@ -27,13 +27,16 @@ _Curated learnings, decisions, and context. Updated periodically from daily file
 
 ## ITIL Issue Management (2026-02-28)
 
-- Full ITIL workflow implemented: `ITIL-ISSUE-MANAGEMENT.md`
+- Full ITIL workflow in `ITIL/` directory:
+  - `ITIL-ISSUE-MANAGEMENT.md` - System documentation
+  - `ITIL/issues/` - Issue tracking files
+  - `ITIL/issues/TEMPLATE.md` - Standard template
+  - `ITIL/playbooks/` - Operational playbooks
+  - `ITIL/reports/` - SLA reports, trend analysis
 - Issue categories: Incident, Service Request, Problem, Change
 - Priority levels P1-P4 with defined SLAs (15min-72hr response/resolution)
 - Workflow stages: New → Triage → In Progress → Pending → Resolved → Closed
-- Directory structure: `issues/` for tracking, `reports/` for analysis
 - GitHub integration via `/gh-issues` skill for engineering tickets
-- Template available at `issues/TEMPLATE.md`
 
 ## Memory Management
 
