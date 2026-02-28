@@ -1,3 +1,5 @@
-# cron entry example
-# Every day at 02:00 UTC backup script
-0 2 * * * /home/localadmin/.openclaw/workspace/backup >> /var/log/backup.log 2>&1
+# cron entry for daily & 6‑hourly repo pushes
+# Daily push at 02:00 UTC
+0 2 * * * /usr/bin/git -C /home/localadmin/.openclaw/workspace push origin main >> /var/log/openclaw-push.log 2>&1
+# 6‑hourly push at 02,08,14,20 UTC
+0 2,8,14,20 * * * /usr/bin/git -C /home/localadmin/.openclaw/workspace push origin main >> /var/log/openclaw-push.log 2>&1
