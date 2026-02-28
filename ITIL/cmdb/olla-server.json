@@ -53,6 +53,13 @@
       "change_id": "CR-001",
       "description": "Initial CMDB entry created",
       "performed_by": "Sam (ops butler AI)"
+    },
+    {
+      "date": "2026-02-28T17:51:00Z",
+      "change_id": "CR-002",
+      "description": "Applied OS security patches",
+      "packages": ["python3-software-properties: 0.99.49.2→0.99.49.4", "software-properties-common: 0.99.49.2→0.99.49.4"],
+      "performed_by": "Sam (ops butler AI)"
     }
   ],
   "notes": "Primary LLM inference server. SSH access via localadmin account with botmaint sub-account. Used for local model hosting and inference."
