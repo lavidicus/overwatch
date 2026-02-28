@@ -1,0 +1,23 @@
+# Modefile for Ollama Qwen3.5:35B-A3B
+# This Modefile configures Ollama to run the quantized 4‑bit Qwen3.5 model.
+# Ensure you have the model downloaded via `ollama pull qwen3.5:35b-a3b` before starting.
+# You can specify GPU usage, batch size, and other runtime options.
+
+[model]
+name = "qwen3.5:35b-a3b"
+# Quantization: 4-bit
+quantization = "int4"
+# Use GPU (CUDA) if available
+device = "cuda"
+# Maximum batch size for inference
+max_batch_size = 8
+# Maximum length of generated text
+max_length = 512
+# Temperature for sampling
+temperature = 0.7
+
+# Optional: enable caching to speed up repeated prompts
+cache = true
+
+# Logging level
+log_level = "info"

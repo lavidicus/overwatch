@@ -14,7 +14,7 @@
         },
         "olla/qwen3.5:35b": {
           "alias": "qwen3.5"
-        }
+        },
         "openai/openai-codex": {
           "alias": "codex"
         }
