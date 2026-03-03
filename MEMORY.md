@@ -2,49 +2,140 @@
 
 _Curated learnings, decisions, and context. Updated periodically from daily files._
 
-## Identity & Setup
+## Identity & Setup (Tag Team)
 
-- **Name:** Sam (🧑‍💼)
-- **Role:** Operations butler AI (sysadmin/engineering/PM/EA) for Jeremy
-- **Vibe:** Warm + witty, confidently sarcastic, ruthless about objectives
-- **Host:** Linux ocg 6.17.9-1-pve (Proxmox LXC container)
-- **Workspace:** `/home/localadmin/.openclaw/workspace`
+- **Sam (ocg):** 🧑‍💼, ops butler AI (sysadmin/engineering/PM/EA)
+  - Host: Linux Proxmox LXC container `ocg`
+  - Model: `olla/qwen3.5:latest`
+  - Workspace: `/home/localadmin/.openclaw/workspace`
 
-## Operating Principles
+- **Eve (dc):** 🤖, ops butler AI (sysadmin/engineering/PM/EA)
+  - Host: Linux runtime `dc`
+  - Model: `ollama/qwen3.5-9B:latest`
+  - Workspace: `/home/localadmin/.openclaw/workspace`
+  - Gateway: Port 18789, local mode, loopback binding
 
-- Text > Brain: If I don't write it down, it doesn't survive restarts
-- Execute before asking: Try to figure it out, then ask if stuck
-- Earn trust through competence: Bold with internal actions, cautious with external
-- Don't exfiltrate private data. Ever.
+- **Shared Workspace:** `/home/localadmin/.openclaw/workspace`
+- **Channel:** Signal group "Workgroup Bots"
+- **Tag Team Mode:** Active ✅
+
+## Operating Principles (Shared)
+
+- **Text > Brain** — If it's not written down, it doesn't survive restarts
+- **Execute before asking** — Try to figure it out, then ask if stuck
+- **Earn trust through competence** — Bold internally, cautious externally
+- **Don't exfiltrate private data** — Ever. Period.
+- **Orchestrate first** — Plan → Execute → Verify → Summarize
+- **Be genuinely helpful** — Not performatively helpful
+- **Have opinions** — Not a search engine with extra steps
+- **Remember we're guests** — Respect privacy and boundaries
 
 ## Tools & Skills
 
-- Skills provide tools; local notes go in TOOLS.md
-- Healthcheck skill for security hardening
-- Weather skill for forecasts
-- GitHub/gh CLI for repo operations
-- TTS for voice storytelling (ElevenLabs sag)
+- **Healthcheck skill** — Security hardening, firewall/SSH config, risk posture
+- **Weather skill** — Forecasts via wttr.in
+- **GitHub/gh CLI** — Issues, PRs, CI runs, code review
+- **TTS (ElevenLabs sag)** — Voice storytelling for movie summaries, storytime
+- **Triple Memory System** — LanceDB, Git-Notes memory, file search
+- **Browser automation** — OpenClaw browser control
+- **Node device control** — Cameras, screens, notifications
+- **Sub-agent orchestration** — Spawn sessions, manage sub-agents
 
 ## ITIL Issue Management (2026-02-28)
 
-- Full ITIL workflow in `ITIL/` directory:
-  - `ITIL-ISSUE-MANAGEMENT.md` - System documentation
-  - `ITIL/issues/` - Issue tracking files
-  - `ITIL/issues/TEMPLATE.md` - Standard template
-  - `ITIL/playbooks/` - Operational playbooks
-  - `ITIL/reports/` - SLA reports, trend analysis
+- Full workflow in `ITIL/` directory:
+  - `ITIL/ITIL-ISSUE-MANAGEMENT.md` — System documentation
+  - `ITIL/issues/` — Issue tracking files
+  - `ITIL/issues/TEMPLATE.md` — Standard template
+  - `ITIL/playbooks/` — Operational playbooks
+  - `ITIL/reports/` — SLA reports, trend analysis
 - Issue categories: Incident, Service Request, Problem, Change
 - Priority levels P1-P4 with defined SLAs (15min-72hr response/resolution)
 - Workflow stages: New → Triage → In Progress → Pending → Resolved → Closed
 - GitHub integration via `/gh-issues` skill for engineering tickets
 
-## Memory Management
+## Context Window Roll-Over Fix (2026-03-01)
 
-- Daily files: `memory/YYYY-MM-DD.md` — raw session logs
-- Long-term: `MEMORY.md` — distilled wisdom
-- Pre-compaction: Review recent daily files, update MEMORY.md, clear stale info
-- System audits flag missing startup file reads (SOUL.md, USER.md, IDENTITY.md, today's memory)
+**Issue:** Context window failed to roll when approaching 2M tokens; llama-server rejected prompts >65536 tokens.
+
+**Root Cause:** Client-side accumulation - OpenClaw built prompts to 66k+ tokens before sending, exceeding server's `--ctx-size 65535`. SWA checkpoints cycling fine (1→8) but compaction didn't fire early enough.
+
+**Fixes Applied:**
+1. **Server:** Updated `llama-server.service` to `--ctx-size 131072` (2x buffer) — ready to deploy
+2. **Client:** Updated `openclaw.json` `reserveTokens: 20000 → 40000` — compaction triggers at ~216k tokens
+3. **Code:** Pending - add prompt builder guard (`if tokens > ctx_size * 0.9: trigger_compaction()`)
+
+**Files:**
+- `ITIL/ITIL-ISSUE-CONTEXT-WINDOW-ROLLOVER.md` — Full issue tracking
+- `llama-server.service` — Updated config ready for deployment
+- `DEPLOY-LLAMA-SERVER.md` — Deployment instructions
+
+**Status:** Configured but not deployed (requires sudo)
+
+**Next:** Deploy to both hosts (ocg + dc), test long conversation, submit code fix to OpenClaw repo.
+
+## Triple Memory System (2026-03-01)
+
+Installed a three-layer memory architecture for persistent context across sessions:
+
+### Layer 1: LanceDB (Conversation Memory)
+- **Status:** Configured in `openclaw.json`
+- **Features:** Auto-recall, auto-capture
+- **Requires:** OpenAI API key for vector embeddings (currently using OAuth)
+- **When active:** Injects relevant memories before each response
+
+### Layer 2: Git-Notes Memory
+- **Location:** `skills/git-notes-memory/memory.py`
+- **Storage:** `memory/git-notes/memory.md`
+- **Features:** Structured decisions with tags and importance levels
+- **Importance levels:** critical (c), high (h), normal (n), low (l)
+- **Usage:** Store preferences, decisions, corrections
+
+### Layer 3: File Search
+- **Script:** `scripts/file-search.sh`
+- **Searches:** All workspace .md, .json, .txt files
+- **When to use:** Finding context in existing docs
+
+**Documentation:** `TRIPLE_MEMORY_SETUP.md`
+
+**Usage examples:**
+- `python3 skills/git-notes-memory/memory.py remember "My preference" -i h -t tag1,tag2`
+- `python3 skills/git-notes-memory/memory.py list`
+- `./scripts/file-search.sh "query" 10`
+
+## Open Issues (2026-03-03)
+
+### P2: Gateway Restart Availability
+- **Issue:** Gateway restart causes agent unavailability
+- **Symptom:** Tool calls failing with "missing tool result in session history; inserted synthetic error result"
+- **Root Cause:** Session not auto-reconnecting after gateway restart
+- **Workaround:** Manual verification of gateway status required after restarts
+- **Next:** Implement automatic session reconnection, add health check endpoint
+
+### Signal Group Policy Warning
+- **Issue:** Allowlist configured with no entries
+- **Impact:** Affects group messages only
+- **Status:** Optional fix (non-blocking)
+
+## Lessons Learned
+
+- Gateway restarts require manual verification of agent availability
+- File edits via `edit` tool can fail silently (race condition?)
+- Need automatic post-restart health checks
+- Configuration changes should trigger proper service restarts
+- Memory states can differ across hosts — need shared MEMORY.md
+- Git tracking essential for cross-host sync
+
+## Recent History
+
+- **2026-03-03:** System healthy, daily backup successful
+- **2026-03-03:** Fixed vLLM provider warnings (removed bad config)
+- **2026-03-03:** Reduced context window to 131k tokens (aligned with llama-server)
+- **2026-03-01:** Triple Memory System installed
+- **2026-03-01:** Context Window Fix documented and configured
+- **2026-02-28:** ITIL Issue Management workflow created
+- **2026-02-28:** Initial OpenClaw setup and configuration
 
 ---
 
-*Created: 2026-02-28*
+*Created: 2026-03-03 | Tag Team Setup: 2026-03-03 (Sam+Eve)*
