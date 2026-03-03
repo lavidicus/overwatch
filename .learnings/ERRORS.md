@@ -1,45 +1,40 @@
-# Learnings
+# Error Log
 
-Corrections, insights, and knowledge gaps captured during development.
+Log command failures, exceptions, and unexpected behaviors.
 
-**Categories**: correction | insight | knowledge_gap | best_practice
-**Areas**: frontend | backend | infra | tests | docs | config
-**Statuses**: pending | in_progress | resolved | wont_fix | promoted | promoted_to_skill
+## Format
 
-## Status Definitions
+## [ERR-YYYYMMDD-XXX] skill_or_command_name
 
-| Status | Meaning |
-|--------|---------|
-| `pending` | Not yet addressed |
-| `in_progress` | Actively being worked on |
-| `resolved` | Issue fixed or knowledge integrated |
-| `wont_fix` | Decided not to address (reason in Resolution) |
-| `promoted` | Elevated to CLAUDE.md, AGENTS.md, or copilot-instructions.md |
-| `promoted_to_skill` | Extracted as a reusable skill |
-
-## Skill Extraction Fields
-
-When a learning is promoted to a skill, add these fields:
-
-```markdown
-**Status**: promoted_to_skill
-**Skill-Path**: skills/skill-name
-```
-
-Example:
-```markdown
-## [LRN-20250115-001] best_practice
-
-**Logged**: 2025-01-15T10:00:00Z
+**Logged**: ISO-8601 timestamp
 **Priority**: high
-**Status**: promoted_to_skill
-**Skill-Path**: skills/docker-m1-fixes
-**Area**: infra
+**Status**: pending | in_progress | resolved | wont_fix
+**Area**: frontend | backend | infra | tests | docs | config
 
 ### Summary
-Docker build fails on Apple Silicon due to platform mismatch
-...
+Brief description of what failed
+
+### Error
+```
+Actual error message or output
 ```
 
----
+### Context
+- Command/operation attempted
+- Input or parameters used
+- Environment details if relevant
 
+### Suggested Fix
+If identifiable, what might resolve this
+
+### Metadata
+- Reproducible: yes | no | unknown
+- Related Files: path/to/file.ext
+- See Also: ERR-20250110-001 (if recurring)
+
+### Resolution (if resolved)
+- **Resolved**: 2025-01-16T09:00:00Z
+- **Commit/PR**: abc123 or #42
+- **Notes**: Brief description of what was done
+
+---

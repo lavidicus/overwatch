@@ -1,78 +1,38 @@
-# Learnings
+# Learning Log
 
-Corrections, insights, and knowledge gaps captured during development.
+Log corrections, knowledge gaps, and best practices discovered during operations.
 
-**Categories**: correction | insight | knowledge_gap | best_practice
-**Areas**: frontend | backend | infra | tests | docs | config
-**Statuses**: pending | in_progress | resolved | wont_fix | promoted | promoted_to_skill
+## Format
 
-## Status Definitions
+## [LRN-YYYYMMDD-XXX] category
 
-| Status | Meaning |
-|--------|---------|
-| `pending` | Not yet addressed |
-| `in_progress` | Actively being worked on |
-| `resolved` | Issue fixed or knowledge integrated |
-| `wont_fix` | Decided not to address (reason in Resolution) |
-| `promoted` | Elevated to CLAUDE.md, AGENTS.md, or copilot-instructions.md |
-| `promoted_to_skill` | Extracted as a reusable skill |
-
-## Skill Extraction Fields
-
-When a learning is promoted to a skill, add these fields:
-
-```markdown
-**Status**: promoted_to_skill
-**Skill-Path**: skills/skill-name
-```
-
-Example:
-```markdown
-## [LRN-20250115-001] best_practice
-
-**Logged**: 2025-01-15T10:00:00Z
-**Priority**: high
-**Status**: promoted_to_skill
-**Skill-Path**: skills/docker-m1-fixes
-**Area**: infra
+**Logged**: ISO-8601 timestamp
+**Priority**: low | medium | high | critical
+**Status**: pending | in_progress | resolved | wont_fix | promoted
+**Area**: frontend | backend | infra | tests | docs | config
 
 ### Summary
-Docker build fails on Apple Silicon due to platform mismatch
-...
-```
-
----
-
-
-## [LRN-20260226-001] best_practice
-
-**Logged**: 2026-02-26T19:10:00Z
-**Priority**: medium
-**Status**: resolved
-**Area**: config
-
-### Summary
-Heartbeat replies delivered to Signal disappear if the message is only `HEARTBEAT_OK`, because the gateway treats that token as an ACK and drops delivery.
+One-line description of what was learned
 
 ### Details
-While testing the Signal heartbeat pipeline the gateway logs showed successful delivery even though no message appeared in Signal. Root cause: the heartbeat model responded with only `HEARTBEAT_OK`, triggering OpenClaw's heartbeat-ack filter which strips and discards the reply when no additional text remains. This makes heartbeat diagnostics invisible on Signal.
+Full context: what happened, what was wrong, what's correct
 
 ### Suggested Action
-Ensure heartbeat prompts force human-readable summaries instead of the ACK token. Update `openclaw.json` and `HEARTBEAT.md` so idle runs reply with a short text (e.g., `No blockers — <UTC time>`).
+Specific fix or improvement to make
 
 ### Metadata
-- Source: conversation
-- Related Files: openclaw.json, HEARTBEAT.md
-- Tags: heartbeat, signal, delivery, ops
-- See Also: none
-- Pattern-Key: comms.heartbeat.ack_filter
-- Recurrence-Count: 1
-- First-Seen: 2026-02-26
-- Last-Seen: 2026-02-26
+- Source: conversation | error | user_feedback | simplify-and-harden
+- Related Files: path/to/file.ext
+- Tags: tag1, tag2
+- See Also: LRN-20250110-001 (if related to existing entry)
+- Pattern-Key: simplify.dead_code | harden.input_validation (optional)
+- Recurrence-Count: 1 (optional)
+- First-Seen: 2025-01-15 (optional)
+- Last-Seen: 2025-01-15 (optional)
 
-### Resolution
-- **Resolved**: 2026-02-26T19:15:00Z
-- **Commit/PR**: 2ca01e7 (heartbeat prompt tightening)
-- **Notes**: Prompt + checklist now force textual summaries so Signal receives the message.
+### Resolution (if resolved)
+- **Resolved**: 2025-01-16T09:00:00Z
+- **Commit/PR**: abc123 or #42
+- **Promoted**: SOUL.md, TOOLS.md, etc. (if applicable)
 
 ---

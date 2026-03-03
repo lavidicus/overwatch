@@ -1,45 +1,35 @@
-# Learnings
+# Feature Requests
 
-Corrections, insights, and knowledge gaps captured during development.
+Log user-requested capabilities and missing features.
 
-**Categories**: correction | insight | knowledge_gap | best_practice
-**Areas**: frontend | backend | infra | tests | docs | config
-**Statuses**: pending | in_progress | resolved | wont_fix | promoted | promoted_to_skill
+## Format
 
-## Status Definitions
+## [FEAT-YYYYMMDD-XXX] capability_name
 
-| Status | Meaning |
-|--------|---------|
-| `pending` | Not yet addressed |
-| `in_progress` | Actively being worked on |
-| `resolved` | Issue fixed or knowledge integrated |
-| `wont_fix` | Decided not to address (reason in Resolution) |
-| `promoted` | Elevated to CLAUDE.md, AGENTS.md, or copilot-instructions.md |
-| `promoted_to_skill` | Extracted as a reusable skill |
+**Logged**: ISO-8601 timestamp
+**Priority**: medium
+**Status**: pending | in_progress | resolved | wont_fix
+**Area**: frontend | backend | infra | tests | docs | config
 
-## Skill Extraction Fields
+### Requested Capability
+What the user wanted to do
 
-When a learning is promoted to a skill, add these fields:
+### User Context
+Why they needed it, what problem they're solving
 
-```markdown
-**Status**: promoted_to_skill
-**Skill-Path**: skills/skill-name
-```
+### Complexity Estimate
+simple | medium | complex
 
-Example:
-```markdown
-## [LRN-20250115-001] best_practice
+### Suggested Implementation
+How this could be built, what it might extend
 
-**Logged**: 2025-01-15T10:00:00Z
-**Priority**: high
-**Status**: promoted_to_skill
-**Skill-Path**: skills/docker-m1-fixes
-**Area**: infra
+### Metadata
+- Frequency: first_time | recurring
+- Related Features: existing_feature_name
 
-### Summary
-Docker build fails on Apple Silicon due to platform mismatch
-...
-```
+### Resolution (if resolved)
+- **Resolved**: 2025-01-16T09:00:00Z
+- **Commit/PR**: abc123 or #42
+- **Notes**: Brief description of what was done
 
 ---
-
