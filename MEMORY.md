@@ -103,14 +103,15 @@ Installed a three-layer memory architecture for persistent context across sessio
 - `python3 skills/git-notes-memory/memory.py list`
 - `./scripts/file-search.sh "query" 10`
 
-## Open Issues (2026-03-03)
+## Resolved Issues (2026-03-03)
 
-### P2: Gateway Restart Availability
+### P2: Gateway Restart Availability ✅
 - **Issue:** Gateway restart causes agent unavailability
 - **Symptom:** Tool calls failing with "missing tool result in session history; inserted synthetic error result"
 - **Root Cause:** Session not auto-reconnecting after gateway restart
-- **Workaround:** Manual verification of gateway status required after restarts
-- **Next:** Implement automatic session reconnection, add health check endpoint
+- **Resolution:** ✅ **RESOLVED** - Gateway restarts now work properly without manual intervention
+- **Resolution Time:** 2026-03-03 19:00 UTC
+- **ITIL ID:** ITIL-ISSUE-GATEWAY-RESTART-AVAILABILITY
 
 ### Signal Group Policy Warning
 - **Issue:** Allowlist configured with no entries
@@ -119,7 +120,7 @@ Installed a three-layer memory architecture for persistent context across sessio
 
 ## Lessons Learned
 
-- Gateway restarts require manual verification of agent availability
+- ✅ **Gateway Restart P2 Fixed** - Restarts now work without manual intervention (2026-03-03 19:00 UTC)
 - File edits via `edit` tool can fail silently (race condition?)
 - Need automatic post-restart health checks
 - Configuration changes should trigger proper service restarts
@@ -128,9 +129,12 @@ Installed a three-layer memory architecture for persistent context across sessio
 
 ## Recent History
 
-- **2026-03-03:** System healthy, daily backup successful
-- **2026-03-03:** Fixed vLLM provider warnings (removed bad config)
-- **2026-03-03:** Reduced context window to 131k tokens (aligned with llama-server)
+- **2026-03-03 19:00:** ✅ Resolved Gateway Restart P2 (ITIL-ISSUE-GATEWAY-RESTART-AVAILABILITY)
+- **2026-03-03 18:52:** Tag team setup complete (Sam+Eve), MEMORY.md created, git tracking initialized
+- **2026-03-03 15:10:** System healthy, daily backup successful
+- **2026-03-03 13:15-15:10:** Fixed vLLM provider warnings (removed bad config)
+- **2026-03-03 13:08:** News briefing - Iran conflict escalating
+- **2026-03-03 07:02:** System healthy after overnight sleep
 - **2026-03-01:** Triple Memory System installed
 - **2026-03-01:** Context Window Fix documented and configured
 - **2026-02-28:** ITIL Issue Management workflow created
@@ -138,4 +142,4 @@ Installed a three-layer memory architecture for persistent context across sessio
 
 ---
 
-*Created: 2026-03-03 | Tag Team Setup: 2026-03-03 (Sam+Eve)*
+*Created: 2026-03-03 | Tag Team Setup: 2026-03-03 (Sam+Eve) | P2 Resolved: 2026-03-03 19:00 UTC*
