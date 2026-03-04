@@ -9,14 +9,6 @@
     "lastRunCommand": "configure",
     "lastRunMode": "local"
   },
-  "auth": {
-    "profiles": {
-      "openai-codex:default": {
-        "provider": "openai-codex",
-        "mode": "oauth"
-      }
-    }
-  },
   "models": {
     "mode": "merge",
     "providers": {
@@ -39,7 +31,7 @@
               "cacheRead": 0,
               "cacheWrite": 0
             },
-            "contextWindow": 256000,
+            "contextWindow": 131072,
             "maxTokens": 16384
           }
         ]
@@ -50,9 +42,7 @@
     "defaults": {
       "model": {
         "primary": "olla/qwen3.5:latest",
-        "fallbacks": [
-          "openai/openai-codex"
-        ]
+        "fallbacks": []
       },
       "workspace": "/home/localadmin/.openclaw/workspace",
       "compaction": {
@@ -139,7 +129,7 @@
       "account": "+13184061402",
       "cliPath": "signal-cli",
       "dmPolicy": "pairing",
-      "groupPolicy": "allowlist"
+      "groupPolicy": "open"
     }
   },
   "gateway": {
