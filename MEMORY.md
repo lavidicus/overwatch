@@ -129,6 +129,9 @@ Installed a three-layer memory architecture for persistent context across sessio
 
 ## Recent History
 
+- **2026-03-04 12:26:** Logged ITIL-ISSUE-HEARTBEAT-NEWS-BRIEFING - missed 6AM CST news briefing
+- **2026-03-03 19:50:** Repository renamed to `sam` → https://github.com/lavidicus/sam
+- **2026-03-03 19:33:** Config cleanup - removed OpenAI dependencies, simplified Signal config
 - **2026-03-03 19:00:** ✅ Resolved Gateway Restart P2 (ITIL-ISSUE-GATEWAY-RESTART-AVAILABILITY)
 - **2026-03-03 18:52:** Tag team setup complete (Sam+Eve), MEMORY.md created, git tracking initialized
 - **2026-03-03 15:10:** System healthy, daily backup successful
