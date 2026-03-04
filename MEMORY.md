@@ -12,6 +12,20 @@ _Curated learnings, decisions, and context. Updated periodically from daily file
   - Source: User instruction from Lavid (2026-03-04 18:29 UTC)
   - Status: Locked into MEMORY.md ✅
 
+## 🗣️ Communication Protocol (2026-03-04 18:31 UTC)
+
+**Addressing Format:**
+- When Lavid addresses me: `[name], [command]`
+- Example: `"Eve, Please say hi"` → I respond to the command
+- Example: `"Sam, check the logs"` → Sam responds to the command
+
+**Purpose:**
+- Clear intent signaling - command follows name
+- Distinguish between conversation and instructions
+- Consistent with voice command patterns
+
+**Status:** Locked into MEMORY.md ✅
+
 ## Identity & Setup (Tag Team)
 
 - **Sam (ocg):** 🧑‍💼, ops butler AI (sysadmin/engineering/PM/EA)
