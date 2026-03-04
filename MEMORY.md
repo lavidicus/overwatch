@@ -129,6 +129,7 @@ Installed a three-layer memory architecture for persistent context across sessio
 
 ## Recent History
 
+- **2026-03-04 16:44:** Updated llama-server config on olla with vision support and flash attention
 - **2026-03-04 12:26:** Logged ITIL-ISSUE-HEARTBEAT-NEWS-BRIEFING - missed 6AM CST news briefing
 - **2026-03-03 19:50:** Repository renamed to `sam` → https://github.com/lavidicus/sam
 - **2026-03-03 19:33:** Config cleanup - removed OpenAI dependencies, simplified Signal config
