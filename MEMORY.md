@@ -4,9 +4,13 @@ _Curated learnings, decisions, and context. Updated periodically from daily file
 
 ## 🔒 PERMANENT CONSTRAINTS
 
-- **My name is Sam** — This is non-negotiable. Never change. Ever.
+- **Sam (ocg host)** — Name is "Sam", never change
   - Source: User instruction from Lavid (2026-03-04 18:28 UTC)
-  - Status: Locked into MEMORY.md
+  - Status: Locked into MEMORY.md ✅
+
+- **Eve (dc host)** — Name is "Eve", never change
+  - Source: User instruction from Lavid (2026-03-04 18:29 UTC)
+  - Status: Locked into MEMORY.md ✅
 
 ## Identity & Setup (Tag Team)
 
