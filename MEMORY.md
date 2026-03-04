@@ -137,6 +137,35 @@ Installed a three-layer memory architecture for persistent context across sessio
 - Memory states can differ across hosts — need shared MEMORY.md
 - Git tracking essential for cross-host sync
 
+## Context Overflow Crisis - March 4, 2026 (15:21-18:28 UTC)
+
+### Incident Summary
+
+**Root Cause:** Context overflow error loop (16:11-18:27 UTC)
+
+**Key Findings:**
+1. **Config changes not applied without restart:** Context size increased to 262k tokens, reserveTokens changed to 50,000, but services not restarted - changes inactive
+2. **Accumulated message history:** Session history grew to 910KB, tool calls and metadata piled up
+3. **Gateway restart critical:** Only full gateway restart (stop+start) resolved the overflow state
+4. **Session cleanup alone insufficient:** Deleting session file didn't fix the issue - gateway state was the blocker
+
+### Resolution
+
+**Gateway Restart (18:27 UTC):**
+- Command: `openclaw gateway stop && sleep 2 && openclaw gateway start`
+- Result: ✅ Context cleared to 23% capacity (29k/131k tokens)
+- Result: ✅ Queue cleared (depth 2 → 0)
+- Result: ✅ Agent fully operational
+
+### Lessons
+
+- ⚠️ **Config changes require service restart** - Changes to context size, model, etc. don't take effect without gateway restart
+- ⚠️ **Session cleanup is not enough** - Deleting session files doesn't clear gateway internal state
+- ⚠️ **Full restart needed:** `stop + sleep + start` is more reliable than `restart` command
+- ✅ **Proactive monitoring:** Consider implementing context growth monitoring and automatic alerts at 80% capacity
+
+---
+
 ## Recent History
 
 - **2026-03-04 16:44:** Updated llama-server config on olla with vision support and flash attention
