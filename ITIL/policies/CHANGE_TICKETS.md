@@ -7,3 +7,4 @@
 | 4 | 2026-02-28 | Jeremy | Token optimization | implemented | Optimized heartbeat prompt, created playbook |
 | 5 | 2026-02-28 | Jeremy | Fix context compaction threshold | complete | Set reserveTokens: 20000, gateway restarted |
 | 6 | 2026-02-28 | Jeremy | Enable pre-compaction memory flush | complete | Added memoryFlush config, gateway restarted |
+| 7 | 2026-03-05 | Jeremy | Fix Ollama tool-call errors | implemented | Set provider api to native ollama; gateway restart pending |

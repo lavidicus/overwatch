@@ -38,3 +38,32 @@ If identifiable, what might resolve this
 - **Notes**: Brief description of what was done
 
 ---
+## [ERR-20260305-001] openclaw-gateway-restart
+
+**Logged**: 2026-03-05T17:30:20Z
+**Priority**: high
+**Status**: pending
+**Area**: infra
+
+### Summary
+openclaw gateway restart failed with tool-session transcript error
+
+### Error
+```
+[openclaw] missing tool result in session history; inserted synthetic error result for transcript repair.
+```
+
+### Context
+- Command: `openclaw gateway restart`
+- Purpose: apply OpenClaw config change (Ollama API switch)
+- Environment: ocg host, OpenClaw workspace
+
+### Suggested Fix
+Retry restart after confirming tool session stability; fall back to `openclaw gateway stop && sleep 2 && openclaw gateway start` if needed.
+
+### Metadata
+- Reproducible: unknown
+- Related Files: /home/localadmin/.openclaw/openclaw.json
+- See Also: 
+
+---

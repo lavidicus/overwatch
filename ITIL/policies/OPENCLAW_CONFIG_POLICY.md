@@ -25,19 +25,17 @@ This document tracks configuration changes to OpenClaw gateway and agent setting
 | Setting | Value | Purpose |
 |---------|-------|---------|
 | `mode` | `safeguard` | Enable auto-compaction protection |
-| `reserveTokens` | `20000` | Headroom before compaction triggers |
+| `reserveTokens` | *default* | Headroom before compaction triggers |
 | `keepRecentTokens` | *default* | Tokens to keep unsummarized |
 | `memoryFlush.enabled` | `true` | Pre-compaction memory preservation |
-| `memoryFlush.softThresholdTokens` | `4000` | Buffer before compaction for flush |
+| `memoryFlush.softThresholdTokens` | *default* | Buffer before compaction for flush |
 
 **Formula**: Compaction triggers when `contextTokens > contextWindow - reserveTokens`
 
-**Example**: 66k window with 20k reserve = triggers at 46k (70%)
-
 **Pre-Compaction Flush Flow**:
-1. Context reaches **42k tokens** (46k - 4k softThreshold) → Silent memory flush
-2. Context reaches **46k tokens** (70%) → Auto-compaction
-3. **20k reserveTokens** → Headroom for prompts/outputs
+1. Context reaches soft threshold → Silent memory flush
+2. Context reaches reserve threshold → Auto-compaction
+3. Reserve tokens provide headroom for prompts/outputs
 
 #### Change History
 
@@ -52,13 +50,25 @@ This document tracks configuration changes to OpenClaw gateway and agent setting
 
 | Setting | Value |
 |---------|-------|
-| `primary` | `olla/qwen3.5:latest` |
-| `fallbacks` | `["openai/openai-codex"]` |
+| `primary` | `github-copilot/gpt-4o` |
+| `fallbacks` | `[]` |
 
-### Context Window
-- **Model**: `olla/qwen3.5:latest`
-- **Window**: 66k tokens
-- **Effective limit**: 46k (with reserveTokens)
+### Heartbeat Model
+
+**Location**: `agents.defaults.heartbeat.model`
+
+| Setting | Value |
+|---------|-------|
+| `model` | `olla/qwen3.5:latest` |
+
+### Ollama Provider Configuration
+
+**Location**: `models.providers.olla`
+
+| Setting | Value |
+|---------|-------|
+| `baseUrl` | `http://olla:11434` |
+| `api` | `ollama` |
 
 ## Related Ollama Configuration
 
@@ -70,7 +80,7 @@ This document tracks configuration changes to OpenClaw gateway and agent setting
 **Effect**: Keeps recent tokens more accessible, reduces "lost in the middle" problem
 
 **Combined with compaction**:
-- Compaction at 70%: Reduces overall context size
+- Compaction at reserve threshold: Reduces overall context size
 - Context-shift: Optimizes which tokens remain accessible
 - Result: Layered protection against context degradation
 
@@ -97,6 +107,13 @@ This document tracks configuration changes to OpenClaw gateway and agent setting
 
 ### Recent Changes
 
+**CR-006** (2026-03-05): Ollama API Fix for Tool Calling
+- Changed: `models.providers.olla.api`
+- From: `openai-completions`
+- To: `ollama`
+- Reason: Prevent tool-call diff errors when streaming
+- Status: Implemented (restart pending)
+
 **CR-004** (2026-02-28): Context Compaction Fix
 - Changed: `agents.defaults.compaction.reserveTokens`
 - From: Not set (caused 100% trigger)
@@ -110,7 +127,7 @@ This document tracks configuration changes to OpenClaw gateway and agent setting
 
 **CR-001** (2026-02-28): Olla CMDB Entry
 - Created: SRV-001 CI entry
-- Added: ollama server to CMDB
+- Added: Ollama server to CMDB
 - Status: Complete
 
 ## Monitoring
@@ -128,5 +145,5 @@ This document tracks configuration changes to OpenClaw gateway and agent setting
 ---
 
 **Owner**: ops-team
-**Last Updated**: 2026-02-28 20:41 UTC
-**Next Review**: 2026-05-28
+**Last Updated**: 2026-03-05 17:31 UTC
+**Next Review**: 2026-06-05
