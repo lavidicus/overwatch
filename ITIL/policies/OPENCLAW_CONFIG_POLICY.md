@@ -91,6 +91,8 @@ This document tracks configuration changes to OpenClaw gateway and agent setting
 1. **Document**: Create change request in `ITIL/change-requests/`
 2. **Implement**: Update config file
 3. **Apply**: Restart affected services (gateway if needed)
+   - Preferred: `scripts/safe-restart-gateway.sh`
+   - Avoid in-session restarts; start a new session afterward to prevent pending tool-call state
 4. **Verify**: Test and confirm expected behavior
 5. **Track**: Update CHANGE_TICKETS.md
 6. **Monitor**: Watch for issues over 24h
