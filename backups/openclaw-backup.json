@@ -9,6 +9,9 @@
     "lastRunCommand": "configure",
     "lastRunMode": "local"
   },
+  "session": {
+    "dmScope": "per-channel-peer"
+  },
   "models": {
     "mode": "merge",
     "providers": {
@@ -32,7 +35,7 @@
               "cacheWrite": 0
             },
             "contextWindow": 131072,
-            "maxTokens": 16384
+            "maxTokens": 8192
           }
         ]
       }
@@ -47,10 +50,8 @@
       "workspace": "/home/localadmin/.openclaw/workspace",
       "compaction": {
         "mode": "safeguard",
-        "reserveTokens": 40000,
         "memoryFlush": {
           "enabled": true,
-          "softThresholdTokens": 4000,
           "prompt": "\nBefore context compaction, write important context to memory files:\n- Update memory/YYYY-MM-DD.md with today's decisions, blockers, and next steps\n- Capture any CR/issue tickets created\n- Document configuration changes made\n- Record lessons learned or technical notes\n- Summarize any project updates or state changes\n\nUse NO_REPLY so this doesn't appear in the chat.\n",
           "systemPrompt": "\nYou are about to trigger context compaction. Before that happens, perform a silent memory flush:\n\n1. Review the conversation for important decisions, changes, or context\n2. Write to memory files (memory/YYYY-MM-DD.md)\n3. Keep it concise but complete\n4. DO NOT send this to the user - use NO_REPLY\n\nThis ensures valuable context survives compaction.\n"
         }
@@ -66,8 +67,40 @@
       "subagents": {
         "maxConcurrent": 8
       }
-    }
+    },
+    "list": [
+      {
+        "id": "main"
+      },
+      {
+        "id": "botbus",
+        "groupChat": {
+          "mentionPatterns": [
+            "^SAM\\b",
+            "^@SAM\\b",
+            "^SAM:"
+          ]
+        },
+        "tools": {
+          "exec": {
+            "ask": "on-miss"
+          }
+        }
+      }
+    ]
   },
+  "bindings": [
+    {
+      "match": {
+        "channel": "signal",
+        "peer": {
+          "kind": "group",
+          "id": "d+dlhvhUvsOSQi4zpIj2tBKsIqgYLWFZelLe7oAWWq0="
+        }
+      },
+      "agentId": "botbus"
+    }
+  ],
   "tools": {
     "web": {
       "search": {
@@ -100,9 +133,6 @@
     "exec": {
       "enabled": true
     }
-  },
-  "session": {
-    "dmScope": "per-channel-peer"
   },
   "hooks": {
     "internal": {
