@@ -156,3 +156,32 @@ Verify model allowlist and provider config; update allowed models or use approve
 - See Also: 
 
 ---
+## [ERR-20260305-005] openclaw-gateway-restart
+
+**Logged**: 2026-03-05T18:16:46Z
+**Priority**: high
+**Status**: pending
+**Area**: infra
+
+### Summary
+Gateway stop/start returned transcript repair error after model allowlist change
+
+### Error
+```
+[openclaw] missing tool result in session history; inserted synthetic error result for transcript repair.
+```
+
+### Context
+- Command: `openclaw gateway stop && sleep 2 && openclaw gateway start`
+- Purpose: apply model allowlist update
+- Environment: ocg host
+
+### Suggested Fix
+Retry restart after confirming session stability; consider restarting outside active session and start a new session post-restart.
+
+### Metadata
+- Reproducible: unknown
+- Related Files: /home/localadmin/.openclaw/openclaw.json
+- See Also: ERR-20260305-001, ERR-20260305-002
+
+---
