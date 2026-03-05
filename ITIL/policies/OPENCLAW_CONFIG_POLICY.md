@@ -50,8 +50,10 @@ This document tracks configuration changes to OpenClaw gateway and agent setting
 
 | Setting | Value |
 |---------|-------|
-| `primary` | `github-copilot/gpt-4o` |
-| `fallbacks` | `[]` |
+| `primary` | `olla/qwen3.5:latest` |
+| `fallbacks` | `["github-copilot/gpt-5.2-codex"]` |
+
+**Usage policy**: Use Qwen by default; only use `gpt-5.2-codex` for deep-thinking tasks or when Qwen fails.
 
 ### Heartbeat Model
 
@@ -108,6 +110,11 @@ This document tracks configuration changes to OpenClaw gateway and agent setting
 ## Audit Trail
 
 ### Recent Changes
+
+**CR-010** (2026-03-05): Model Policy Update (Qwen default, Codex fallback)
+- Changed: `agents.defaults.model` and allowed model list
+- Reason: Default to `olla/qwen3.5:latest`; only use Codex for deep-thinking or Qwen failures
+- Status: Implemented (restart may be required)
 
 **CR-007** (2026-03-05): Session Transcript Repair (Tool Result Mismatch)
 - Changed: Session transcript (inserted synthetic tool results for interrupted tool calls)

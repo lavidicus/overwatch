@@ -10,3 +10,4 @@
 | 7 | 2026-03-05 | Jeremy | Fix Ollama tool-call errors | implemented | Set provider api to native ollama; gateway restart pending |
 | 8 | 2026-03-05 | Jeremy | Repair session transcript for missing tool results | implemented | Inserted synthetic tool results after gateway restarts to clear pending tool calls |
 | 9 | 2026-03-05 | Jeremy | Add safe gateway restart workflow | implemented | Added scripts/safe-restart-gateway.sh and policy guidance |
+| 10 | 2026-03-05 | Jeremy | Set Qwen default, Codex fallback for deep thinking | implemented | Primary=olla/qwen3.5:latest; fallback=github-copilot/gpt-5.2-codex; allowed model list trimmed |
