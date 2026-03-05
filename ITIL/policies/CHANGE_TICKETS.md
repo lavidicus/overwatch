@@ -8,3 +8,4 @@
 | 5 | 2026-02-28 | Jeremy | Fix context compaction threshold | complete | Set reserveTokens: 20000, gateway restarted |
 | 6 | 2026-02-28 | Jeremy | Enable pre-compaction memory flush | complete | Added memoryFlush config, gateway restarted |
 | 7 | 2026-03-05 | Jeremy | Fix Ollama tool-call errors | implemented | Set provider api to native ollama; gateway restart pending |
+| 8 | 2026-03-05 | Jeremy | Repair session transcript for missing tool results | implemented | Inserted synthetic tool results after gateway restarts to clear pending tool calls |

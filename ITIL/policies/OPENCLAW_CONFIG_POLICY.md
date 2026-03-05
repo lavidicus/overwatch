@@ -107,6 +107,12 @@ This document tracks configuration changes to OpenClaw gateway and agent setting
 
 ### Recent Changes
 
+**CR-007** (2026-03-05): Session Transcript Repair (Tool Result Mismatch)
+- Changed: Session transcript (inserted synthetic tool results for interrupted tool calls)
+- Reason: Gateway restarts interrupted tool executions, leaving pending tool calls and breaking tool use
+- Mitigation: Repair transcript + avoid in-session restarts when possible
+- Status: Implemented (session repaired; monitoring)
+
 **CR-006** (2026-03-05): Ollama API Fix for Tool Calling
 - Changed: `models.providers.olla.api`
 - From: `openai-completions`
@@ -141,6 +147,7 @@ This document tracks configuration changes to OpenClaw gateway and agent setting
 - Context usage > 80%: Investigate compaction behavior
 - Compaction count increasing rapidly: Review token usage patterns
 - Gateway restarts: Verify config loaded correctly
+- Tool transcript errors ("missing tool result"): Check for pending tool calls; repair transcript or start a new session
 
 ---
 
