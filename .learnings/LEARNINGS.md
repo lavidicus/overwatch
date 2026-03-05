@@ -36,3 +36,25 @@ Specific fix or improvement to make
 - **Promoted**: SOUL.md, TOOLS.md, etc. (if applicable)
 
 ---
+## [LRN-20260305-001] correction
+
+**Logged**: 2026-03-05T17:34:20Z
+**Priority**: medium
+**Status**: pending
+**Area**: infra
+
+### Summary
+Preferred gateway restart command is `systemctl --user restart openclaw-gateway`.
+
+### Details
+User clarified this command works best for restarting the OpenClaw gateway and should be used instead of `openclaw gateway restart`.
+
+### Suggested Action
+Use `systemctl --user restart openclaw-gateway` for gateway restarts by default; keep stop/start as fallback.
+
+### Metadata
+- Source: user_feedback
+- Related Files: ITIL/policies/OPENCLAW_CONFIG_POLICY.md
+- Tags: openclaw, gateway, restart
+
+---

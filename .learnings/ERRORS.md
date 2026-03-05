@@ -67,3 +67,33 @@ Retry restart after confirming tool session stability; fall back to `openclaw ga
 - See Also: 
 
 ---
+
+## [ERR-20260305-002] openclaw-gateway-restart-systemctl
+
+**Logged**: 2026-03-05T17:34:40Z
+**Priority**: high
+**Status**: pending
+**Area**: infra
+
+### Summary
+Gateway restart via systemctl triggered tool-session transcript error
+
+### Error
+```
+[openclaw] missing tool result in session history; inserted synthetic error result for transcript repair.
+```
+
+### Context
+- Command: `systemctl --user restart openclaw-gateway`
+- Purpose: apply OpenClaw config change
+- Environment: ocg host
+
+### Suggested Fix
+Investigate tool-session transcript repair errors; confirm gateway health via systemctl status/logs.
+
+### Metadata
+- Reproducible: unknown
+- Related Files: /home/localadmin/.openclaw/openclaw.json
+- See Also: ERR-20260305-001
+
+---
