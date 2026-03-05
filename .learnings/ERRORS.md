@@ -97,3 +97,62 @@ Investigate tool-session transcript repair errors; confirm gateway health via sy
 - See Also: ERR-20260305-001
 
 ---
+
+## [ERR-20260305-003] git-add-outside-repo
+
+**Logged**: 2026-03-05T18:02:32Z
+**Priority**: high
+**Status**: pending
+**Area**: config
+
+### Summary
+Attempted to `git add` a file outside the workspace repo
+
+### Error
+```
+fatal: /home/localadmin/.openclaw/openclaw.json: '/home/localadmin/.openclaw/openclaw.json' is outside repository at '/home/localadmin/.openclaw/workspace'
+```
+
+### Context
+- Command: `git add /home/localadmin/.openclaw/openclaw.json ITIL/policies/OPENCLAW_CONFIG_POLICY.md ITIL/policies/CHANGE_TICKETS.md`
+- Workspace repo: /home/localadmin/.openclaw/workspace
+
+### Suggested Fix
+Only stage files within the workspace repo; document external config changes separately.
+
+### Metadata
+- Reproducible: yes
+- Related Files: /home/localadmin/.openclaw/openclaw.json
+- See Also: 
+
+---
+## [ERR-20260305-004] session-status-model-override
+
+**Logged**: 2026-03-05T18:11:26Z
+**Priority**: high
+**Status**: pending
+**Area**: config
+
+### Summary
+Failed to switch session model to default via session_status; model not allowed
+
+### Error
+```
+Model "olla/qwen3.5:latest" is not allowed.
+```
+
+### Context
+- Tool: session_status
+- Input: model="olla/qwen3.5:latest"
+- Goal: switch session back to default model after restart
+- Environment: ocg host, OpenClaw workspace
+
+### Suggested Fix
+Verify model allowlist and provider config; update allowed models or use approved model IDs.
+
+### Metadata
+- Reproducible: yes
+- Related Files: /home/localadmin/.openclaw/openclaw.json
+- See Also: 
+
+---
