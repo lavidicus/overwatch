@@ -1,16 +1,21 @@
 {
   "meta": {
-    "lastTouchedVersion": "2026.2.26",
-    "lastTouchedAt": "2026-03-01T06:55:08.005Z"
+    "lastTouchedVersion": "2026.3.2",
+    "lastTouchedAt": "2026-03-06T02:01:41.455Z"
   },
   "wizard": {
-    "lastRunAt": "2026-03-01T06:55:07.962Z",
-    "lastRunVersion": "2026.2.26",
+    "lastRunAt": "2026-03-06T02:01:41.410Z",
+    "lastRunVersion": "2026.3.2",
     "lastRunCommand": "configure",
     "lastRunMode": "local"
   },
-  "session": {
-    "dmScope": "per-channel-peer"
+  "auth": {
+    "profiles": {
+      "github-copilot:github": {
+        "provider": "github-copilot",
+        "mode": "token"
+      }
+    }
   },
   "models": {
     "mode": "merge",
@@ -45,13 +50,21 @@
     "defaults": {
       "model": {
         "primary": "olla/qwen3.5:latest",
-        "fallbacks": []
+        "fallbacks": [
+          "github-copilot/gpt-5.2-codex"
+        ]
+      },
+      "models": {
+        "github-copilot/gpt-5.2-codex": {},
+        "olla/qwen3.5:latest": {}
       },
       "workspace": "/home/localadmin/.openclaw/workspace",
       "compaction": {
         "mode": "safeguard",
+	"reserveTokens": 20000,
         "memoryFlush": {
           "enabled": true,
+	  "softThresholdTokens": 21072,
           "prompt": "\nBefore context compaction, write important context to memory files:\n- Update memory/YYYY-MM-DD.md with today's decisions, blockers, and next steps\n- Capture any CR/issue tickets created\n- Document configuration changes made\n- Record lessons learned or technical notes\n- Summarize any project updates or state changes\n\nUse NO_REPLY so this doesn't appear in the chat.\n",
           "systemPrompt": "\nYou are about to trigger context compaction. Before that happens, perform a silent memory flush:\n\n1. Review the conversation for important decisions, changes, or context\n2. Write to memory files (memory/YYYY-MM-DD.md)\n3. Keep it concise but complete\n4. DO NOT send this to the user - use NO_REPLY\n\nThis ensures valuable context survives compaction.\n"
         }
@@ -61,7 +74,7 @@
         "model": "olla/qwen3.5:latest",
         "session": "main",
         "target": "signal",
-        "prompt": "Report blockers/opportunities. No updates \u2192 'No blockers \u2014 <time>'."
+        "prompt": "Report blockers/opportunities. No updates → 'No blockers — <time>'."
       },
       "maxConcurrent": 4,
       "subagents": {
@@ -89,27 +102,8 @@
       }
     ]
   },
-  "bindings": [
-    {
-      "match": {
-        "channel": "signal",
-        "peer": {
-          "kind": "group",
-          "id": "d+dlhvhUvsOSQi4zpIj2tBKsIqgYLWFZelLe7oAWWq0="
-        }
-      },
-      "agentId": "botbus"
-    }
-  ],
   "tools": {
     "web": {
-      "search": {
-        "enabled": true,
-        "apiKey": "BSABcetQUGiAzp7MypbtZ-a09JuB_ZP",
-        "maxResults": 5,
-        "timeoutSeconds": 30,
-        "cacheTtlMinutes": 15
-      },
       "fetch": {
         "enabled": true
       }
@@ -120,6 +114,18 @@
       "ask": "off"
     }
   },
+  "bindings": [
+    {
+      "agentId": "botbus",
+      "match": {
+        "channel": "signal",
+        "peer": {
+          "kind": "group",
+          "id": "d+dlhvhUvsOSQi4zpIj2tBKsIqgYLWFZelLe7oAWWq0="
+        }
+      }
+    }
+  ],
   "messages": {
     "ackReactionScope": "group-mentions"
   },
@@ -133,6 +139,9 @@
     "exec": {
       "enabled": true
     }
+  },
+  "session": {
+    "dmScope": "per-channel-peer"
   },
   "hooks": {
     "internal": {
@@ -194,7 +203,7 @@
     },
     "entries": {
       "gh-issues": {
-        "apiKey": "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"
+        "apiKey": "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"
       }
     }
   },
