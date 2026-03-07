@@ -1,19 +1,55 @@
 # Proxmox ZFS Cache/Log Setup (Post-Install)
 
+---
+**Author:** Sam
+**Created:** 2026-03-07
+**Last Updated:** 2026-03-07
+**Version:** 2.0
+**Tags:** [proxmox, zfs, cache, slog, performance]
+---
+
 ## Overview
 
 Playbook for configuring ZFS after Proxmox install to add NVMe cache (L2ARC) and log (SLOG) devices, based on existing admin guide.
 
----
+## Priority
 
-## 1) Pre-Change Checklist
+**P2** — Performance optimization, not emergency
 
-### Required
+## Category
 
-- Proxmox installed with ZFS RAID-Z
-- Console/SSH access
-- **Backup completed** (required)
-- NVMe drive available
+**Change Management**
+
+## Estimated Duration
+
+- **Total:** ~15-30 minutes
+- **Critical path:** ~10 minutes (partition + add)
+- **Notes:** ZFS operations may vary by pool size
+
+## Communication
+
+- **Before starting:** Notify if production pool
+- **After completion:** Verify performance improvement
+- **If blocked:** Check NVMe device availability
+
+## Risk Assessment
+
+| Risk | Impact | Mitigation |
+|------|--------|------------|
+| Wrong device selected | High | Verify device names carefully |
+| Data corruption | Medium | Backup before changes |
+| Performance degradation | Low | Test on non-production first |
+
+## Prerequisites
+
+- **System:** Proxmox installed with ZFS RAID-Z
+- **Access:** Console/SSH access
+- **Backup:** ✅ Backup completed (required)
+- **Hardware:** NVMe drive available
+
+## Procedure
+
+### Step 1: Pre-Change Checklist
 
 ```bash
 # Verify current pool
@@ -26,13 +62,11 @@ lsblk -o NAME,SIZE,TYPE,MOUNTPOINT
 zpool list
 ```
 
----
-
-## 2) Add a 4th Partition to ZFS Disks
+### Step 2: Add a 4th Partition to ZFS Disks
 
 > Proxmox ZFS install often leaves unused space after initial partitions.
 
-### For Each ZFS Disk
+**For Each ZFS Disk:**
 
 ```bash
 # Example disk
@@ -49,9 +83,7 @@ fdisk /dev/sda
 
 Repeat for `/dev/sdb`, `/dev/sdc`, etc.
 
----
-
-## 3) Partition NVMe for Cache + Log
+### Step 3: Partition NVMe for Cache + Log
 
 ```bash
 fdisk /dev/nvme0n1
@@ -66,9 +98,7 @@ fdisk /dev/nvme0n1
 w
 ```
 
----
-
-## 4) Add Cache and Log to ZFS Pool
+### Step 4: Add Cache and Log to ZFS Pool
 
 ```bash
 # Add cache (L2ARC)
@@ -81,11 +111,9 @@ zpool add rpool log /dev/nvme0n1p2
 zpool status
 ```
 
----
+### Step 5: Optional — Disable ZFS Sync (Performance)
 
-## 5) Optional: Disable ZFS Sync (Performance)
-
-> **WARNING:** increases risk of data loss on power failure.
+> **WARNING:** Increases risk of data loss on power failure.
 
 ```bash
 zfs set sync=disabled rpool
@@ -95,9 +123,7 @@ zfs set sync=disabled mas
 zfs get sync rpool
 ```
 
----
-
-## 6) Verification
+### Step 6: Verification
 
 ```bash
 # Confirm cache/log attached
@@ -110,9 +136,7 @@ lsblk
 zpool list
 ```
 
----
-
-## 7) Rollback / Removal
+## Rollback / Removal
 
 ```bash
 # Remove cache/log (if needed)
@@ -123,12 +147,25 @@ zpool remove rpool /dev/nvme0n1p2
 zpool status
 ```
 
----
+## Success Criteria
+
+- ✅ L2ARC cache visible in `zpool status`
+- ✅ SLOG device visible in `zpool status`
+- ✅ Pool health shows ONLINE
+- ✅ Performance improved (verify with benchmarks)
 
 ## Related PKB Guides
 
 - [[pkb/areas/System guides/Proxmox/PVE Guides/PVE Storage Guides/Configure ZFS disks after Proxmox Installation]]
 
----
+## Notes
 
-*Created: 2026-03-07 | Priority: P2 | Category: Change Management*
+- L2ARC improves read performance
+- SLOG improves synchronous write performance
+- NVMe recommended for both
+- Sync=disabled increases risk but improves performance
+
+---
+**Version History:**
+- v1.0 — Original playbook
+- v2.0 — Updated to new ITIL template format (2026-03-07)

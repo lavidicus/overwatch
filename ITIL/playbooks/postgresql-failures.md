@@ -1,16 +1,51 @@
 # PostgreSQL Failures
 
+---
+**Author:** Sam
+**Created:** 2026-03-07
+**Last Updated:** 2026-03-07
+**Version:** 2.0
+**Tags:** [database, postgresql, incident-response, recovery]
+---
+
 ## Overview
 
-PostgreSQL database troubleshooting for connection failures, performance issues, and recovery scenarios.
+PostgreSQL database troubleshooting for connection failures, performance issues, and recovery scenarios. Use this playbook when database services are unavailable or degraded.
 
 ## Priority
 
-**P2** — Database availability affects dependent services
+**P2** — Database availability affects dependent services and user operations
 
 ## Category
 
 **Incident Response**
+
+## Estimated Duration
+
+- **Total:** ~30-60 minutes (varies by issue type)
+- **Critical path:** ~15 minutes (status checks + common resolutions)
+- **Notes:** Recovery from backup can take hours depending on database size
+
+## Communication
+
+- **Before starting:** Notify #ops-channel of investigation
+- **After completion:** Update incident ticket with resolution
+- **If blocked >15 min:** Escalate to database administrator
+
+## Risk Assessment
+
+| Risk | Impact | Mitigation |
+|------|--------|------------|
+| Service interruption during repair | High | Schedule maintenance window if possible |
+| Data loss during recovery | Critical | Verify backup integrity before proceeding |
+| Configuration errors | Medium | Document all changes, test in staging first |
+
+## Prerequisites
+
+- **Access:** Root or sudo privileges on database server
+- **Tools:** PostgreSQL client installed, `journalctl` available
+- **Information:** Database version, server hostname, backup location
+- **Dependencies:** Backup system operational, monitoring alerts configured
 
 ## Status Checks
 
@@ -20,11 +55,17 @@ PostgreSQL database troubleshooting for connection failures, performance issues,
 # Check PostgreSQL service status
 sudo systemctl status postgresql
 
-# Check if listening
+# Check if listening on port 5432
 sudo ss -tlnp | grep 5432
 
-# Check processes
+# Check cluster status
 pg_lsclusters
+```
+
+**Expected output:**
+```
+ Version  Active  Port    Owner
+ 16      online  5432    postgres
 ```
 
 ### Connection Test
@@ -41,7 +82,7 @@ psql -h <host> -U <user> -d <database>
 
 ```bash
 # Check database size
-sudo -u postgres psql -c "SELECT pg_size_pretty(pg_database_size('<database>'));
+sudo -u postgres psql -c "SELECT pg_size_pretty(pg_database_size('<database>'));"
 
 # Check active connections
 sudo -u postgres psql -c "SELECT count(*) FROM pg_stat_activity;"
@@ -50,7 +91,146 @@ sudo -u postgres psql -c "SELECT count(*) FROM pg_stat_activity;"
 sudo -u postgres psql -c "SELECT * FROM pg_locks WHERE NOT granted;"
 ```
 
-## Common Failure Scenarios
+## Procedure
+
+### Step 1: Identify the Failure Type
+
+Run status checks to determine the category of failure:
+
+```bash
+# Quick diagnostic script
+sudo systemctl is-active postgresql && echo "SERVICE: Running" || echo "SERVICE: Stopped"
+sudo ss -tlnp | grep -q 5432 && echo "PORT: Listening" || echo "PORT: Not Listening"
+sudo -u postgres psql -c "SELECT 1;" >/dev/null 2>&1 && echo "CONNECTION: OK" || echo "CONNECTION: Failed"
+```
+
+**Expected output:**
+```
+SERVICE: Running
+PORT: Listening
+CONNECTION: OK
+```
+
+### Step 2: Diagnose Based on Symptoms
+
+**If SERVICE is Stopped:**
+
+```bash
+# Check logs for startup errors
+sudo journalctl -u postgresql -n 50 --no-pager
+
+# Check for port conflicts
+sudo ss -tlnp | grep 5432
+
+# Check data directory permissions
+ls -la /var/lib/postgresql/<version>/main/
+```
+
+**If CONNECTION Failed but SERVICE Running:**
+
+```bash
+# Check pg_hba.conf settings
+sudo cat /etc/postgresql/<version>/main/pg_hba.conf | grep -v "^#" | grep -v "^$"
+
+# Check listen_addresses
+sudo grep "listen_addresses" /etc/postgresql/<version>/main/postgresql.conf
+```
+
+### Step 3: Apply Resolution
+
+**Decision Points:**
+
+**If port conflict →** Go to Resolution 3A
+**If permission issue →** Go to Resolution 3B
+**If connection refused →** Go to Resolution 3C
+**If authentication failed →** Go to Resolution 3D
+
+#### Resolution 3A: Port Conflict
+
+```bash
+# Kill stale PostgreSQL processes
+sudo pkill -9 postgres
+
+# Restart service
+sudo systemctl start postgresql
+
+# Verify
+sudo systemctl status postgresql
+```
+
+#### Resolution 3B: Permission Issue
+
+```bash
+# Fix ownership
+sudo chown -R postgres:postgres /var/lib/postgresql/
+
+# Restart service
+sudo systemctl start postgresql
+```
+
+#### Resolution 3C: Connection Refused
+
+```bash
+# Edit pg_hba.conf to allow connections
+# Add line for remote access:
+host    all             all             0.0.0.0/0               md5
+
+# Edit postgresql.conf
+sudo nano /etc/postgresql/<version>/main/postgresql.conf
+# Change:
+listen_addresses = '*'  # or specific IPs
+
+# Reload configuration
+sudo systemctl reload postgresql
+```
+
+#### Resolution 3D: Authentication Failed
+
+```bash
+# Reset password
+sudo -u postgres psql
+ALTER USER <username> WITH PASSWORD '<newpassword>';
+\q
+```
+
+### Step 4: Recovery (If Database Corrupted)
+
+**If database is corrupted or data loss occurred:**
+
+```bash
+# Stop PostgreSQL
+sudo systemctl stop postgresql
+
+# Backup current state (if possible)
+tar czf /tmp/pg-backup-$(date +%Y%m%d).tar.gz /var/lib/postgresql/<version>/main/
+
+# Restore from backup
+sudo -u postgres pg_restore -d <database> /path/to/backup.dump
+
+# Start PostgreSQL
+sudo systemctl start postgresql
+```
+
+## Verification
+
+```bash
+# Service is running
+sudo systemctl is-active postgresql
+
+# Port is listening
+sudo ss -tlnp | grep 5432
+
+# Can connect and query
+sudo -u postgres psql -c "SELECT version();"
+
+# Check for errors in logs
+sudo journalctl -u postgresql -n 20 | grep -i error
+
+# Verify database size matches expected
+sudo -u postgres psql -c "SELECT pg_size_pretty(pg_database_size('<database>'));"
+```
+
+## Common Issues
 
 ### Database Won't Start
 
@@ -67,86 +247,17 @@ sudo journalctl -u postgresql -n 50
 
 # Check if port is in use
 sudo ss -tlnp | grep 5432
-
-# Check data directory permissions
-ls -la /var/lib/postgresql/<version>/main/
 ```
 
 **Resolution:**
 
 ```bash
-# If port conflict - kill stale process
+# If port conflict
 sudo pkill -9 postgres
 sudo systemctl start postgresql
-
-# If permission issue
-sudo chown -R postgres:postgres /var/lib/postgresql/
 ```
 
-### Connection Refused
-
-**Symptoms:**
-- Application reports "connection refused"
-- Can't connect from remote host
-
-**Diagnosis:**
-
-```bash
-# Check pg_hba.conf
-sudo cat /etc/postgresql/<version>/main/pg_hba.conf
-
-# Check listen_addresses
-sudo grep listen_addresses /etc/postgresql/<version>/main/postgresql.conf
-```
-
-**Resolution:**
-
-```bash
-# Edit pg_hba.conf to allow connections
-# Add line for remote access:
-host    all             all             0.0.0.0/0               md5
-
-# Edit postgresql.conf
-sudo nano /etc/postgresql/<version>/main/postgresql.conf
-# Change:
-listen_addresses = '*'  # or specific IPs
-
-# Reload configuration
-sudo systemctl reload postgresql
-```
-
-### Authentication Failed
-
-**Symptoms:**
-- "password authentication failed" errors
-- Application can't authenticate
-
-**Diagnosis:**
-
-```bash
-# Check user exists
-sudo -u postgres psql -c "\du"
-
-# Check password hash
-sudo -u postgres psql -c "SELECT usename, passwd FROM pg_user WHERE usename='<user>';"
-```
-
-**Resolution:**
-
-```bash
-# Reset password
-sudo -u postgres psql
-ALTER USER <username> WITH PASSWORD '<newpassword>';
-\q
-
-# Or create new user
-sudo -u postgres psql
-CREATE USER <username> WITH PASSWORD '<password>';
-GRANT ALL PRIVILEGES ON DATABASE <database> TO <username>;
-\q
-```
-
-### Database Full / Disk Space
+### Disk Full
 
 **Symptoms:**
 - Writes fail
@@ -159,13 +270,14 @@ GRANT ALL PRIVILEGES ON DATABASE <database> TO <username>;
 # Check disk space
 df -h
 
-# Check database size
+# Check largest tables
 sudo -u postgres psql -c "
   SELECT 
-    pg_database.datname,
-    pg_size_pretty(pg_database_size(pg_database.datname)) as size
-  FROM pg_database
-  ORDER BY pg_database_size(pg_database.datname) DESC;"
+    schemaname, tablename, 
+    pg_size_pretty(pg_total_relation_size(schemaname||'.'||tablename)) as size
+  FROM pg_tables 
+  ORDER BY pg_total_relation_size(schemaname||'.'||tablename) DESC
+  LIMIT 10;"
 ```
 
 **Resolution:**
@@ -175,9 +287,7 @@ sudo -u postgres psql -c "
 sudo -u postgres psql -c "VACUUM FULL;"
 
 # Clear old logs
-sudo rm /var/log/postgresql/*.log.*
-
-# Add storage if needed
+sudo find /var/log/postgresql/ -name "*.log.*" -mtime +7 -delete
 ```
 
 ### Replication Issues
@@ -189,7 +299,6 @@ sudo rm /var/log/postgresql/*.log.*
 **Diagnosis:**
 
 ```bash
-# Check replication status
 sudo -u postgres psql -c "
   SELECT 
     client_addr,
@@ -198,12 +307,6 @@ sudo -u postgres psql -c "
     write_lsn,
     sync_state
   FROM pg_stat_replication;"
-
-# Check replication lag
-sudo -u postgres psql -c "
-  SELECT 
-    pg_wal_lsn_diff(pg_current_wal_lsn(), replay_lsn) AS lag_bytes
-  FROM pg_stat_replication;"
 ```
 
 **Resolution:**
@@ -211,75 +314,41 @@ sudo -u postgres psql -c "
 ```bash
 # Restart replication on standby
 sudo systemctl restart postgresql
-
-# If severely behind, may need to resync standby
 ```
 
-## Recovery Procedures
-
-### Restore from Backup
+## Rollback
 
 ```bash
-# Stop PostgreSQL
+# If configuration change caused issues, restore from backup config
+cp /etc/postgresql/<version>/main/postgresql.conf.bak \
+   /etc/postgresql/<version>/main/postgresql.conf
+cp /etc/postgresql/<version>/main/pg_hba.conf.bak \
+   /etc/postgresql/<version>/main/pg_hba.conf
+
+# Reload PostgreSQL
+sudo systemctl reload postgresql
+
+# Or restore entire database from backup
 sudo systemctl stop postgresql
-
-# Restore from backup (example with pg_dump)
-sudo -u postgres pg_restore -d <database> /path/to/backup.dump
-
-# Start PostgreSQL
+# Restore data directory from backup
 sudo systemctl start postgresql
-```
-
-### Point-in-Time Recovery
-
-```bash
-# Configure recovery target in postgresql.conf
-recovery_target_time = '2024-01-01 12:00:00'
-
-# Restore base backup and WAL files
-# Then start PostgreSQL
-sudo systemctl start postgresql
-```
-
-## Prevention
-
-### Monitoring
-
-```bash
-# Add to /etc/cron.daily/postgres-check
-#!/bin/bash
-# Check disk space
-DF=$(df /var/lib/postgresql | tail -1 | awk '{print $5}' | sed 's/%//')
-if [ $DF -gt 85 ]; then
-  echo "PostgreSQL disk usage at ${DF}%" | mail -s "Alert: PostgreSQL Disk" admin@example.com
-fi
-
-# Check replication lag
-LAG=$(sudo -u postgres psql -t -c "SELECT pg_wal_lsn_diff(pg_current_wal_lsn(), replay_lsn) FROM pg_stat_replication LIMIT 1;")
-if [ $(echo $LAG > 100000000 | bc) -eq 1 ]; then
-  echo "PostgreSQL replication lag: $LAG bytes" | mail -s "Alert: PostgreSQL Replication" admin@example.com
-fi
-```
-
-### Regular Maintenance
-
-```bash
-# Daily vacuum (automatic in modern PostgreSQL)
-# Weekly vacuum analyze
-sudo -u postgres psql -c "VACUUM ANALYZE;"
-
-# Monthly statistics update
-sudo -u postgres psql -c "ANALYZE;"
 ```
 
 ## Related Playbooks
 
 - [[docker-container-failures.md]] — If PostgreSQL runs in container
 - [[proxmox-backup-restore.md]] — For VM/container backup restore
+- [[postgresql-failures.md]] — This playbook (original version)
 
 ## Notes
 
-- Default port: 5432
-- Default data directory: `/var/lib/postgresql/<version>/main/`
-- Default config: `/etc/postgresql/<version>/main/`
-- Always backup before making changes
+- **Default port:** 5432
+- **Default data directory:** `/var/lib/postgresql/<version>/main/`
+- **Default config:** `/etc/postgresql/<version>/main/`
+- **Backup strategy:** Always backup before making changes
+- **Maintenance window:** Schedule major operations during low-traffic periods
+
+---
+**Version History:**
+- v1.0 — Original playbook
+- v2.0 — Updated to new ITIL template format (2026-03-07)

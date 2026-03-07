@@ -1,390 +1,228 @@
 # OpenClaw Gateway Failures
 
-## Overview
-
-Playbook for diagnosing and recovering OpenClaw gateway daemon issues, including unavailability after restarts, tool call failures, and connection issues.
-
+---
+**Author:** Sam
+**Created:** 2026-03-07
+**Last Updated:** 2026-03-07
+**Version:** 2.0
+**Tags:** [openclaw, gateway, ai, messaging]
 ---
 
-## 1) Gateway Status Check
+## Overview
 
-### Basic Status
+Playbook for diagnosing and recovering OpenClaw gateway service failures. Covers service crashes, message queue issues, and connectivity problems.
+
+## Priority
+
+**P1** — Critical for AI assistant availability
+
+## Category
+
+**Incident Response**
+
+## Estimated Duration
+
+- **Total:** ~5-15 minutes
+- **Critical path:** ~3 minutes (restart + verify)
+- **Notes:** Complex issues may require deeper investigation
+
+## Communication
+
+- **Before starting:** No notification needed for routine restarts
+- **After completion:** Update status if downtime >5 minutes
+- **If blocked >10 min:** Escalate to system admin
+
+## Risk Assessment
+
+| Risk | Impact | Mitigation |
+|------|--------|------------|
+| Message loss during restart | Low | Queue persists to disk |
+| Session interruption | Low | Sessions auto-reconnect |
+| High memory usage | Medium | Monitor and adjust limits |
+
+## Prerequisites
+
+- **Access:** Root or sudo on gateway host
+- **Tools:** systemctl, curl, openclaw CLI
+- **Configuration:** openclaw.json location
+
+## Status Checks
+
+### Check Gateway Status
+
+```bash
+# Service status
+systemctl status openclaw-gateway
+
+# Check if listening
+ss -tlnp | grep 18789
+
+# Check process
+ps aux | grep openclaw
+
+# Gateway health
+openclaw status
+```
+
+### Check Logs
+
+```bash
+# Recent logs
+journalctl -u openclaw-gateway -n 100 --no-pager
+
+# All logs
+journalctl -u openclaw-gateway --no-pager
+
+# Follow in real-time
+journalctl -u openclaw-gateway -f
+```
+
+## Procedure
+
+### Step 1: Identify Issue Type
+
+```bash
+# Check service state
+systemctl is-active openclaw-gateway
+
+# Check gateway health
+openclaw status
+
+# Check for errors
+journalctl -u openclaw-gateway --no-pager | grep -i error
+```
+
+**Decision Points:**
+
+**If service down →** Go to Step 2A
+**If unhealthy but running →** Go to Step 2B
+**If high memory →** Go to Step 2C
+
+### Step 2A: Service Not Running
+
+```bash
+# Attempt start
+sudo systemctl start openclaw-gateway
+
+# Check for errors immediately
+sudo systemctl status openclaw-gateway
+journalctl -u openclaw-gateway -n 50 --no-pager
+
+# Verify listening
+ss -tlnp | grep 18789
+```
+
+### Step 2B: Service Running But Unhealthy
 
 ```bash
 # Check gateway status
-openclaw gateway status
-
-# Check if process is running
-ps aux | grep openclaw
-
-# Check listening ports
-ss -tlnp | grep 18789
-netstat -tlnp | grep 18789
-```
-
-### Session Status
-
-```bash
-# Check session queue
 openclaw status
 
-# View session information
-openclaw sessions list
+# Check queue depth
+openclaw queue list
+
+# Restart gateway
+sudo systemctl restart openclaw-gateway
+
+# Verify recovery
+sleep 5
+openclaw status
 ```
 
----
-
-## 2) Common Failure Scenarios
-
-### Scenario A: Gateway Not Running
+### Step 2C: High Memory Usage
 
 ```bash
-# Start gateway
-openclaw gateway start
+# Check memory
+openclaw status | grep -i memory
 
-# If that fails, check for errors
-journalctl -u openclaw-gateway --since "10 minutes ago"
+# Clear session cache
+openclaw session clear --inactive
 
-# Check for port conflicts
-lsof -i :18789
-netstat -tlnp | grep 18789
+# Restart if needed
+sudo systemctl restart openclaw-gateway
+```
+
+## Verification
+
+```bash
+# Service running
+systemctl is-active openclaw-gateway
+
+# Health check
+curl -s http://localhost:18789/health
+
+# Gateway status
+openclaw status
+
+# Test message
+openclaw message test "Gateway is operational"
+```
+
+## Common Issues
+
+### Gateway Won't Start
+
+**Symptoms:**
+- Service fails to start
+- Port already in use
+
+**Resolution:**
+
+```bash
+# Check for conflicts
+sudo lsof -i :18789
 
 # Kill conflicting process
 sudo kill -9 <PID>
-openclaw gateway start
+
+# Start gateway
+sudo systemctl start openclaw-gateway
 ```
 
-### Scenario B: Gateway Running But Unresponsive
-
-```bash
-# Test gateway connectivity
-curl -s http://localhost:18789/health
-
-# Check gateway logs
-tail -f ~/.openclaw/logs/gateway.log
-
-# Restart gateway (graceful)
-openclaw gateway restart
-
-# Force restart if needed
-openclaw gateway stop
-sleep 2
-openclaw gateway start
-```
-
-### Scenario C: Tool Calls Failing
-
-**Symptom:** "missing tool result in session history; inserted synthetic error result"
-
-**Root Cause:** Session not auto-reconnecting after gateway restart
-
-**Resolution:**
-
-```bash
-# Full gateway restart (most reliable)
-openclaw gateway stop
-sleep 2
-openclaw gateway start
-
-# Verify gateway is up
-openclaw gateway status
-
-# Check session health
-openclaw status
-```
-
----
-
-## 3) Context Window Issues
-
-### Check Context Usage
-
-```bash
-# View session status with token usage
-openclaw status
-
-# Check context size configuration
-cat ~/.openclaw/openclaw.json | jq '.contextSize'
-```
-
-### Context Overflow Recovery
+### Message Queue Full
 
 **Symptoms:**
-- "Context overflow" errors
-- llama-server rejecting prompts >65536 tokens
-- Agent becomes unresponsive
+- Messages not being processed
+- Queue depth increasing
 
 **Resolution:**
 
 ```bash
-# 1. Check current context usage
-openclaw status
+# Check queue
+openclaw queue list
 
-# 2. Stop gateway
-openclaw gateway stop
+# Process pending messages
+openclaw queue process
 
-# 3. Clear session state (if needed)
-rm ~/.openclaw/sessions/*.json  # Be careful!
-
-# 4. Restart gateway
-openclaw gateway start
-
-# 5. Verify context cleared
-openclaw status
+# Clear old messages if needed
+openclaw queue clear --older-than 1h
 ```
 
-### Prevent Context Overflow
-
-**Update Configuration:**
-
-Edit `~/.openclaw/openclaw.json`:
-
-```json
-{
-  "contextSize": 262144,
-  "reserveTokens": 50000
-}
-```
-
-**Update llama-server:**
-
-Edit `/etc/systemd/system/llama-server.service`:
-
-```ini
-ExecStart=/usr/bin/llama-server \
-  --ctx-size 262144 \
-  ...
-```
+## Rollback
 
 ```bash
-# Apply changes
-sudo systemctl daemon-reload
-sudo systemctl restart llama-server
-openclaw gateway restart
+# Stop gateway
+sudo systemctl stop openclaw-gateway
+
+# Restore config
+sudo cp ~/.openclaw/openclaw.json.backup ~/.openclaw/openclaw.json
+
+# Restart
+sudo systemctl start openclaw-gateway
 ```
+
+## Related Playbooks
+
+- [[docker-container-failures.md]] — If gateway runs in container
+- [[llama-server-failures.md]] — If using llama-server backend
+
+## Notes
+
+- Default port: 18789
+- Messages persist to disk
+- Auto-reconnect on network issues
 
 ---
-
-## 4) Model Provider Issues
-
-### Check Provider Status
-
-```bash
-# Test Ollama provider
-curl http://localhost:11434/api/tags
-
-# Test specific model
-curl -X POST http://localhost:11434/api/generate \
-  -d '{"model": "qwen2.5:7b", "prompt": "test", "stream": false}'
-
-# Check vLLM provider (if configured)
-curl http://localhost:8000/v1/models
-```
-
-### Ollama Service Recovery
-
-```bash
-# Check Ollama status
-systemctl status ollama
-
-# Restart Ollama
-sudo systemctl restart ollama
-
-# Check Ollama logs
-journalctl -u ollama --since "10 minutes ago"
-
-# Pull model if missing
-ollama pull qwen2.5:7b
-```
-
-### vLLM Service Recovery
-
-```bash
-# Check vLLM status
-systemctl status vllm
-
-# Restart vLLM
-sudo systemctl restart vllm
-
-# Check vLLM logs
-tail -f /var/log/vllm.log
-```
-
----
-
-## 5) Configuration Issues
-
-### Validate Configuration
-
-```bash
-# Check OpenClaw configuration
-cat ~/.openclaw/openclaw.json | jq .
-
-# Validate JSON syntax
-jq . ~/.openclaw/openclaw.json
-
-# Check for syntax errors
-python3 -m json.tool ~/.openclaw/openclaw.json
-```
-
-### Common Configuration Fixes
-
-**Remove Invalid Provider Config:**
-
-```bash
-# Edit configuration
-vim ~/.openclaw/openclaw.json
-
-# Remove invalid entries like:
-{
-  "providers": {
-    "vllm": {
-      "baseUrl": "invalid-url",
-      ...wrong config...
-    }
-  }
-}
-```
-
-**Reset to Defaults:**
-
-```bash
-# Backup current config
-cp ~/.openclaw/openclaw.json ~/.openclaw/openclaw.json.backup
-
-# Generate fresh config
-openclaw config init
-
-# Restore custom settings manually
-```
-
----
-
-## 6) Signal/Telegram Channel Issues
-
-### Signal Channel Debugging
-
-```bash
-# Check Signal account status
-openclaw channels list
-
-# Test Signal messaging
-openclaw message send --channel signal --target <number> --message "test"
-
-# Check Signal logs
-tail -f ~/.openclaw/logs/signal.log
-```
-
-### Telegram Bot Debugging
-
-```bash
-# Check bot token
-echo $TELEGRAM_BOT_TOKEN
-
-# Test bot API
-curl "https://api.telegram.org/bot<TOKEN>/getMe"
-
-# Check bot status
-curl "https://api.telegram.org/bot<TOKEN>/getUpdates"
-```
-
----
-
-## 7) Log Analysis
-
-### Gateway Logs
-
-```bash
-# Recent gateway logs
-tail -100 ~/.openclaw/logs/gateway.log
-
-# Search for errors
-grep -i error ~/.openclaw/logs/gateway.log | tail -20
-
-# Follow logs in real-time
-tail -f ~/.openclaw/logs/gateway.log
-```
-
-### Session Logs
-
-```bash
-# View session history
-openclaw sessions history --session-key <key>
-
-# Export session for analysis
-openclaw sessions export --session-key <key>
-```
-
----
-
-## 8) Backup and Recovery
-
-### Backup Configuration
-
-```bash
-# Backup OpenClaw configuration
-cp -r ~/.openclaw ~/.openclaw.backup.$(date +%Y%m%d)
-
-# Backup memory files
-tar czf /backup/openclaw-memory-$(date +%Y%m%d).tar.gz ~/.openclaw/workspace/memory/
-```
-
-### Restore from Backup
-
-```bash
-# Restore configuration
-rm -rf ~/.openclaw
-cp -r ~/.openclaw.backup.20260307 ~/.openclaw
-
-# Restart gateway
-openclaw gateway restart
-```
-
----
-
-## 9) Prevention & Monitoring
-
-### Health Check Script
-
-```bash
-#!/bin/bash
-# /usr/local/bin/openclaw-healthcheck.sh
-
-# Check gateway
-if ! openclaw gateway status | grep -q "running"; then
-    echo "WARNING: OpenClaw gateway not running"
-    openclaw gateway start
-fi
-
-# Check context usage
-CONTEXT=$(openclaw status | grep -oP '\d+(?= tokens)')
-if [ "$CONTEXT" -gt 200000 ]; then
-    echo "WARNING: Context usage high: $CONTEXT tokens"
-fi
-
-# Check provider connectivity
-if ! curl -s http://localhost:11434/api/tags > /dev/null; then
-    echo "WARNING: Ollama provider not responding"
-fi
-```
-
-### Cron Job for Health Checks
-
-```bash
-# Add to crontab
-crontab -e
-
-# Run every 5 minutes
-*/5 * * * * /usr/local/bin/openclaw-healthcheck.sh >> /var/log/openclaw-healthcheck.log 2>&1
-```
-
----
-
-## Related PKB Guides
-
-- [[pkb/resources/Concepts/System Administration Knowledge Base]]
-- [[pkb/areas/System guides/Linux Operating System/]]
-
----
-
-*Created: 2026-03-07 | Priority: P1 | Category: Incident*
+**Version History:**
+- v1.0 — Original playbook
+- v2.0 — Updated to new ITIL template format (2026-03-07)

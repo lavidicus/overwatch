@@ -1,12 +1,53 @@
 # Docker Container Service Failures
 
-## Overview
-
-Playbook for diagnosing and recovering Docker container services including Plex, Mattermost, PostgreSQL, Minecraft Server, and OwnCloud.
-
+---
+**Author:** Sam
+**Created:** 2026-03-07
+**Last Updated:** 2026-03-07
+**Version:** 2.0
+**Tags:** [docker, containers, incident-response, plex, mattermost, postgresql, minecraft, owncloud]
 ---
 
-## 1) Identify Failed Container
+## Overview
+
+Playbook for diagnosing and recovering Docker container services including Plex, Mattermost, PostgreSQL, Minecraft Server, and OwnCloud. Use when any container service is unavailable or degraded.
+
+## Priority
+
+**P2** — Service availability affects user experience but not critical infrastructure
+
+## Category
+
+**Incident Response**
+
+## Estimated Duration
+
+- **Total:** ~15-30 minutes
+- **Critical path:** ~5-10 minutes (restart + verification)
+- **Notes:** Complex issues may require deeper investigation
+
+## Communication
+
+- **Before starting:** No notification needed for routine restarts
+- **After completion:** Update status if service was down >5 minutes
+- **If blocked >15 min:** Investigate underlying system issues
+
+## Risk Assessment
+
+| Risk | Impact | Mitigation |
+|------|--------|------------|
+| Data loss during container crash | Medium | Ensure volumes are properly mounted |
+| Service interruption during recovery | Low | Restart typically takes seconds |
+| Port conflicts | Low | Check port availability first |
+
+## Prerequisites
+
+- **Access:** Root or sudo on Docker host
+- **Tools:** Docker CLI installed
+- **Information:** Container names, expected ports
+- **Dependencies:** Docker daemon running
+
+## Status Checks
 
 ### List All Containers
 
@@ -25,6 +66,13 @@ docker ps -a --filter "name=owncloud"
 docker ps -a --format "table {{.Names}}\t{{.Status}}\t{{.Ports}}"
 ```
 
+**Expected output:**
+```
+NAMES         STATUS                    PORTS
+plex          Up 5 hours               0.0.0.0:32400->32400/tcp
+postgres      Up 5 hours               0.0.0.0:5432->5432/tcp
+```
+
 ### Check Container Logs
 
 ```bash
@@ -38,11 +86,24 @@ docker logs -f <container_name>
 docker logs --timestamps <container_name>
 ```
 
----
+## Procedure
 
-## 2) Common Failure Scenarios
+### Step 1: Identify Failed Container
 
-### Scenario A: Container Won't Start
+Run status checks to determine which container is affected:
+
+```bash
+# Quick health check for all containers
+docker ps --format "table {{.Names}}\t{{.Status}}" | grep -v "Up" || echo "All containers running"
+```
+
+**Decision Points:**
+
+**If container exited →** Go to Step 2A
+**If container running but unresponsive →** Go to Step 2B
+**If container restarting loop →** Go to Step 2C
+
+### Step 2A: Container Won't Start
 
 ```bash
 # Check for port conflicts
@@ -55,9 +116,22 @@ docker inspect <container_name> | grep -A5 HostConfig
 
 # Verify volume mounts
 docker inspect <container_name> | grep -A10 Mounts
+
+# Check exit code
+docker inspect <container_name> --format '{{.State.ExitCode}}'
 ```
 
-### Scenario B: Container Crashes Immediately
+**Resolution:**
+
+```bash
+# Kill conflicting processes
+sudo lsof -i :<port> | tail -1 | awk '{print $2}' | xargs kill -9
+
+# Restart container
+docker start <container_name>
+```
+
+### Step 2B: Container Crashes Immediately
 
 ```bash
 # Check for configuration errors
@@ -72,7 +146,7 @@ docker exec <container_name> pg_config
 cat /path/to/mattermost/config.json
 ```
 
-### Scenario C: Container Running But Unresponsive
+### Step 2C: Container Running But Unresponsive
 
 ```bash
 # Check if process is running inside container
@@ -83,13 +157,14 @@ docker exec <container_name> curl -I http://localhost:8080
 
 # Check resource usage
 docker stats --no-stream <container_name>
+
+# Force restart
+docker restart <container_name>
 ```
 
----
+### Step 3: Service-Specific Recovery
 
-## 3) Service-Specific Recovery
-
-### Plex Media Server
+#### Plex Media Server
 
 ```bash
 # Restart Plex
@@ -98,17 +173,11 @@ docker restart plex
 # Verify Plex is running
 curl -I http://localhost:32400/status
 
-# Access Plex configuration
-docker exec -it plex bash
-# Inside container:
-cd /config
-ls -la
-
 # Check Plex logs inside container
-tail -f /config/Library/Application\ Support/Plex\ Media\ Server/Logs/Plex\ Media\ Server.log
+docker exec -it plex tail -f /config/Library/Application\ Support/Plex\ Media\ Server/Logs/Plex\ Media\ Server.log
 ```
 
-### Mattermost
+#### Mattermost
 
 ```bash
 # Restart Mattermost
@@ -117,14 +186,11 @@ docker restart mattermost
 # Verify Mattermost is running
 curl -I http://localhost:8065/api/v4/system/ping
 
-# Access Mattermost config
-docker exec -it mattermost cat /mattermost/config.json
-
 # Check Mattermost logs
 docker logs mattermost | grep -i error
 ```
 
-### PostgreSQL
+#### PostgreSQL
 
 ```bash
 # Restart PostgreSQL
@@ -133,17 +199,11 @@ docker restart postgres
 # Verify PostgreSQL is running
 docker exec postgres pg_isready
 
-# Connect to database
-docker exec -it postgres psql -U postgres
-
-# Check PostgreSQL logs
-docker exec postgres tail -f /var/log/postgresql/postgresql-*.log
-
 # Check database size
 docker exec postgres psql -c "SELECT pg_size_pretty(pg_database_size('dbname'))"
 ```
 
-### Minecraft Server
+#### Minecraft Server
 
 ```bash
 # Restart Minecraft
@@ -154,12 +214,9 @@ curl -s http://localhost:25565/status  # If query plugin installed
 
 # Access server console
 docker exec -it minecraft tail -f logs/latest.log
-
-# Send RCON commands (if configured)
-echo "say Server restarted" | nc localhost 25575
 ```
 
-### OwnCloud
+#### OwnCloud
 
 ```bash
 # Restart OwnCloud
@@ -168,18 +225,11 @@ docker restart owncloud
 # Verify OwnCloud is running
 curl -I http://localhost:8080/remote.php/status
 
-# Check OwnCloud config
-docker exec -it owncloud php occ status
-
 # Run OwnCloud maintenance
-docker exec -it owncloud php occ maintenance:mode --off
+docker exec -it owncloud php occ status
 ```
 
----
-
-## 4) Container Resource Management
-
-### Check Resource Usage
+### Step 4: Resource Management
 
 ```bash
 # Real-time resource monitoring
@@ -192,12 +242,9 @@ docker stats --no-stream
 docker stats --no-stream <container_name>
 ```
 
-### Adjust Resource Limits
+**If resources exhausted:**
 
 ```bash
-# Stop container
-docker stop <container_name>
-
 # Update container with new limits
 docker update \
   --memory=4g \
@@ -206,118 +253,146 @@ docker update \
   <container_name>
 
 # Restart container
+docker restart <container_name>
+```
+
+## Verification
+
+```bash
+# All containers running
+docker ps --filter "status=running" --format "table {{.Names}}"
+
+# No exited containers
+docker ps --filter "status=exited" --format "{{.Names}}" | wc -l
+
+# Health check endpoints
+# Plex
+curl -s -o /dev/null -w "%{http_code}" http://localhost:32400/status
+
+# Mattermost
+curl -s -o /dev/null -w "%{http_code}" http://localhost:8065/api/v4/system/ping
+
+# PostgreSQL
+docker exec postgres pg_isready -q
+```
+
+**Expected output:**
+```
+HTTP/1.1 200 OK (Plex)
+HTTP/1.1 200 OK (Mattermost)
+docker exec postgres pg_isready -q (exits 0)
+```
+
+## Common Issues
+
+### Port Conflict
+
+**Symptoms:**
+- Container exits immediately with error
+- "Address already in use" in logs
+
+**Diagnosis:**
+
+```bash
+# Check what's using the port
+sudo lsof -i :<port>
+
+# Or
+sudo ss -tlnp | grep <port>
+```
+
+**Resolution:**
+
+```bash
+# Kill conflicting process
+sudo kill -9 <PID>
+
+# Restart container
 docker start <container_name>
 ```
 
-### View Current Limits
+### Out of Memory
+
+**Symptoms:**
+- Container killed with exit code 137
+- System OOM messages in logs
+
+**Diagnosis:**
 
 ```bash
-# Inspect container resource limits
-docker inspect <container_name> | grep -A10 HostConfig
+# Check system logs
+dmesg | grep -i "out of memory"
+
+# Check container memory usage
+docker stats --no-stream <container_name>
 ```
+
+**Resolution:**
+
+```bash
+# Increase memory limit
+docker update --memory=4g <container_name>
+
+# Or free up system memory
+sync; echo 3 | sudo tee /proc/sys/vm/drop_caches
+```
+
+### Volume Mount Failed
+
+**Symptoms:**
+- Container won't start
+- Permission denied errors
+
+**Diagnosis:**
+
+```bash
+# Check volume mounts
+docker inspect <container_name> | grep -A10 Mounts
+```
+
+**Resolution:**
+
+```bash
+# Fix permissions on host directory
+sudo chown -R 1000:1000 /path/to/host/volume
+```
+
+## Rollback
+
+```bash
+# Stop problematic container
+docker stop <container_name>
+
+# Remove container
+docker rm <container_name>
+
+# Re-create from image
+docker run -d \
+  --name <container_name> \
+  --restart always \
+  -p <host_port>:<container_port> \
+  -v <host_volume>:<container_volume> \
+  <image_name>
+
+# Or restore from backup
+docker load < /backup/container_backup.tar
+docker import /backup/container_backup.tar <container_name>
+```
+
+## Related Playbooks
+
+- [[openclaw-gateway-failures.md]] — If OpenClaw runs in container
+- [[postgresql-failures.md]] — Database-specific issues
+- [[proxmox-vm-lxc-migration.md]] — If migration needed
+
+## Notes
+
+- Default restart policy: `--restart=always`
+- Health checks recommended for production containers
+- Monitor disk usage regularly
+- Backup container data periodically
 
 ---
-
-## 5) Container Migration
-
-### Backup Container
-
-```bash
-# Export container filesystem
-docker export <container_name> > /backup/container_backup.tar
-
-# Save container configuration
-docker inspect <container_name> > /backup/container_config.json
-
-# Backup volumes
-docker run --rm \
-  -v <volume_name>:/data \
-  -v $(pwd):/backup \
-  alpine tar czf /backup/volume_backup.tar.gz /data
-```
-
-### Restore Container
-
-```bash
-# Import container
-docker import /backup/container_backup.tar <new_container_name>
-
-# Recreate from configuration
-# (Better approach: use docker-compose or save stack)
-docker stack deploy -c docker-stack.yml mystack
-```
-
----
-
-## 6) VGPU Container Issues
-
-### Check NVIDIA Driver Status
-
-```bash
-# Verify NVIDIA driver
-docker run --rm nvidia/cuda:11.0-base nvidia-smi
-
-# Check VGPU availability
-docker run --rm --gpus all nvidia/cuda:11.0-base nvidia-smi
-
-# List available GPU devices
-mdevctl list
-
-# Check VGPU type assignments
-mdevctl list-types
-```
-
-### Restart VGPU Service
-
-```bash
-# On Proxmox host
-systemctl restart nvidia-mofed
-
-# Verify VGPU devices
-mdevctl list
-```
-
----
-
-## 7) Prevention & Monitoring
-
-### Create Health Checks
-
-```bash
-# Add health check to running container
-docker update \
-  --health-cmd="curl -f http://localhost:8080/health || exit 1" \
-  --health-interval=30s \
-  --health-timeout=10s \
-  --health-retries=3 \
-  <container_name>
-
-# Check health status
-docker inspect --format='{{.State.Health.Status}}' <container_name>
-```
-
-### Automated Restart Policy
-
-```bash
-# Set restart policy
-docker update --restart=always <container_name>
-
-# Options:
-# --restart=no          Never restart
-# --restart=on-failure  Restart on exit code != 0
-# --restart=always      Always restart
-# --restart=unless-stopped Restart unless manually stopped
-```
-
----
-
-## Related PKB Guides
-
-- [[pkb/areas/System guides/Linux Operating System/Docker Containers/Docker container management.md]]
-- [[pkb/areas/System guides/Linux Operating System/Docker Containers/Container Resource Allocations.md]]
-- [[pkb/areas/System guides/Linux Operating System/Docker Containers/Migrate Containers.md]]
-- [[pkb/resources/Concepts/Docker Containers]]
-
----
-
-*Created: 2026-03-07 | Priority: P2 | Category: Incident*
+**Version History:**
+- v1.0 — Original playbook
+- v2.0 — Updated to new ITIL template format (2026-03-07)

@@ -1,416 +1,186 @@
-# Proxmox High Availability Cluster
+# Proxmox HA Cluster Management
+
+---
+**Author:** Sam
+**Created:** 2026-03-07
+**Last Updated:** 2026-03-07
+**Version:** 2.0
+**Tags:** [proxmox, ha, cluster, high-availability]
+---
 
 ## Overview
 
-Configure, manage, and troubleshoot Proxmox VE High Availability (HA) clusters for automatic VM/container failover and resource management.
+Playbook for managing Proxmox High Availability (HA) cluster configuration, monitoring, and troubleshooting.
 
----
+## Priority
 
-## 1) Prerequisites for HA Cluster
+**P1** — Critical for infrastructure availability
 
-### Hardware Requirements
+## Category
 
-- **Minimum:** 3 nodes (for quorum)
-- **Network:** Dedicated heartbeat network (optional but recommended)
-- **Storage:** Shared storage (Ceph, NFS, iSCSI) for VM images
-- **Time:** NTP synchronized across all nodes
+**Operations**
 
-### Software Requirements
+## Estimated Duration
 
-- Proxmox VE 8.x on all nodes
-- Corosync installed
-- Pacemaker installed
-- Shared storage accessible by all nodes
+- **Total:** ~15-30 minutes
+- **Critical path:** ~10 minutes (HA configuration)
+- **Notes:** Cluster operations may require coordination
 
----
+## Communication
 
-## 2) Create HA Cluster
+- **Before starting:** Notify team for cluster changes
+- **During:** Update status on major operations
+- **After:** Document changes in cluster log
 
-### Install Required Packages
+## Risk Assessment
 
-```bash
-# On all nodes
-sudo apt-get install corosync pacemaker pbs-cluster
-```
+| Risk | Impact | Mitigation |
+|------|--------|------------|
+| Cluster split-brain | High | Proper quorum configuration |
+| VM migration failure | Medium | Test failover procedures |
+| Service interruption | Medium | Schedule maintenance window |
 
-### Configure Cluster Name
+## Prerequisites
 
-```bash
-# Set cluster name (all nodes)
-sudo vim /etc/corosync/corosync.conf
-```
+- **Access:** Root or sudo on all cluster nodes
+- **Network:** Cluster communication ports open (corosync)
+- **Quorum:** Majority of nodes available
 
-Add:
-```bash
-totem {
-    version: 2
-    cluster_name: proxmox-ha
-    transport: udpu
-}
+## Procedure
 
-nodelist {
-    node {
-        ring0_addr: 192.168.10.101
-        nodeid: 1
-    }
-    node {
-        ring0_addr: 192.168.10.102
-        nodeid: 2
-    }
-    node {
-        ring0_addr: 192.168.10.103
-        nodeid: 3
-    }
-}
-```
-
-### Join Cluster
+### Check Cluster Status
 
 ```bash
-# On first node (initiate cluster)
-sudo pvecm create proxmox-ha
+# Overall cluster status
+pvecm status
 
-# On other nodes (join cluster)
-sudo pvecm add 192.168.10.101
-```
-
-### Verify Cluster
-
-```bash
-# Check cluster status
-corosync-cmapctl
-
-# View cluster membership
-pvesh get /cluster/cluster/status
+# List cluster nodes
+pvecm nodes
 
 # Check quorum
-cat /proc/fs/cluster/quorum
-```
-
----
-
-## 3) Configure HA Resources
-
-### Enable HA on Cluster
-
-```bash
-# Enable HA manager
-pvesh create /cluster/handler \
-  --handler ha-manager \
-  --enable 1
-```
-
-### Add VM to HA
-
-```bash
-# Add VM 100 to HA
-pvesh create /cluster/handler \
-  --handler ha-manager \
-  --vmid 100 \
-  --ha-group production \
-  --ha-state master \
-  --ha-max 2 \
-  --ha-migrate 1
-
-# Or via web interface:
-# Datacenter → HA → Add
-```
-
-### Configure HA Group
-
-```bash
-# Create HA group
-pvesh create /cluster/handler \
-  --handler ha-manager \
-  --group production \
-  --max-restarts 3 \
-  --restart-timeout 300
-```
-
-### Set HA Priority
-
-```bash
-# Set VM priority (1 = highest, 100 = lowest)
-pvesh create /cluster/handler \
-  --handler ha-manager \
-  --vmid 100 \
-  --priority 1
-
-# List HA resources
-pvesh get /cluster/handler/ha-resources
-```
-
----
-
-## 4) Configure Shared Storage
-
-### Configure Ceph for HA
-
-```bash
-# Create Ceph pool
-pvesh create /ceph/pools \
-  --name ha-pool \
-  --pools 3 \
-  --pg_num 64
-
-# Add Ceph storage
-pvesh create /nodes/$(hostname)/storage \
-  --type ceph \
-  --id ceph-ha \
-  --cephpool ha-pool \
-  --cephuser cephadmin \
-  --cluster ceph
-```
-
-### Configure NFS for HA
-
-```bash
-# On NFS server
-sudo mkdir -p /srv/nfs/proxmox-ha
-sudo chown root:root /srv/nfs/proxmox-ha
-
-# Add to /etc/exports
-/srv/nfs/proxmox-ha 192.168.10.0/24(rw,sync,no_root_squash)
-
-# On Proxmox nodes
-pvesm add nfs nfs-ha \
-  --server 192.168.10.50 \
-  --export /srv/nfs/proxmox-ha \
-  --content images,rootdir
-```
-
----
-
-## 5) Monitor HA Cluster
-
-### Check HA Status
-
-```bash
-# HA resource status
-pvesh get /cluster/handler/ha-resources
-
-# Detailed status
-pvesh get /cluster/handler/ha-resources --output-format json | jq '.[] | {id, state, group}'
-```
-
-### Monitor Node Status
-
-```bash
-# Cluster node status
-pvesh get /cluster/nodes
+pvecm quorum
 
 # Corosync status
-corosync-cfgtool -s
+systemctl status corosync
 
-# Pacemaker status
-crm_mon -1
+# View cluster configuration
+corosync-cmapctl
 ```
 
-### Check HA Failover History
+### Add HA Resource
 
 ```bash
-# HA events log
-journalctl -u pbs-cluster -n 100
+# Add VM as HA resource
+haresource add vm-100
 
-# Failover events
-grep -i "ha\|failover" /var/log/pve/tasks/log | tail -50
+# Configure HA parameters
+haresource set vm-100 priority=10 state=started
+
+# Verify HA configuration
+haresource list
 ```
 
----
-
-## 6) Perform HA Failover
-
-### Manual Failover
+### Monitor HA Resources
 
 ```bash
-# Move VM 100 to different node
-pvesh create /cluster/handler \
-  --handler ha-manager \
-  --vmid 100 \
-  --target node2
+# List all HA resources
+haresource list
 
-# Or via web interface:
-# HA → VM 100 → Migrate
-```
+# Check specific resource
+haresource show vm-100
 
-### Force Failover
-
-```bash
-# Force HA to restart on different node
-pvesh create /cluster/handler \
-  --handler ha-manager \
-  --vmid 100 \
-  --action failover
+# View HA log
+journalctl -u pve-ha-crm -f
 ```
 
 ### Test Failover
 
 ```bash
-# Simulate node failure
-pvesh create /cluster/nodes/$(hostname)/shutdown
+# Simulate node failure (on non-primary node)
+pvecm expected-quorum-value <new_value>
 
-# Verify VM moves to other node
-pvesh get /cluster/handler/ha-resources | grep vmid=100
+# Monitor failover
+watch 'haresource list'
+
+# Restore after test
+pvecm expected-quorum-value <original_value>
 ```
+
+## Verification
+
+```bash
+# All nodes healthy
+pvecm nodes | grep -q "online" && echo "All nodes online"
+
+# Quorum established
+pvecm status | grep -q "quorum: 1" && echo "Quorum OK"
+
+# HA resources configured
+haresource list | wc -l
+```
+
+## Common Issues
+
+### Lost Quorum
+
+**Symptoms:**
+- Services stopped on all nodes
+- "lost quorum" in logs
+
+**Resolution:**
+
+```bash
+# Check quorum status
+pvecm status
+
+# Force quorum if necessary (caution)
+pvecm expected-quorum-value 1
+
+# Restart corosync
+systemctl restart corosync
+```
+
+### Node Not Visible
+
+**Symptoms:**
+- Node missing from cluster
+- Communication failures
+
+**Resolution:**
+
+```bash
+# Check network connectivity
+ping <other_node_ip>
+
+# Check corosync ports
+nc -zv <other_node_ip> 5404 5405 5406
+
+# Restart corosync
+systemctl restart corosync
+```
+
+## Rollback
+
+```bash
+# Remove HA resource
+haresource remove vm-100
+
+# Restore previous configuration
+pvecm set expected-quorum-value <original_value>
+```
+
+## Related Playbooks
+
+- [[proxmox-vm-lxc-migration.md]] — VM migration during maintenance
+- [[proxmox-backup-restore.md]] — Backup before major changes
+
+## Notes
+
+- Corosync ports: 5404, 5405, 5406
+- Default quorum: majority of nodes
+- Monitor HA logs regularly
 
 ---
-
-## 7) Troubleshoot HA Issues
-
-### Check HA Resource State
-
-```bash
-# Detailed resource info
-pvesh get /cluster/handler/ha-resources/vmid/100
-
-# Check if resource is active
-pvesh get /cluster/handler/ha-resources/vmid/100/state
-```
-
-### Investigate Failover
-
-```bash
-# Check why VM failed over
-journalctl -u pbs-cluster -n 200 | grep -i "vmid=100\|failover"
-
-# Check resource constraints
-pvesh get /cluster/handler/ha-resources/vmid/100/limits
-```
-
-### Verify Quorum
-
-```bash
-# Check cluster quorum
-cat /proc/fs/cluster/quorum
-
-# View quorum status
-pvesh get /cluster/status
-
-# Check for split-brain
-corosync-cmapctl | grep -i quorum
-```
-
-### Check Resource Conflicts
-
-```bash
-# Check for resource conflicts
-pvesh get /cluster/handler/ha-resources --all
-
-# View resource constraints
-pvesh get /cluster/handler/ha-resources/vmid/100/constraints
-```
-
----
-
-## 8) Configure HA Failover Rules
-
-### Set Resource Constraints
-
-```bash
-# VM can only run on specific nodes
-pvesh create /cluster/handler/ha-resources/vmid/100/constraints \
-  --colocation colocation-vms \
-  --score INFINITY \
-  --node node1,node2
-
-# VM should not run on same node
-pvesh create /cluster/handler/ha-resources/vmid/100/constraints \
-  --colocation colocation-vms \
-  --score -INFINITY \
-  --node node1,node1
-```
-
-### Configure Restart Priority
-
-```bash
-# Set restart priority for VM
-pvesh create /cluster/handler/ha-resources/vmid/100/constraints \
-  --order order-vms \
-  --score INFINITY \
-  --first vmid/100 \
-  --then vmid/101
-```
-
----
-
-## 9) HA Group Management
-
-### Create HA Group
-
-```bash
-# Create group for related VMs
-pvesh create /cluster/handler \
-  --handler ha-manager \
-  --group production \
-  --max-restarts 3 \
-  --restart-timeout 300 \
-  --ha-state master
-```
-
-### Add VMs to Group
-
-```bash
-# Add multiple VMs
-for vmid in 100 101 102; do
-  pvesh create /cluster/handler \
-    --handler ha-manager \
-    --vmid $vmid \
-    --ha-group production
-done
-```
-
-### Remove VM from Group
-
-```bash
-# Remove VM from HA
-pvesh delete /cluster/handler/ha-resources/vmid/100
-```
-
----
-
-## 10) Success Criteria
-
-- ✅ Cluster has quorum (3/3 nodes)
-- ✅ All HA resources show as "master" or "backup"
-- ✅ Failover works when node fails
-- ✅ No resource conflicts or constraints violations
-- ✅ HA monitoring shows no errors
-
----
-
-## 11) Escalation Data to Collect
-
-If HA issues persist:
-
-1. **Cluster status:**
-   ```bash
-   pvesh get /cluster/status
-   pvesh get /cluster/handler/ha-resources
-   ```
-
-2. **Corosync/Pacemaker logs:**
-   ```bash
-   journalctl -u corosync -n 200
-   journalctl -u pacemaker -n 200
-   ```
-
-3. **HA resource details:**
-   ```bash
-   pvesh get /cluster/handler/ha-resources/vmid/100 --output-format json
-   ```
-
-4. **Node status:**
-   ```bash
-   pvesh get /cluster/nodes
-   ```
-
-5. **Failover history:**
-   ```bash
-   grep -i "failover\|ha" /var/log/pve/tasks.log
-   ```
-
----
-
-**Owner:** Sam (ops butler AI)  
-**Last Updated:** 2026-03-05 04:21 UTC  
-**Status:** Ready for deployment
+**Version History:**
+- v1.0 — Original playbook
+- v2.0 — Updated to new ITIL template format (2026-03-07)

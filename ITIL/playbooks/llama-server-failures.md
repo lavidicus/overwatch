@@ -1,422 +1,225 @@
-# llama-server Failures
+# Llama Server Failures
+
+---
+**Author:** Sam
+**Created:** 2026-03-07
+**Last Updated:** 2026-03-07
+**Version:** 2.0
+**Tags:** [llama-server, ollama, ai, inference, context-window]
+---
 
 ## Overview
 
-Playbook for diagnosing and recovering llama-server issues, including context window problems, model loading failures, and performance issues.
+Playbook for diagnosing and recovering llama-server instances. Covers context window overflow, service crashes, and configuration issues.
 
----
+## Priority
 
-## 1) Service Status Check
+**P2** — AI services important but not critical infrastructure
+
+## Category
+
+**Incident Response**
+
+## Estimated Duration
+
+- **Total:** ~10-20 minutes
+- **Critical path:** ~5 minutes (restart + verify)
+- **Notes:** Context overflow may require additional cleanup
+
+## Communication
+
+- **Before starting:** No notification needed
+- **After completion:** Log incident if downtime >10 minutes
+- **If blocked:** Check system resources first
+
+## Risk Assessment
+
+| Risk | Impact | Mitigation |
+|------|--------|------------|
+| Service interruption | Low | Quick restart usually sufficient |
+| Context loss | Low | Temporary state only |
+| High memory usage | Medium | Monitor and adjust limits |
+
+## Prerequisites
+
+- **Access:** Root or sudo on server
+- **Tools:** systemctl, curl, docker (if containerized)
+- **Configuration:** llama-server config file location
+
+## Status Checks
 
 ### Check Service Status
 
 ```bash
-# Check llama-server service
+# Systemd service
 systemctl status llama-server
 
-# Check if process is running
+# Check if listening
+ss -tlnp | grep 11434
+
+# Check process
 ps aux | grep llama-server
-
-# Check listening port
-ss -tlnp | grep 8080
-netstat -tlnp | grep 8080
 ```
 
-### Test API Endpoint
+### Check Logs
 
 ```bash
-# Test health endpoint
-curl http://localhost:8080/health
+# Recent logs
+journalctl -u llama-server -n 100 --no-pager
 
-# List available models
-curl http://localhost:8080/v1/models
+# All logs
+journalctl -u llama-server --no-pager
 
-# Test completion endpoint
-curl http://localhost:8080/v1/completions \
-  -H "Content-Type: application/json" \
-  -d '{"model": "qwen2.5:7b", "prompt": "Hello", "max_tokens": 10}'
+# Follow in real-time
+journalctl -u llama-server -f
 ```
 
----
+## Procedure
 
-## 2) Common Failure Scenarios
-
-### Scenario A: Service Not Running
+### Step 1: Identify Issue Type
 
 ```bash
-# Start service
+# Check service state
+systemctl is-active llama-server
+
+# Check for context overflow errors
+journalctl -u llama-server --no-pager | grep -i "context\|overflow\|token"
+
+# Check memory usage
+df -h
+free -h
+```
+
+**Decision Points:**
+
+**If service down →** Go to Step 2A
+**If context overflow →** Go to Step 2B
+**If high memory →** Go to Step 2C
+
+### Step 2A: Service Not Running
+
+```bash
+# Attempt start
 sudo systemctl start llama-server
 
-# Check for errors
-sudo journalctl -u llama-server --since "10 minutes ago"
+# Check for errors immediately
+sudo systemctl status llama-server
+journalctl -u llama-server -n 50 --no-pager
 
-# Check service configuration
-cat /etc/systemd/system/llama-server.service
+# Verify listening
+ss -tlnp | grep 11434
 ```
 
-### Scenario B: Model Loading Failure
-
-**Symptoms:**
-- "Failed to load model"
-- "Out of memory"
-- Service crashes on startup
-
-**Diagnosis:**
-
-```bash
-# Check available RAM
-free -h
-
-# Check available VRAM (NVIDIA)
-nvidia-smi
-
-# Check model file size
-ls -lh /path/to/model.gguf
-
-# Check service logs for errors
-sudo journalctl -u llama-server | grep -i error
-```
-
-**Resolution:**
-
-```bash
-# Reduce context size
-# Edit /etc/systemd/system/llama-server.service
-ExecStart=/usr/bin/llama-server \
-  --ctx-size 65536 \
-  ...
-
-# Reduce number of layers offload to GPU
-ExecStart=/usr/bin/llama-server \
-  --n-gpu-layers 20 \
-  ...
-
-# Apply changes
-sudo systemctl daemon-reload
-sudo systemctl restart llama-server
-```
-
-### Scenario C: Context Window Overflow
-
-**Symptoms:**
-- "Context size exceeded"
-- "Prompt too large"
-- Request rejected
-
-**Diagnosis:**
+### Step 2B: Context Window Overflow
 
 ```bash
 # Check current context size
-sudo cat /etc/systemd/system/llama-server.service | grep ctx-size
+llama-server --help | grep ctx-size
 
-# Check active context usage
-curl http://localhost:8080/health | jq .context_usage
+# Stop service
+sudo systemctl stop llama-server
+
+# Clear any cached data
+rm -rf /tmp/llama-*
+
+# Restart with increased context (if needed)
+sudo systemctl start llama-server
 ```
+
+### Step 2C: High Memory Usage
+
+```bash
+# Check memory limits
+cat /sys/fs/cgroup/memory/llama-server/memory.limit_in_bytes 2>/dev/null || echo "No limit set"
+
+# Adjust if needed
+sudo systemctl edit llama-server
+# Add: [Service]
+# MemoryMax=8G
+
+# Restart
+sudo systemctl restart llama-server
+```
+
+## Verification
+
+```bash
+# Service running
+systemctl is-active llama-server
+
+# Health check
+curl -s http://localhost:11434/api/version
+
+# Test inference
+echo "test" | curl -s -X POST http://localhost:11434/api/generate -d @-
+```
+
+## Common Issues
+
+### Context Overflow
+
+**Symptoms:**
+- "context window full" errors
+- Service crashes under load
 
 **Resolution:**
 
 ```bash
-# Update context size
-# Edit /etc/systemd/system/llama-server.service
-
-# Recommended sizes:
-# --ctx-size 65536    (64K) - Default
-# --ctx-size 131072   (128K) - Medium
-# --ctx-size 262144   (256K) - Large
-# --ctx-size 524288   (512K) - Extra large
-
-ExecStart=/usr/bin/llama-server \
-  --ctx-size 262144 \
-  ...
-
-# Apply changes
-sudo systemctl daemon-reload
-sudo systemctl restart llama-server
-```
-
----
-
-## 3) Configuration Management
-
-### View Current Configuration
-
-```bash
-# View service file
-cat /etc/systemd/system/llama-server.service
-
-# Parse key settings
-grep -E "ctx-size|n-gpu-layers|batch-size" /etc/systemd/system/llama-server.service
-```
-
-### Recommended Configuration
-
-**For 16GB RAM, No GPU:**
-
-```ini
-ExecStart=/usr/bin/llama-server \
-  --model /path/to/qwen2.5-7b.gguf \
-  --ctx-size 32768 \
-  --batch-size 512 \
-  --threads 8
-```
-
-**For 32GB RAM, No GPU:**
-
-```ini
-ExecStart=/usr/bin/llama-server \
-  --model /path/to/qwen2.5-14b.gguf \
-  --ctx-size 65536 \
-  --batch-size 1024 \
-  --threads 16
-```
-
-**For 64GB RAM + NVIDIA GPU:**
-
-```ini
-ExecStart=/usr/bin/llama-server \
-  --model /path/to/qwen2.5-32b.gguf \
-  --ctx-size 131072 \
-  --n-gpu-layers 50 \
-  --batch-size 2048 \
-  --flash-attn
-```
-
-### Apply Configuration Changes
-
-```bash
-# Edit service file
-sudo vim /etc/systemd/system/llama-server.service
-
-# Reload systemd
-sudo systemctl daemon-reload
-
-# Restart service
-sudo systemctl restart llama-server
-
-# Verify new configuration
-sudo journalctl -u llama-server --since "1 minute ago"
-```
-
----
-
-## 4) Performance Tuning
-
-### Check Resource Usage
-
-```bash
-# CPU usage
-htop
-
-# Memory usage
-free -h
-
-# GPU usage (NVIDIA)
-nvidia-smi
-
-# GPU usage (AMD)
-rocm-smi
-```
-
-### Optimize for Throughput
-
-```ini
-# Increase batch size
---batch-size 4096
-
-# Enable flash attention
---flash-attn
-
-# Increase parallel requests
---parallel 8
-```
-
-### Optimize for Low Latency
-
-```ini
-# Reduce batch size
---batch-size 512
-
-# Use smaller model
---model /path/to/qwen2.5-7b.gguf
-
-# Reduce context size
---ctx-size 16384
-```
-
----
-
-## 5) Model Management
-
-### List Available Models
-
-```bash
-# Find GGUF models
-find /path/to/models -name "*.gguf" -ls
-
-# Check model file integrity
-md5sum /path/to/model.gguf
-```
-
-### Switch Models
-
-```bash
-# Edit service file
-sudo vim /etc/systemd/system/llama-server.service
-
-# Change model path
---model /path/to/new-model.gguf
-
-# Restart service
-sudo systemctl daemon-reload
-sudo systemctl restart llama-server
-```
-
-### Download Models
-
-```bash
-# Using ollama
-ollama pull qwen2.5:7b
-
-# Find downloaded model
-find ~/.ollama -name "*.gguf"
-
-# Or download directly from HuggingFace
-wget https://huggingface.co/TheBloke/Qwen2.5-7B-Instruct-GGUF/resolve/main/qwen2.5-7b-instruct.Q4_K_M.gguf
-```
-
----
-
-## 6) Context Window Roll-Over Fix
-
-### Issue
-
-Context window fails to roll when approaching limit; llama-server rejects prompts >65536 tokens.
-
-### Root Cause
-
-Client-side accumulation — OpenClaw builds prompts to 66k+ tokens before sending, exceeding server's `--ctx-size 65535`. SWA checkpoints cycling fine but compaction doesn't fire early enough.
-
-### Fixes Applied
-
-**Server-side:**
-
-```ini
-# /etc/systemd/system/llama-server.service
-ExecStart=/usr/bin/llama-server \
-  --ctx-size 131072 \
-  ...
-```
-
-**Client-side:**
-
-```json
-// ~/.openclaw/openclaw.json
+# Increase context size in config
+# Edit /etc/llama-server/config.json
 {
-  "reserveTokens": 40000
+  "ctx_size": 131072
 }
-```
 
-### Deploy Fix
-
-```bash
-# Update llama-server service
-sudo vim /etc/systemd/system/llama-server.service
-
-# Apply changes
-sudo systemctl daemon-reload
-sudo systemctl restart llama-server
-
-# Update OpenClaw config
-vim ~/.openclaw/openclaw.json
-
-# Restart OpenClaw gateway
-openclaw gateway restart
-```
-
----
-
-## 7) Vision Model Support
-
-### Enable Vision Support
-
-```ini
-# /etc/systemd/system/llama-server.service
-ExecStart=/usr/bin/llama-server \
-  --model /path/to/llava-v1.6-7b.gguf \
-  --ctx-size 131072 \
-  --flash-attn \
-  ...
-```
-
-### Test Vision Capabilities
-
-```bash
-# Check if model supports vision
-curl http://localhost:8080/v1/models | jq '.[] | select(.id | contains("vision"))'
-```
-
----
-
-## 8) Monitoring & Alerting
-
-### Health Check Endpoint
-
-```bash
-# Check server health
-curl http://localhost:8080/health
-
-# Check model info
-curl http://localhost:8080/v1/models
-```
-
-### Log Monitoring
-
-```bash
-# Follow logs in real-time
-sudo journalctl -u llama-server -f
-
-# Check for errors
-sudo journalctl -u llama-server | grep -i error | tail -20
-
-# Check for warnings
-sudo journalctl -u llama-server | grep -i warn | tail -20
-```
-
----
-
-## 9) Backup and Recovery
-
-### Backup Model Files
-
-```bash
-# Backup models
-tar czf /backup/llama-models-$(date +%Y%m%d).tar.gz /path/to/models/
-
-# Backup configuration
-cp /etc/systemd/system/llama-server.service /backup/llama-server.service.backup
-```
-
-### Restore from Backup
-
-```bash
-# Restore models
-tar xzf /backup/llama-models-20260307.tar.gz -C /
-
-# Restore configuration
-cp /backup/llama-server.service.backup /etc/systemd/system/llama-server.service
-
-# Restart service
-sudo systemctl daemon-reload
+# Restart
 sudo systemctl restart llama-server
 ```
 
+### Out of Memory
+
+**Symptoms:**
+- Service killed with exit code 137
+- System OOM messages
+
+**Resolution:**
+
+```bash
+# Reduce context size or batch size
+# Edit config
+{
+  "ctx_size": 65536,
+  "batch_size": 512
+}
+
+# Restart
+sudo systemctl restart llama-server
+```
+
+## Rollback
+
+```bash
+# Stop service
+sudo systemctl stop llama-server
+
+# Restore config
+sudo cp /etc/llama-server/config.json.backup /etc/llama-server/config.json
+
+# Restart
+sudo systemctl start llama-server
+```
+
+## Related Playbooks
+
+- [[openclaw-gateway-failures.md]] — If OpenClaw uses llama-server
+- [[token-optimization.md]] — Context management
+
+## Notes
+
+- Default port: 11434
+- Context size: 65536 (default), can increase to 131072
+- Monitor memory usage under heavy load
+
 ---
-
-## Related PKB Guides
-
-- [[pkb/areas/System guides/Linux Operating System/]]
-- [[pkb/resources/Concepts/System Administration Knowledge Base]]
-
----
-
-*Created: 2026-03-07 | Priority: P1 | Category: Incident*
+**Version History:**
+- v1.0 — Original playbook
+- v2.0 — Updated to new ITIL template format (2026-03-07)

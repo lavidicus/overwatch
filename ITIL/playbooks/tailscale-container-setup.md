@@ -1,5 +1,13 @@
 # Tailscale Container Setup
 
+---
+**Author:** Sam
+**Created:** 2026-03-07
+**Last Updated:** 2026-03-07
+**Version:** 2.0
+**Tags:** [tailscale, container, networking, mesh]
+---
+
 ## Overview
 
 Tailscale provides secure mesh networking for containers, enabling encrypted connectivity without port forwarding or complex firewall rules.
@@ -12,15 +20,35 @@ Tailscale provides secure mesh networking for containers, enabling encrypted con
 
 **Change Management**
 
+## Estimated Duration
+
+- **Total:** ~15-30 minutes
+- **Critical path:** ~10 minutes (config + install)
+- **Notes:** Authentication requires manual step
+
+## Communication
+
+- **Before starting:** No notification needed
+- **After completion:** Verify Tailscale connectivity
+- **If blocked:** Check container network access
+
+## Risk Assessment
+
+| Risk | Impact | Mitigation |
+|------|--------|------------|
+| Network config overwritten | Low | Use .pve-ignore files |
+| Container reboot required | Low | Plan for brief downtime |
+| DNS conflicts | Low | Disable MagicDNS |
+
 ## Prerequisites
 
-- Proxmox LXC container created
-- Tailscale account
-- Container has network access
+- **Container:** Proxmox LXC container created
+- **Account:** Tailscale account
+- **Network:** Container has network access
 
 ## Procedure
 
-### 1. Prevent PVE Updates to Network Config
+### Step 1: Prevent PVE Updates to Network Config
 
 PVE can overwrite `/etc/hosts` and `/etc/resolv.conf` during updates.
 
@@ -32,9 +60,7 @@ sudo touch /etc/.pve-ignore.resolv.conf
 
 These files tell PVE to preserve network configuration files.
 
-### 2. Configure LXC for Tailscale Access
-
-Edit the container configuration file.
+### Step 2: Configure LXC for Tailscale Access
 
 **Step 2.1: Locate config file**
 
@@ -56,7 +82,7 @@ lxc.cgroup2.devices.allow: c 10:200 rwm
 lxc.mount.entry: /dev/net/tun dev/net/tun none bind,create=file
 ```
 
-### 3. Apply Configuration
+### Step 3: Apply Configuration
 
 Reboot the container for changes to take effect.
 
@@ -71,7 +97,7 @@ pct status VMID
 pct enter VMID
 ```
 
-### 4. Install Tailscale
+### Step 4: Install Tailscale
 
 Inside the container:
 
@@ -83,7 +109,7 @@ curl -fsSL https://tailscale.com/install.sh | sh
 sudo tailscale up --accept-dns=false
 ```
 
-### 5. Authentication
+### Step 5: Authentication
 
 Follow the instructions from `tailscale up`:
 
@@ -92,7 +118,7 @@ Follow the instructions from `tailscale up`:
 3. Authorize the device
 4. Wait for device to appear online
 
-### 6. Disable Key Expiry
+### Step 6: Disable Key Expiry
 
 To prevent re-authentication on key expiry:
 
@@ -126,7 +152,7 @@ ping <container-tailscale-ip>
 ssh user@<container-tailscale-ip>
 ```
 
-## Common Issues
+## Troubleshooting
 
 ### "No route to host" after install
 
@@ -200,3 +226,8 @@ pct reboot VMID
 - Each device gets a stable 100.x.x.x IP
 - Traffic is encrypted end-to-end
 - Works through NAT and firewalls
+
+---
+**Version History:**
+- v1.0 — Original playbook
+- v2.0 — Updated to new ITIL template format (2026-03-07)

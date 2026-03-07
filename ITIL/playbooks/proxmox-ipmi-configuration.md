@@ -1,14 +1,54 @@
 # Proxmox IPMI Tool Configuration
 
+---
+**Author:** Sam
+**Created:** 2026-03-07
+**Last Updated:** 2026-03-07
+**Version:** 2.0
+**Tags:** [proxmox, ipmi, hardware, monitoring]
+---
+
 ## Overview
 
 Playbook for installing and configuring IPMI tools on Proxmox hosts for remote hardware management.
 
----
+## Priority
 
-## 1) Installation
+**P2** — Important for hardware monitoring but not emergency
 
-### Install ipmitool
+## Category
+
+**Operations**
+
+## Estimated Duration
+
+- **Total:** ~10-20 minutes
+- **Critical path:** ~5 minutes (install + verify)
+- **Notes:** Remote config may take longer
+
+## Communication
+
+- **Before starting:** No notification needed
+- **After completion:** Verify hardware monitoring works
+- **If blocked:** Check IPMI network connectivity
+
+## Risk Assessment
+
+| Risk | Impact | Mitigation |
+|------|--------|------------|
+| Incorrect sensor readings | Low | Verify with multiple tools |
+| IPMI lockout | Medium | Know default credentials |
+| Network misconfiguration | Medium | Document current config |
+
+## Prerequisites
+
+- **Access:** Root or sudo on Proxmox host
+- **Network:** IPMI interface accessible
+- **Credentials:** IPMI username/password
+
+## Procedure
+
+### Step 1: Installation
 
 ```bash
 # Install ipmitool package
@@ -18,11 +58,7 @@ apt install ipmitool -y
 ipmitool --version
 ```
 
----
-
-## 2) Monitor Hardware Sensors
-
-### Check All Sensors
+### Step 2: Monitor Hardware Sensors
 
 ```bash
 # List all sensor readings
@@ -38,8 +74,7 @@ ipmitool sensor list | grep -i fan
 ipmitool sensor list | grep -i volt
 ```
 
-### Example Output
-
+**Example Output:**
 ```
 System Temp       24.0 C  ok
 CPU Temp          45.0 C  ok
@@ -47,11 +82,7 @@ Fan 1             2500 RPM ok
 +12V              12.1 V  ok
 ```
 
----
-
-## 3) Manage IPMI Users
-
-### List Existing Users
+### Step 3: Manage IPMI Users
 
 ```bash
 # List all IPMI users
@@ -59,11 +90,7 @@ ipmitool user list
 
 # View detailed user info
 ipmitool user summary <user_id>
-```
 
-### Create/Modify Users
-
-```bash
 # Set username
 ipmitool user set name <user_id> <username>
 
@@ -81,7 +108,7 @@ ipmitool user priv <user_id> <privilege>
 ipmitool user enable <user_id>
 ```
 
-### Example: Create Admin User
+**Example: Create Admin User**
 
 ```bash
 # Create user ID 3 named 'ipmiadmin' with admin privileges
@@ -94,11 +121,7 @@ ipmitool user enable 3
 ipmitool user summary 3
 ```
 
----
-
-## 4) Remote Management
-
-### Power Control
+### Step 4: Remote Management
 
 ```bash
 # Get power status
@@ -115,11 +138,7 @@ ipmitool power cycle
 
 # Reset (warm boot)
 ipmitool power reset
-```
 
-### System Information
-
-```bash
 # Get system info
 ipmitool mc info
 
@@ -133,11 +152,7 @@ ipmitool sel list
 ipmitool sel clear
 ```
 
----
-
-## 5) Remote LAN Configuration
-
-### Check Network Settings
+### Step 5: Remote LAN Configuration
 
 ```bash
 # Get LAN configuration
@@ -145,11 +160,7 @@ ipmitool lan print
 
 # Get specific settings
 ipmitool lan print 1 | grep -E "IP Address|IP Subnet|Default Gateway"
-```
 
-### Configure Remote Access
-
-```bash
 # Set IP address (static)
 ipmitool lan set 1 ipaddr <ip_address>
 ipmitool lan set 1 netmask <subnet_mask>
@@ -162,9 +173,7 @@ ipmitool lan set 1 ipsrc dhcp
 ipmitool lan print 1
 ```
 
----
-
-## 6) Troubleshooting
+## Troubleshooting
 
 ### ipmitool Not Responding
 
@@ -202,9 +211,7 @@ ssh <user>@<ipmi_ip>
 iptables -L -n | grep 623
 ```
 
----
-
-## 7) Automation
+## Automation
 
 ### Health Check Script
 
@@ -224,12 +231,30 @@ if [ $FAN -eq 0 ]; then
 fi
 ```
 
----
+## Verification
+
+```bash
+# Sensors readable
+ipmitool sensor list | wc -l
+
+# User configured
+ipmitool user summary 3
+
+# LAN configured
+ipmitool lan print 1 | grep -E "IP Address|IP Subnet"
+```
 
 ## Related PKB Guides
 
 - [[pkb/areas/System guides/Proxmox/PVE System Tools/IPMI Tool Management]]
 
----
+## Notes
 
-*Created: 2026-03-07 | Priority: P2 | Category: Operations*
+- Default IPMI port: 623
+- User IDs 1-15 available
+- Privilege levels: callback(1), user(2), operator(3), admin(4)
+
+---
+**Version History:**
+- v1.0 — Original playbook
+- v2.0 — Updated to new ITIL template format (2026-03-07)

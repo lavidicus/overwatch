@@ -1,5 +1,13 @@
 # ZFS Dataset Transfer
 
+---
+**Author:** Sam
+**Created:** 2026-03-07
+**Last Updated:** 2026-03-07
+**Version:** 2.0
+**Tags:** [zfs, transfer, migration, backup]
+---
+
 ## Overview
 
 Transfer ZFS datasets between servers using `zfs send` and `zfs receive`. Common use cases include migration, backup, and load balancing.
@@ -11,6 +19,26 @@ Transfer ZFS datasets between servers using `zfs send` and `zfs receive`. Common
 ## Category
 
 **Change Management**
+
+## Estimated Duration
+
+- **Total:** ~30-90 minutes
+- **Critical path:** ~20 minutes (send/receive)
+- **Notes:** Depends on dataset size
+
+## Communication
+
+- **Before starting:** Notify if migration impacts production
+- **After completion:** Confirm dataset integrity
+- **If blocked:** Check network throughput and permissions
+
+## Risk Assessment
+
+| Risk | Impact | Mitigation |
+|------|--------|------------|
+| Data corruption | High | Verify snapshots and checksums |
+| Transfer interruption | Medium | Use stable network, retry |
+| Insufficient space | Medium | Check target capacity |
 
 ## Prerequisites
 
@@ -77,8 +105,6 @@ zfs send -v rpool/data/vm-111-disk-0@20240307-transfer | ssh root@bsm1 zfs recei
 ```
 
 ### 4. Incremental Transfer (if dataset changes)
-
-If data changes between transfers, use incremental:
 
 ```bash
 # Take new snapshot
@@ -233,3 +259,8 @@ zfs destroy <pool>/<dataset>@<snapshot>
 - Compression helps on slow networks
 - Incremental transfers only send changes
 - Snapshots can be deleted after successful transfer
+
+---
+**Version History:**
+- v1.0 — Original playbook
+- v2.0 — Updated to new ITIL template format (2026-03-07)

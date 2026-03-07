@@ -1,17 +1,55 @@
 # Token Optimization Playbook
 
+---
+**Author:** Sam
+**Created:** 2026-02-28
+**Last Updated:** 2026-03-07
+**Version:** 2.0
+**Tags:** [tokens, optimization, costs, models]
+---
+
 ## Overview
-This playbook provides actionable steps to reduce token usage and costs while maintaining response quality. Based on SIP token optimization sprint plan.
+
+Actionable steps to reduce token usage and costs while maintaining response quality. Based on SIP token optimization sprint plan.
+
+## Priority
+
+**P2** — Cost and efficiency optimization, not emergency
+
+## Category
+
+**Operations**
+
+## Estimated Duration
+
+- **Total:** ~30-60 minutes
+- **Critical path:** ~10 minutes (heartbeat optimization)
+- **Notes:** System prompt cleanup may take longer
+
+## Communication
+
+- **Before starting:** No notification needed
+- **After completion:** Log token reduction results
+- **If blocked:** Verify configs are writable
+
+## Risk Assessment
+
+| Risk | Impact | Mitigation |
+|------|--------|------------|
+| Over-optimization reduces quality | Medium | Keep quality checks |
+| Misconfigured models | Medium | Validate model routing |
+| Cleanup deletes needed logs | Low | Keep backups before cleanup |
 
 ## Current Model Configuration
+
 - **Primary Model**: `olla/qwen3.5:latest` (local, free)
 - **Fallback**: `openai/openai-codex` (paid, if needed)
 - **Heartbeat Interval**: Every 6 hours
 - **Heartbeat Prompt**: "Check: Any blockers, opportunities, or progress updates needed?"
 
-## Quick Wins (Immediate Implementation)
+## Procedure
 
-### 1. Heartbeat Prompt Optimization
+### 1) Heartbeat Prompt Optimization
 
 **Current:**
 ```
@@ -30,7 +68,7 @@ Report blockers/opportunities. No updates → "No blockers — <time>".
 sed -i 's/Check: Any blockers, opportunities, or progress updates needed?/Report blockers\/opportunities. No updates → "No blockers — <time>"./' ~/.openclaw/openclaw.json
 ```
 
-### 2. Compact Reply Guidelines
+### 2) Compact Reply Guidelines
 
 **When to be concise:**
 - Routine updates (heartbeat, cron jobs)
@@ -54,7 +92,7 @@ sed -i 's/Check: Any blockers, opportunities, or progress updates needed?/Report
 - **Confirmations**: One sentence + result
 ```
 
-### 3. System Prompt Hygiene
+### 3) System Prompt Hygiene
 
 **Remove unnecessary cruft:**
 - Redundant role definitions
@@ -66,7 +104,7 @@ sed -i 's/Check: Any blockers, opportunities, or progress updates needed?/Report
 2. Consolidate overlapping instructions
 3. Remove dated references
 
-### 4. Diff/Log Deduplication
+### 4) Diff/Log Deduplication
 
 **Pattern to avoid:**
 ```
@@ -81,12 +119,12 @@ sed -i 's/Check: Any blockers, opportunities, or progress updates needed?/Report
 Files changed: A, B, C, D (see commit for full list)
 ```
 
-**Implementation:** In responses, summarize repeated patterns:
+**Implementation:** Summarize repeated patterns:
 ```
 Updated 23 files (see git status for full list)
 ```
 
-### 5. Session History Cleanup
+### 5) Session History Cleanup
 
 **Automated cleanup:**
 - Delete session transcripts older than 7 days
@@ -100,10 +138,10 @@ find ~/.openclaw/sessions/ -name "*.json" -mtime +7 -delete
 
 ## Longer Term Optimizations
 
-### 1. Model Routing
+### 1) Model Routing
 
 **Strategy:**
-- Use local models (`olla/qwen3.5:latest`) for all routine tasks
+- Use local models (`olla/qwen3.5:latest`) for routine tasks
 - Only use paid models for complex reasoning or when explicitly requested
 - Cache frequent responses locally
 
@@ -116,7 +154,7 @@ find ~/.openclaw/sessions/ -name "*.json" -mtime +7 -delete
 }
 ```
 
-### 2. Auto-Summarized Context Windows
+### 2) Auto-Summarized Context Windows
 
 **Concept:** Instead of sending full session history, send:
 - Key decisions made
@@ -125,7 +163,7 @@ find ~/.openclaw/sessions/ -name "*.json" -mtime +7 -delete
 
 **Implementation:** Create summarization script that runs before each session start.
 
-### 3. Periodic Cleanup Schedule
+### 3) Periodic Cleanup Schedule
 
 **Cron job for cleanup:**
 ```bash
@@ -146,8 +184,6 @@ find ~/.openclaw/sessions/ -name "*.json" -mtime +7 -delete
 - **Response quality**: No degradation in user satisfaction
 
 ---
-
-**Status**: Ready for implementation
-**Next Action**: Apply heartbeat prompt optimization
-**Owner**: Sam (ops butler AI)
-**Last Updated**: 2026-02-28
+**Version History:**
+- v1.0 — Original playbook
+- v2.0 — Updated to new ITIL template format (2026-03-07)

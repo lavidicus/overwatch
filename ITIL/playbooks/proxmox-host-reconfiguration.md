@@ -1,14 +1,55 @@
 # Proxmox Host Reconfiguration
 
+---
+**Author:** Sam
+**Created:** 2026-03-07
+**Last Updated:** 2026-03-07
+**Version:** 2.0
+**Tags:** [proxmox, hostname, ip, network, cluster]
+---
+
 ## Overview
 
 Playbook for safely changing Proxmox hostnames and IP addresses, including cluster-aware procedures and recovery from misconfiguration.
 
----
+## Priority
 
-## 1) Pre-Change Checklist
+**P2** — Important but requires planning
 
-### Critical Pre-Flight Checks
+## Category
+
+**Change Management**
+
+## Estimated Duration
+
+- **Total:** ~20-40 minutes
+- **Critical path:** ~10 minutes (config + reboot)
+- **Notes:** Cluster operations may take longer
+
+## Communication
+
+- **Before starting:** Notify team of planned downtime
+- **During:** Update on connectivity loss
+- **After:** Verify all services restored
+
+## Risk Assessment
+
+| Risk | Impact | Mitigation |
+|------|--------|------------|
+| Lost connectivity | High | Have console/IPMI access ready |
+| Cluster communication fail | High | Plan maintenance window |
+| Service disruption | Medium | Schedule during low-usage |
+
+## Prerequisites
+
+- **Backup:** ✅ Create backup (REQUIRED)
+- **Console:** ✅ Verify console access works
+- **Access:** ✅ Root/sudo access
+- **Documentation:** ✅ Document current state
+
+## Procedure
+
+### Step 1: Pre-Flight Checks
 
 ```bash
 # 1. Create backup (REQUIRED)
@@ -34,7 +75,7 @@ echo "IP: $(ip addr show vmbr0 | grep 'inet ' | awk '{print $2}')"
 echo "Date: $(date)"
 ```
 
-### Cluster Detection
+### Step 2: Check Cluster Membership
 
 ```bash
 # Check cluster membership
@@ -49,11 +90,9 @@ pvecm status
 pvecm nodes
 ```
 
----
+### Step 3: Change Hostname
 
-## 2) Change Hostname (Non-Clustered or Clustered)
-
-### Method 1: hostnamectl (Recommended)
+**Method 1: hostnamectl (Recommended)**
 
 ```bash
 # Set new hostname
@@ -72,7 +111,7 @@ sudo vim /etc/hosts
 reboot
 ```
 
-### Method 2: Manual (Legacy)
+**Method 2: Manual (Legacy)**
 
 ```bash
 # Edit hostname file
@@ -87,25 +126,9 @@ sudo vim /etc/hosts
 reboot
 ```
 
-### Post-Reboot Verification
+### Step 4: Change IP Address
 
-```bash
-# Verify hostname
-hostname
-
-# Verify /etc/hosts
-cat /etc/hosts
-
-# Check Proxmox web interface accessible
-```
-
----
-
-## 3) Change IP Address
-
-### For Standalone Hosts
-
-#### Static IP
+**For Standalone Hosts:**
 
 ```bash
 # Backup current config
@@ -131,28 +154,11 @@ sudo ifdown vmbr0 && sudo ifup vmbr0
 ip addr show vmbr0
 ```
 
-#### DHCP
-
-```bash
-# Edit network configuration
-sudo vim /etc/network/interfaces
-
-# Change from static to dhcp:
-auto vmbr0
-iface vmbr0 inet dhcp
-
-# Restart networking
-sudo systemctl restart networking
-
-# Verify DHCP-assigned IP
-ip addr show vmbr0
-```
-
-### For Clustered Hosts
+**For Clustered Hosts:**
 
 **⚠️ CRITICAL: Do NOT edit /etc/network/interfaces directly in a cluster!**
 
-#### Using Web Interface (Recommended)
+**Via Web UI (Recommended):**
 
 1. Navigate to **Node → Network** in Proxmox web UI
 2. Select bridge (e.g., vmbr0)
@@ -161,7 +167,7 @@ ip addr show vmbr0
 5. Click **Update** (confirm you'll lose connection)
 6. Reconnect to new IP
 
-#### Using CLI (pvecluster)
+**Via CLI (pvecluster):**
 
 ```bash
 # Update node in cluster
@@ -174,54 +180,17 @@ pvecm nodes
 pvecm status
 ```
 
----
+### Step 5: Change Both Hostname and IP
 
-## 4) Change Both Hostname and IP
-
-### Recommended Order
+**Recommended Order:**
 
 1. **Change hostname first** (less disruptive)
 2. **Reboot**
 3. **Change IP address** (causes downtime)
 
-### Standalone Host
+### Step 6: Post-Change Verification
 
-```bash
-# 1. Change hostname
-hostnamectl set-hostname <new_hostname>
-
-# 2. Update /etc/hosts
-sudo vim /etc/hosts
-
-# 3. Reboot
-reboot
-
-# 4. After reboot, change IP
-sudo vim /etc/network/interfaces
-sudo systemctl restart networking
-```
-
-### Clustered Host
-
-```bash
-# 1. Change hostname
-hostnamectl set-hostname <new_hostname>
-
-# 2. Update /etc/hosts
-sudo vim /etc/hosts
-
-# 3. Reboot
-reboot
-
-# 4. Change IP via web UI or pvecm update
-# (Do NOT edit /etc/network/interfaces directly)
-```
-
----
-
-## 5) Post-Change Verification
-
-### Network Verification
+**Network Verification:**
 
 ```bash
 # Check IP address
@@ -239,7 +208,7 @@ systemctl status pvedaemon
 # Browser: https://<new_ip>:8006
 ```
 
-### Cluster Verification (if applicable)
+**Cluster Verification (if applicable):**
 
 ```bash
 # Check cluster status
@@ -255,7 +224,7 @@ systemctl status corosync
 corosync-cmapctl
 ```
 
-### Service Verification
+**Service Verification:**
 
 ```bash
 # Check VMs/containers running
@@ -269,13 +238,11 @@ pvesm status
 replication list
 ```
 
----
-
-## 6) Recovery from Lost Connectivity
+## Recovery from Lost Connectivity
 
 ### Scenario: Wrong IP, Locked Out
 
-#### Via Console/IPMI
+**Via Console/IPMI:**
 
 ```bash
 # 1. Access via IPMI/iDRAC console
@@ -293,7 +260,7 @@ sudo systemctl restart networking
 ip addr show vmbr0
 ```
 
-#### Via Rescue Mode
+**Via Rescue Mode:**
 
 ```bash
 # 1. Boot into rescue mode
@@ -308,9 +275,7 @@ vim /mnt/etc/network/interfaces
 reboot
 ```
 
----
-
-## 7) DNS and External Updates
+## DNS and External Updates
 
 ### Update DNS Records
 
@@ -333,9 +298,7 @@ dnsupdate -z <zone> <record> <new_ip>
 - [ ] Load balancer configurations
 - [ ] Any scripts with hardcoded IPs
 
----
-
-## 8) Troubleshooting
+## Troubleshooting
 
 ### Proxmox Web UI Inaccessible
 
@@ -382,12 +345,18 @@ getent hosts <hostname>
 systemctl restart networking
 ```
 
----
-
 ## Related PKB Guides
 
 - [[pkb/areas/System guides/Proxmox/PVE Guides/PVE System Configurations/PVE System Name IP Change Guide]]
 
----
+## Notes
 
-*Created: 2026-03-07 | Priority: P2 | Category: Change Management*
+- Always test on non-production first
+- Have console access before making changes
+- Document all changes
+- Update DNS and monitoring systems
+
+---
+**Version History:**
+- v1.0 — Original playbook
+- v2.0 — Updated to new ITIL template format (2026-03-07)

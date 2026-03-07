@@ -1,10 +1,44 @@
 # Ubuntu Kernel 6.5.11 Pin (Mainline)
 
+---
+**Author:** Sam
+**Created:** 2026-03-05
+**Last Updated:** 2026-03-07
+**Version:** 2.0
+**Tags:** [ubuntu, kernel, grub, pinning]
+---
+
 ## Overview
 
 Pin Ubuntu to boot **6.5.11-060511-generic** by default (instead of 6.8) using a **hard GRUB pin by menuentry ID**. This prevents automatic kernel updates from changing the boot default.
 
----
+## Priority
+
+**P2** — Kernel stability, important for compatibility
+
+## Category
+
+**Change Management**
+
+## Estimated Duration
+
+- **Total:** ~15-30 minutes
+- **Critical path:** ~10 minutes (grub edit + update)
+- **Notes:** Requires reboot
+
+## Communication
+
+- **Before starting:** Notify users of reboot
+- **After completion:** Confirm kernel version
+- **If blocked:** Check grub config permissions
+
+## Risk Assessment
+
+| Risk | Impact | Mitigation |
+|------|--------|------------|
+| Boot failure | High | Keep old kernel available |
+| Wrong menuentry ID | Medium | Verify grub.cfg first |
+| Reboot downtime | Low | Schedule maintenance window |
 
 ## Preconditions
 
@@ -12,9 +46,9 @@ Pin Ubuntu to boot **6.5.11-060511-generic** by default (instead of 6.8) using a
 - ✅ You have `sudo` access on the host
 - ✅ GRUB configuration file is accessible
 
----
+## Procedure
 
-## 1) Confirm 6.5 Kernel Exists in GRUB
+### Step 1: Confirm 6.5 Kernel Exists in GRUB
 
 ```bash
 sudo grep -nE "submenu 'Advanced options for Ubuntu|menuentry 'Ubuntu, with Linux 6\.5\.11|menuentry 'Ubuntu, with Linux 6\.8" /boot/grub/grub.cfg | head -n 80
@@ -25,11 +59,7 @@ sudo grep -nE "submenu 'Advanced options for Ubuntu|menuentry 'Ubuntu, with Linu
 - `menuentry 'Ubuntu, with Linux 6.5.11-060511-generic`
 - `menuentry 'Ubuntu, with Linux 6.8.0-101-generic`
 
----
-
-## 2) Extract the 6.5.11 GRUB Menuentry ID
-
-From the `grub.cfg` output, capture the **menuentry_id_option** string for 6.5.11:
+### Step 2: Extract the 6.5.11 GRUB Menuentry ID
 
 ```bash
 grep -A 1 "menuentry 'Ubuntu, with Linux 6.5.11-060511-generic" /boot/grub/grub.cfg
@@ -40,21 +70,15 @@ grep -A 1 "menuentry 'Ubuntu, with Linux 6.5.11-060511-generic" /boot/grub/grub.
 gnulinux-6.5.11-060511-generic-advanced-6e099cec-5135-4ee6-a45c-618fe2a90e94
 ```
 
-**Save this ID** — you'll need it in the next step.
-
----
-
-## 3) Hard-Pin GRUB to 6.5.11 by ID
+### Step 3: Hard-Pin GRUB to 6.5.11 by ID
 
 **⚠️ IMPORTANT:** Use the exact ID from step 2. Do NOT use `saved_entry` — this creates a hard pin.
-
-### Edit GRUB defaults
 
 ```bash
 sudo vim /etc/default/grub
 ```
 
-### Set these lines (replace with your exact ID):
+Set these lines (replace with your exact ID):
 
 ```conf
 GRUB_DEFAULT="gnulinux-6.5.11-060511-generic-advanced-6e099cec-5135-4ee6-a45c-618fe2a90e94"
@@ -62,14 +86,14 @@ GRUB_TIMEOUT_STYLE=menu
 GRUB_TIMEOUT=5
 ```
 
-### Ensure these are NOT active (remove or comment if present):
+Ensure these are NOT active (remove or comment if present):
 
 ```conf
 #GRUB_DEFAULT=saved
 #GRUB_SAVEDEFAULT=true
 ```
 
-### Apply configuration
+Apply configuration:
 
 ```bash
 sudo update-grub
@@ -77,25 +101,18 @@ sudo update-grub
 
 **Output should show:** "Found Linux image: /boot/vmlinuz-6.5.11-060511-generic"
 
----
-
-## 4) Reboot and Verify Active Kernel
+### Step 4: Reboot and Verify Active Kernel
 
 ```bash
 sudo reboot
-```
 
-After boot completes:
-
-```bash
+# After boot
 uname -r
 ```
 
 **Expected:** `6.5.11-060511-generic`
 
----
-
-## 5) Validation (GRUB Pin Still Configured)
+### Step 5: Validation (GRUB Pin Still Configured)
 
 ```bash
 grep -nE "GRUB_DEFAULT|GRUB_TIMEOUT_STYLE|GRUB_TIMEOUT|GRUB_SAVEDEFAULT" /etc/default/grub
@@ -114,8 +131,6 @@ And:
 6.5.11-060511-generic
 ```
 
----
-
 ## Success Criteria
 
 - ✅ `uname -r` returns `6.5.11-060511-generic`
@@ -123,40 +138,32 @@ And:
 - ✅ `GRUB_SAVEDEFAULT` is commented out (not active)
 - ✅ GRUB menu shows timeout of 5 seconds
 
----
-
 ## Rollback (Restore Default Behavior)
-
-If you need to revert to default boot behavior:
-
-### 1. Edit GRUB defaults
 
 ```bash
 sudo vim /etc/default/grub
 ```
 
-### 2. Set default to first entry:
+Set default to first entry:
 
 ```conf
 GRUB_DEFAULT=0
 ```
 
-### 3. Apply + reboot:
+Apply + reboot:
 
 ```bash
 sudo update-grub
 sudo reboot
 ```
 
-### 4. Verify:
+Verify:
 
 ```bash
 uname -r
 ```
 
 Should now boot to the latest available kernel (likely 6.8.x).
-
----
 
 ## Troubleshooting
 
@@ -195,15 +202,12 @@ GRUB_DEFAULT=exact-id-from-grub.cfg  # WRONG
    ```
 3. If still wrong, fix the ID and run `sudo update-grub` again
 
----
-
 ## Related Issues
 
 - [ITIL-CHANGE-USM1-KERNEL-CONSTRAINT.md](../ITIL-CHANGE-USM1-KERNEL-CONSTRAINT.md) - usm1 kernel lock
 - [ITIL-CHANGE-USM1-KERNEL-CONSTRAINT.md](../ITIL-CHANGE-USM1-KERNEL-CONSTRAINT.md) - Proxmox kernel considerations
 
 ---
-
-**Owner:** Sam (ops butler AI)  
-**Last Updated:** 2026-03-05 04:14 UTC  
-**Status:** Ready for deployment
+**Version History:**
+- v1.0 — Original playbook
+- v2.0 — Updated to new ITIL template format (2026-03-07)

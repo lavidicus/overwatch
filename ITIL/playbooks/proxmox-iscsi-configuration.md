@@ -1,5 +1,13 @@
 # Proxmox iSCSI Configuration
 
+---
+**Author:** Sam
+**Created:** 2026-03-07
+**Last Updated:** 2026-03-07
+**Version:** 2.0
+**Tags:** [proxmox, iscsi, storage, network]
+---
+
 ## Overview
 
 iSCSI allows Proxmox VE to access remote block storage over IP networks. This playbook covers discovery, configuration, authentication, and troubleshooting.
@@ -12,24 +20,36 @@ iSCSI allows Proxmox VE to access remote block storage over IP networks. This pl
 
 **Change Management**
 
-## Concepts
+## Estimated Duration
 
-- **Initiator:** Proxmox host
-- **Target:** Storage server/NAS
-- **Portal:** Target IP:3260
-- **LUN:** Presented block device
-- **CHAP:** Authentication for access control
+- **Total:** ~20-40 minutes
+- **Critical path:** ~10 minutes (discovery + config)
+- **Notes:** Authentication setup may take longer
+
+## Communication
+
+- **Before starting:** Notify if storage affects production VMs
+- **After completion:** Verify storage accessible
+- **If blocked:** Check network connectivity
+
+## Risk Assessment
+
+| Risk | Impact | Mitigation |
+|------|--------|------------|
+| Storage unavailability | High | Test on non-production first |
+| Data corruption | High | Verify backups before changes |
+| Network issues | Medium | Use dedicated storage network |
 
 ## Prerequisites
 
-- iSCSI target configured (NAS or storage server)
-- Target IP and LUNs available
-- Network connectivity from Proxmox to target
-- CHAP credentials (if enabled)
+- **Storage:** iSCSI target configured (NAS or storage server)
+- **Network:** Target IP and LUNs available
+- **Connectivity:** Network connectivity from Proxmox to target
+- **Auth:** CHAP credentials (if enabled)
 
 ## Procedure
 
-### 1. Discover iSCSI Target
+### Step 1: Discover iSCSI Target
 
 ```bash
 # Scan target for LUNs
@@ -39,7 +59,7 @@ pvesm scan <target_ip>
 pvesm scan 10.50.21.25
 ```
 
-### 2. Add iSCSI Storage in Proxmox
+### Step 2: Add iSCSI Storage in Proxmox
 
 **Via Web UI:**
 
@@ -63,7 +83,7 @@ iscsiadm -m discovery -t sendtargets -p <target_ip>
 pvesm add iscsi iscsi-storage --portal <target_ip> --target <iqn>
 ```
 
-### 3. Verify Connection
+### Step 3: Verify Connection
 
 ```bash
 # Check storage list
@@ -76,7 +96,7 @@ iscsiadm -m session
 iscsiadm -m node
 ```
 
-## Common Issues
+## Troubleshooting
 
 ### Target Not Found
 
@@ -120,13 +140,18 @@ pvesm scan <target_ip>
 - Enable jumbo frames if supported
 - Ensure NICs are at 10Gb+ for heavy workloads
 
-## Verification Checklist
+## Verification
 
-- iSCSI target discovered
-- Storage appears in Datacenter → Storage
-- LUNs visible and usable
-- No authentication errors
-- Latency acceptable
+```bash
+# iSCSI target discovered
+pvesm status | grep iscsi
+
+# Sessions established
+iscsiadm -m session
+
+# No authentication errors
+journalctl -u pve-proxy | grep -i iscsi
+```
 
 ## Rollback
 
@@ -149,3 +174,8 @@ iscsiadm -m node -u
 - Default iSCSI port: 3260
 - Always use CHAP for security
 - Use dedicated VLAN for storage traffic if possible
+
+---
+**Version History:**
+- v1.0 — Original playbook
+- v2.0 — Updated to new ITIL template format (2026-03-07)

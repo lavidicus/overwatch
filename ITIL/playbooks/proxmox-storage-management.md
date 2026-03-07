@@ -1,393 +1,185 @@
 # Proxmox Storage Management
 
+---
+**Author:** Sam
+**Created:** 2026-03-07
+**Last Updated:** 2026-03-07
+**Version:** 2.0
+**Tags:** [proxmox, storage, zfs, lvm, ceph]
+---
+
 ## Overview
 
-Manage Proxmox VE storage backends including local storage, NFS, Ceph, ZFS, and iSCSI. Diagnose storage issues and optimize performance.
+Playbook for managing Proxmox storage operations including adding, removing, and troubleshooting storage.
 
----
+## Priority
 
-## 1) List and Monitor Storage
+**P2** — Storage operations are important but planned
 
-### View All Storage Configuration
+## Category
 
-```bash
-# List all storage backends
-pvesm status
+**Operations**
 
-# Detailed storage information
-pvesm status --output-format json | jq '.[] | {id, type, content, available: .available}'
-```
+## Estimated Duration
 
-### Check Storage Usage
+- **Total:** ~20-45 minutes
+- **Critical path:** ~10 minutes (storage add/verify)
+- **Notes:** ZFS operations may take longer
 
-```bash
-# Local storage
-df -h /var/lib/vz
+## Communication
 
-# All Proxmox storage
-pvesm status | grep -E "^[a-z]|Total|free"
-```
+- **Before starting:** Notify if storage affects production VMs
+- **During:** Update on major operations
+- **After:** Document storage changes
 
-### Monitor I/O Performance
+## Risk Assessment
 
-```bash
-# I/O statistics (1-second intervals)
-iostat -x 1
+| Risk | Impact | Mitigation |
+|------|--------|------------|
+| Data loss | High | Backup before operations |
+| Storage unmount | Medium | Verify redundancy |
+| Performance impact | Medium | Schedule maintenance window |
 
-# Per-device stats
-iostat -x 5 10
+## Prerequisites
 
-# Check for I/O wait
-vmstat 1 10 | grep "wa"
-```
+- **Access:** Root or sudo on Proxmox host
+- **Storage:** Storage device available
+- **Backup:** Current data backed up
 
----
+## Procedure
 
-## 2) Add Local Directory Storage
-
-### Create Directory Storage
+### Add Storage
 
 ```bash
-# Create backup directory
-sudo mkdir -p /mnt/proxmox-storage/backups
-sudo chown root:root /mnt/proxmox-storage/backups
-sudo chmod 755 /mnt/proxmox-storage/backups
+# Add ZFS storage
+pvesm add zfs zfs-storage /dev/disk/by-id/<disk_id>
 
-# Add to Proxmox via CLI
-pvesm add dir local-backup \
-  --path /mnt/proxmox-storage/backups \
-  --content backup,iso,vztmpl
+# Add LVM storage
+pvesm add lvm lvm-storage /dev/mapper/<vg_name>
 
-# Add via web interface:
-# Datacenter → Storage → Add → Directory
+# Add directory storage
+pvesm add dir dir-storage /mnt/data
+
+# Add NFS storage
+pvesm add nfs nfs-storage <nfs_server>:/<path>
+
+# Add Ceph RBD storage
+pvesm add rbd ceph-rbd --crush-location <location>
 ```
 
-### Add Local Storage for VMs
+### Remove Storage
 
 ```bash
-# Create storage for VM images
-sudo mkdir -p /mnt/proxmox-storage/vm-images
-sudo chown root:root /mnt/proxmox-storage/vm-images
+# Remove empty storage
+pvesm remove <storage_id>
 
-pvesm add dir local-vmstorage \
-  --path /mnt/proxmox-storage/vm-images \
-  --content images,rootdir \
-  --content-type dir
+# Force remove (dangerous)
+pvesm remove <storage_id> --force
 ```
 
----
-
-## 3) Add NFS Storage
-
-### Configure NFS Server (if needed)
-
-```bash
-# Install NFS server
-sudo apt-get install nfs-kernel-server
-
-# Create export directory
-sudo mkdir -p /srv/nfs/proxmox
-sudo chown nobody:nogroup /srv/nfs/proxmox
-sudo chmod 755 /srv/nfs/proxmox
-
-# Configure exports
-sudo vim /etc/exports
-```
-
-Add:
-```bash
-/srv/nfs/proxmox 192.168.1.0/24(rw,sync,no_subtree_check,no_root_squash)
-```
-
-Apply:
-```bash
-sudo exportfs -ra
-sudo systemctl restart nfs-kernel-server
-```
-
-### Add NFS to Proxmox
-
-```bash
-# Via CLI
-pvesm add nfs nfs-storage \
-  --path /srv/nfs/proxmox \
-  --server 192.168.1.100 \
-  --export /srv/nfs/proxmox \
-  --content images,iso,vztmpl
-
-# Via web interface:
-# Datacenter → Storage → Add → NFS
-```
-
-### Verify NFS Mount
-
-```bash
-# Check mount
-mount | grep nfs
-
-# Test read/write
-sudo touch /mnt/nfs-storage/test-file
-sudo rm /mnt/nfs-storage/test-file
-```
-
----
-
-## 4) Add ZFS Storage (Recommended for Production)
-
-### Install ZFS
-
-```bash
-# Install ZFS packages
-sudo apt-get install zfs-dkms zfs-utils
-
-# Enable ZFS
-sudo systemctl enable zfs-import
-sudo systemctl start zfs-import
-```
-
-### Create ZFS Pool
-
-```bash
-# List available disks
-lsblk
-
-# Create ZFS pool (replace disk names)
-sudo zpool create proxmox-zfs \
-  /dev/sdb /dev/sdc \
-  -m /mnt/proxmox-zfs \
-  -o ashift=12 \
-  -o compression=lz4 \
-  -o dedup=off \
-  -o sync=standard
-
-# Create datasets for different content types
-sudo zfs create proxmox-zfs/vm-images
-sudo zfs create proxmox-zfs/backups
-sudo zfs create proxmox-zfs/iso
-sudo zfs create proxmox-zfs/templates
-```
-
-### Add ZFS to Proxmox
-
-```bash
-# Via CLI
-pvesm add zfs proxmox-zfs \
-  --pool proxmox-zfs/vm-images
-
-# Via web interface:
-# Datacenter → Storage → Add → ZFS
-```
-
-### ZFS Performance Tuning
-
-```bash
-# View ZFS pool status
-zpool status proxmox-zfs
-
-# Check ZFS properties
-zfs get all proxmox-zfs
-
-# Adjust ZFS ARC size (limit memory usage)
-echo 'options zfs zfs_arc_max=4294967296' | sudo tee /etc/modprobe.d/zfs.conf
-sudo update-initramfs -u
-```
-
----
-
-## 5) Add Ceph Storage (Hyper-Converged)
-
-### Prerequisites
-
-- 3+ Proxmox nodes
-- Dedicated network for Ceph traffic
-- SSD/NVMe for OSDs
-
-### Initialize Ceph Pool
-
-```bash
-# Create Ceph pool via CLI
-pvesh create /ceph/pools \
-  --name ceph-pool \
-  --pools 3 \
-  --pg_num 64 \
-  --pgp_num 64
-
-# Add Ceph storage
-pvesm add ceph ceph-storage \
-  --content images,rootdir \
-  --cephpool ceph-pool \
-  --cephuser cephadmin \
-  --clustername ceph
-```
-
-### Monitor Ceph Health
-
-```bash
-# Ceph cluster health
-ceph -s
-
-# Ceph pool status
-ceph osd pool stats
-
-# Ceph OSD status
-ceph osd tree
-```
-
----
-
-## 6) Storage Migration
-
-### Migrate VM to Different Storage
-
-```bash
-# Migrate VM 100 to new storage
-qm migrate 100 \
-  --target-storage new-storage \
-  --online  # for running VMs
-```
-
-### Migrate LXC Container
-
-```bash
-# Migrate container 100
-pct migrate 100 --target-storage new-storage
-```
-
-### Migrate Backup File
-
-```bash
-# Copy backup to new storage
-rsync -av /var/lib/vz/dump/vzdump-backup-100*.vma.gz \
-  /mnt/new-storage/dump/
-
-# Update storage reference (if needed)
-pvesm status
-```
-
----
-
-## 7) Storage Cleanup
-
-### Remove Unused Storage
+### Check Storage Status
 
 ```bash
 # List all storage
 pvesm status
 
-# Remove storage definition
-pvesm remove local-backup
+# Check specific storage
+pvesm content <storage_id>
 
-# Remove orphaned files
-find /var/lib/vz/dump -name "*.vma.gz" -mtime +90 -delete
+# Check ZFS pool
+zpool status
+
+# Check LVM
+pvs
+vgs
+lvs
 ```
 
-### Clean Up Old VM Images
+### Resize Storage
 
 ```bash
-# List old images
-ls -lh /var/lib/vz/images/100/
+# Extend ZFS dataset
+zfs set quota=100G <pool>/<dataset>
 
-# Remove old disk images (BE CAREFUL)
-rm -f /var/lib/vz/images/100/vm-100-disk-1.old
+# Extend LVM
+lvextend -L +10G /dev/mapper/<vg>-<lv>
 ```
 
-### Compress Backup Archives
+## Verification
 
 ```bash
-# Compress uncompressed backups
-find /var/lib/vz/dump -name "*.vma" -exec gzip {} \;
+# Storage is listed
+pvesm status | grep <storage_id>
 
-# Recompress with better compression
-zstd -19 /var/lib/vz/dump/vzdump-backup-*.vma
+# Storage is accessible
+pvesm content <storage_id>
+
+# ZFS health
+zpool status | grep -q "ONLINE" && echo "ZFS OK"
 ```
+
+## Common Issues
+
+### Storage Not Mounting
+
+**Symptoms:**
+- Storage shows as offline
+- VMs won't start
+
+**Resolution:**
+
+```bash
+# Check storage configuration
+cat /etc/pve/storage.cfg
+
+# Verify device exists
+ls -la /dev/disk/by-id/
+
+# Mount manually
+mount -t zfs <pool>/<dataset> /mnt/pve/<storage_id>
+```
+
+### ZFS Pool Degraded
+
+**Symptoms:**
+- "DEGRADED" status
+- Missing disks
+
+**Resolution:**
+
+```bash
+# Check pool status
+zpool status
+
+# Replace failed disk
+zpool replace <pool> <failed_disk> <new_disk>
+
+# Scrub pool
+zpool scrub <pool>
+```
+
+## Rollback
+
+```bash
+# Remove newly added storage
+pvesm remove <storage_id>
+
+# Restore from backup if needed
+vzrestore <vmid> <backup_file>
+```
+
+## Related Playbooks
+
+- [[proxmox-vm-lxc-migration.md]] — Migrate VMs to new storage
+- [[zfs-dataset-transfer.md]] — ZFS operations
+
+## Notes
+
+- Always backup before storage operations
+- ZFS scrub regularly for data integrity
+- Monitor storage usage
 
 ---
-
-## 8) Troubleshooting Storage Issues
-
-### Storage Not Available
-
-```bash
-# Check storage status
-pvesm status
-
-# Check if NFS is mounted
-mount | grep nfs
-
-# Check Ceph connectivity
-ceph -s
-```
-
-### Disk Full
-
-```bash
-# Find large files
-du -sh /var/lib/vz/* | sort -rh | head -10
-
-# Remove old backups
-find /var/lib/vz/dump -name "*.gz" -mtime +30 -delete
-
-# Compress current backups
-zstd -19 /var/lib/vz/dump/*.vma
-```
-
-### I/O Performance Degradation
-
-```bash
-# Check for I/O wait
-vmstat 1 10 | grep "wa"
-
-# Check disk latency
-iostat -x 1 10 | grep -E "r_await|w_await"
-
-# Check for slow queries
-grep "slow query" /var/log/syslog
-```
-
----
-
-## 9) Success Criteria
-
-- ✅ All storage backends show as "available" in `pvesm status`
-- ✅ No disk full warnings
-- ✅ I/O wait < 5% during normal operation
-- ✅ Backup storage has adequate free space (>20%)
-- ✅ Storage performance within expected range
-
----
-
-## 10) Escalation Data to Collect
-
-If storage issues persist:
-
-1. **Storage status:**
-   ```bash
-   pvesm status --output-format json
-   ```
-
-2. **Disk usage:**
-   ```bash
-   df -hT
-   ```
-
-3. **I/O statistics:**
-   ```bash
-   iostat -x 5 10
-   ```
-
-4. **Storage backend logs:**
-   ```bash
-   tail -100 /var/log/syslog | grep -i "storage\|ceph\|zfs\|nfs"
-   ```
-
-5. **Ceph/ZFS specific:**
-   ```bash
-   ceph -s  # for Ceph
-   zpool status  # for ZFS
-   ```
-
----
-
-**Owner:** Sam (ops butler AI)  
-**Last Updated:** 2026-03-05 04:21 UTC  
-**Status:** Ready for deployment
+**Version History:**
+- v1.0 — Original playbook
+- v2.0 — Updated to new ITIL template format (2026-03-07)
