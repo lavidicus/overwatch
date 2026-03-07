@@ -12,17 +12,63 @@ _Curated learnings, decisions, and context. Updated periodically from daily file
   - Source: User instruction from Lavid (2026-03-04 18:29 UTC)
   - Status: Locked into MEMORY.md ✅
 
-## 🗣️ Communication Protocol (2026-03-04 18:31 UTC)
+## 🔐 SSH Access - hal-maint (2026-03-05 03:37-03:39 UTC)
+
+**Added to Sam (ocg host):**
+
+### usm1 (Confirmed ✅)
+- **User:** hal-maint@usm1 (shown as `root@usm1` in authorized_keys)
+- **Location:** ~/.ssh/authorized_keys
+- **Purpose:** Maintenance access from usm1 host
+- **Status:** ✅ Verified and documented
+
+### usm2 (Confirmed ✅)
+- **User:** hal-maint@usm2
+- **Status:** ✅ Verified - SSH connection successful
+- **Note:** newer kernel (6.17.9-1 vs 6.5.13-5 on usm1)
+
+**Existing SSH Keys:**
+- `id_ed25519_olla` - Ollama provider
+- `id_rsa` - Standard SSH key
+
+**Security Note:** Keep SSH access minimal and monitored. Regular audit recommended.
+
+## 🛑 CRITICAL: usm1 Kernel Version Constraint
+
+**Date:** 2026-03-05 03:42 UTC  
+**Host:** usm1.9xc.local (172.16.254.231)  
+**Current Kernel:** 6.5.13-5-pve
+
+**CONSTRAINT:** ⚠️ **NEVER UPDATE KERNEL ON usm1**
+
+**Reason:** NVIDIA VGPU drivers break with kernels newer than 6.5.x
+
+**Impact:** VGPU passthrough functionality will be lost if kernel is updated
+
+**Mitigation:**
+- Pin kernel to 6.5.x series on usm1
+- Exclude usm1 from automatic kernel updates
+- Document in configuration management
+- Monitor for security patches that might require kernel updates
+
+**Related:** usm2 runs 6.17.9-1-pve without NVIDIA VGPU requirements
 
 **Addressing Format:**
 - When Lavid addresses me: `[name], [command]`
 - Example: `"Eve, Please say hi"` → I respond to the command
 - Example: `"Sam, check the logs"` → Sam responds to the command
 
+**Group Chat Behavior:**
+- Both bots see all group messages (they're both participants)
+- Each bot checks if addressed by name before responding
+- If not addressed, stay silent unless genuinely helpful to contribute
+- React with emoji to acknowledge messages without cluttering chat
+
 **Purpose:**
 - Clear intent signaling - command follows name
 - Distinguish between conversation and instructions
 - Consistent with voice command patterns
+- Prevent duplicate/confused responses in tag team mode
 
 **Status:** Locked into MEMORY.md ✅
 
@@ -64,6 +110,12 @@ _Curated learnings, decisions, and context. Updated periodically from daily file
 - **Browser automation** — OpenClaw browser control
 - **Node device control** — Cameras, screens, notifications
 - **Sub-agent orchestration** — Spawn sessions, manage sub-agents
+- **PKB Vault (Obsidian)** — Personal knowledge base for mental models, frameworks, cross-domain connections
+  - **Location:** `workspace/pkb/`
+  - **Purpose:** Knowledge synthesis layer ("think with" vs "retrieve")
+  - **Structure:** daily/, areas/, resources/, inbox/, templates/, archives/
+  - **Integration:** Symlinked to `memory/` for reference
+  - **Created:** 2026-03-07
 
 ## ITIL Issue Management (2026-02-28)
 
@@ -182,6 +234,7 @@ Installed a three-layer memory architecture for persistent context across sessio
 
 ## Recent History
 
+- **2026-03-07 04:35:** PKB vault created (`workspace/pkb/`) — Obsidian personal knowledge base for mental models and cross-domain connections
 - **2026-03-04 16:44:** Updated llama-server config on olla with vision support and flash attention
 - **2026-03-04 12:26:** Logged ITIL-ISSUE-HEARTBEAT-NEWS-BRIEFING - missed 6AM CST news briefing
 - **2026-03-03 19:50:** Repository renamed to `sam` → https://github.com/lavidicus/sam
