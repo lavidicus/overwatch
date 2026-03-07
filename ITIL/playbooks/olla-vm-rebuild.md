@@ -76,6 +76,14 @@ qm set 100 --boot order=scsi0
 qm start 100
 ```
 
+### 6) Snapshot after CUDA/NVIDIA setup
+```bash
+qm shutdown 100 --timeout 120
+qm snapshot 100 post-cuda-setup \
+  --description "Ubuntu 24.04 cloud image, static IP 172.16.254.100, localadmin user, NVIDIA 535 driver + CUDA toolkit installed, GPU passthrough configured (secondary), ready for use."
+qm start 100
+```
+
 ---
 
 ## Progress Log
@@ -92,6 +100,9 @@ qm start 100
   - password: `11imistest`
   - DHCP enabled
 - VMID 100 started
+- Snapshot created: `post-cuda-setup`
+- Snapshot description recorded (Ubuntu 24.04 + static IP + localadmin + NVIDIA/CUDA + GPU passthrough)
+- VM restarted after snapshot
 
 ## 2026‑03‑07 21:08 UTC
 - User suspects DHCP IP is likely `.85` (unconfirmed)
