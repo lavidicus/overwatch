@@ -1,10 +1,10 @@
 {
   "meta": {
     "lastTouchedVersion": "2026.3.2",
-    "lastTouchedAt": "2026-03-06T02:01:41.455Z"
+    "lastTouchedAt": "2026-03-07T04:57:07.334Z"
   },
   "wizard": {
-    "lastRunAt": "2026-03-06T02:01:41.410Z",
+    "lastRunAt": "2026-03-07T04:57:07.288Z",
     "lastRunVersion": "2026.3.2",
     "lastRunCommand": "configure",
     "lastRunMode": "local"
@@ -39,7 +39,7 @@
               "cacheRead": 0,
               "cacheWrite": 0
             },
-            "contextWindow": 131072,
+            "contextWindow": 65536,
             "maxTokens": 8192
           }
         ]
@@ -61,10 +61,10 @@
       "workspace": "/home/localadmin/.openclaw/workspace",
       "compaction": {
         "mode": "safeguard",
-	"reserveTokens": 20000,
+        "reserveTokens": 20000,
         "memoryFlush": {
           "enabled": true,
-	  "softThresholdTokens": 21072,
+          "softThresholdTokens": 21072,
           "prompt": "\nBefore context compaction, write important context to memory files:\n- Update memory/YYYY-MM-DD.md with today's decisions, blockers, and next steps\n- Capture any CR/issue tickets created\n- Document configuration changes made\n- Record lessons learned or technical notes\n- Summarize any project updates or state changes\n\nUse NO_REPLY so this doesn't appear in the chat.\n",
           "systemPrompt": "\nYou are about to trigger context compaction. Before that happens, perform a silent memory flush:\n\n1. Review the conversation for important decisions, changes, or context\n2. Write to memory files (memory/YYYY-MM-DD.md)\n3. Keep it concise but complete\n4. DO NOT send this to the user - use NO_REPLY\n\nThis ensures valuable context survives compaction.\n"
         }
@@ -104,6 +104,10 @@
   },
   "tools": {
     "web": {
+      "search": {
+        "enabled": true,
+        "apiKey": "BSAPBHIyE3j3dPC4zXvazuyfX6ZUFeM"
+      },
       "fetch": {
         "enabled": true
       }
