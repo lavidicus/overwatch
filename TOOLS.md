@@ -37,4 +37,28 @@ Skills are shared. Your setup is yours. Keeping them apart means you can update 
 
 ---
 
+## 🚨 File Edit Tool Constraint (CRITICAL)
+
+**Problem:** The `edit` tool fails silently with "Invalid diff" errors when text doesn't match exactly (whitespace, line endings, etc.)
+
+**Solution:**
+1. **Read file first** with `read` to get exact content
+2. **Use that exact content** in `oldText` parameter
+3. **Fallback:** If `edit` fails, use `write` which overwrites without exact matching
+4. **Default strategy:** Use `write` for complete file overwrites; use `edit` only for small, precise changes
+
+**Example workflow:**
+```bash
+# Read first
+read file.txt → get exact content
+
+# Edit with exact match
+edit oldText="<exact content from read>" newText="<new content>"
+
+# Fallback if edit fails
+write content="<full new content>"
+```
+
+---
+
 Add whatever helps you do your job. This is your cheat sheet.

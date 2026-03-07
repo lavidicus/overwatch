@@ -8,6 +8,10 @@
     "cost-report": {
       "version": "1.0.2",
       "installedAt": 1772138887653
+    },
+    "voice-transcribe": {
+      "version": "1.0.1",
+      "installedAt": 1772913751525
     }
   }
 }
