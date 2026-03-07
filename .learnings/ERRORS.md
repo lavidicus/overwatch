@@ -38,6 +38,73 @@ If identifiable, what might resolve this
 - **Notes**: Brief description of what was done
 
 ---
+
+## [ERR-20260307-004] usm2-vmid-100-olla-destroyed
+
+**Logged**: 2026-03-07T20:38:34Z
+**Priority**: critical
+**Status**: pending
+**Area**: infra
+
+### Summary
+Destroyed VMID 100 on usm2, which previously hosted Olla, during cleanup of failed VM creation.
+
+### Error
+```
+Human report: "Olla was VMID 100 and now I’m not seeing it listed on qm list."
+```
+
+### Context
+- Host: usm2 (Proxmox VE 9.1.5)
+- Action: `qm destroy 100` run to clean up failed VM creation attempt
+- Result: VMID 100 removed, config and disks deleted
+- Impact: Olla VM removed from usm2
+
+### Suggested Fix
+- Avoid using a fixed VMID without first verifying existing VMs on host.
+- Always run `qm list` or `ls /etc/pve/nodes/<node>/qemu-server` before creating a VM.
+- When reusing a VMID, confirm owner/service or check with user.
+
+### Metadata
+- Reproducible: yes
+- Related Files: /etc/pve/nodes/usm2/qemu-server/100.conf
+- See Also: (none)
+
+---
+
+## [ERR-20260307-001] usm2-networking-restart
+
+**Logged**: 2026-03-07T19:23:00Z
+**Priority**: critical
+**Status**: pending
+**Area**: infra
+
+### Summary
+Restarting networking on usm2 after adding vmbr2 likely dropped the management NIC, causing loss of control of OpenClaw.
+
+### Error
+```
+User report: "script killed the NIC on USM2 and I lost control of OpenClaw"
+```
+
+### Context
+- Command attempted: `sudo systemctl restart networking` on usm2
+- Purpose: apply vmbr2 (VLAN22) bridge config
+- Interface: enp3s0f1 (for vmbr2)
+- Result: management connectivity lost
+
+### Suggested Fix
+- Avoid full `systemctl restart networking` on remote hosts.
+- Use `ifreload -a` or `ifup vmbr2` instead, or schedule a maintenance window with console access.
+- Validate the bridge config with `ifquery` before applying.
+- Consider using `pve-networking` reload tools on Proxmox.
+
+### Metadata
+- Reproducible: unknown
+- Related Files: /etc/network/interfaces (usm2)
+- See Also: (none)
+
+---
 ## [ERR-20260305-001] openclaw-gateway-restart
 
 **Logged**: 2026-03-05T17:30:20Z
@@ -183,5 +250,67 @@ Retry restart after confirming session stability; consider restarting outside ac
 - Reproducible: unknown
 - Related Files: /home/localadmin/.openclaw/openclaw.json
 - See Also: ERR-20260305-001, ERR-20260305-002
+
+---
+
+## [ERR-20260307-002] ssh-usm2-unresolved
+
+**Logged**: 2026-03-07T19:35:00Z
+**Priority**: medium
+**Status**: pending
+**Area**: infra
+
+### Summary
+SSH to usm2 failed because hostname could not be resolved.
+
+### Error
+```
+ssh: Could not resolve hostname usm2: Name or service not known
+```
+
+### Context
+- Command attempted: ssh hal-maint@usm2
+- Purpose: check/download Proxmox ISO on usm2
+
+### Suggested Fix
+- Use IP address or ensure DNS/hosts entry for usm2 exists.
+- Confirm management connectivity restored after networking changes.
+
+### Metadata
+- Reproducible: unknown
+- Related Files: none
+- See Also: ERR-20260307-001
+
+---
+
+## [ERR-20260307-003] usm2-proxmox-iso-cert-mismatch
+
+**Logged**: 2026-03-07T19:46:00Z
+**Priority**: high
+**Status**: pending
+**Area**: infra
+
+### Summary
+Downloading Proxmox ISO on usm2 failed due to TLS certificate hostname mismatch for download.proxmox.com.
+
+### Error
+```
+The certificate's owner does not match hostname ‘download.proxmox.com’
+```
+
+### Context
+- Command: wget https://download.proxmox.com/iso/proxmox-ve_9.1-1.iso
+- Host: usm2
+- Result: TLS verification failed
+
+### Suggested Fix
+- Verify system time and CA bundle on usm2.
+- Check for TLS inspection/SSL proxy on the network.
+- As a last resort, use `wget --no-check-certificate` only with explicit approval and verify checksum.
+
+### Metadata
+- Reproducible: unknown
+- Related Files: /etc/ssl/certs
+- See Also: ERR-20260307-001
 
 ---

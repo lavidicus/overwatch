@@ -36,6 +36,28 @@ Specific fix or improvement to make
 - **Promoted**: SOUL.md, TOOLS.md, etc. (if applicable)
 
 ---
+## [LRN-20260307-002] correction
+
+**Logged**: 2026-03-07T21:14:28Z
+**Priority**: low
+**Status**: pending
+**Area**: infra
+
+### Summary
+Confirmed Olla VM IP is 172.16.254.78, not .83/.85; target static should be 172.16.254.100/24.
+
+### Details
+User corrected earlier assumption of DHCP IP; actual current IP is .78 and must be reconfigured to .100/24.
+
+### Suggested Action
+Update playbook and reconfigure VM network to static 172.16.254.100/24.
+
+### Metadata
+- Source: user_feedback
+- Related Files: ITIL/playbooks/olla-vm-rebuild.md
+- Tags: ip, network, olla
+
+---
 ## [LRN-20260305-001] correction
 
 **Logged**: 2026-03-05T17:34:20Z
