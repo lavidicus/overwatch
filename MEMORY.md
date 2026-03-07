@@ -116,6 +116,9 @@ _Curated learnings, decisions, and context. Updated periodically from daily file
   - **Structure:** daily/, areas/, resources/, inbox/, templates/, archives/
   - **Integration:** Symlinked to `memory/` for reference
   - **Created:** 2026-03-07
+  - **Content:** 141+ guides (Linux, Windows, Proxmox, Networking, Database, AI/ML, Radio)
+  - **Concept Notes:** System Admin KB, Docker, Storage, Virtualization, Network Security, Windows Admin
+  - **ITIL Integration:** Cross-referenced with operational playbooks
 
 ## ITIL Issue Management (2026-02-28)
 

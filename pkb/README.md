@@ -2,6 +2,25 @@
 
 > Welcome to your personal knowledge base. This vault is for thinking, connecting ideas, and building mental models.
 
+**Total Notes:** 141+ | **Last Updated:** 2026-03-07
+
+---
+
+## 📚 Quick Links
+
+### Concept Notes (Knowledge Synthesis)
+- [[resources/Concepts/System Administration Knowledge Base]] — Complete topic index
+- [[resources/Concepts/Docker Containers]] — Containerization
+- [[resources/Concepts/Storage Systems]] — ZFS, GlusterFS, Ceph, NFS
+- [[resources/Concepts/Virtualization]] — Proxmox, NVIDIA GRID, GPU passthrough
+- [[resources/Concepts/Network Security]] — Firewalld, IPSEC, Windows Firewall
+- [[resources/Concepts/Windows Administration]] — Windows Server & Client
+
+### OpenClaw Integration
+- `../ITIL/playbooks/` — Operational procedures (linked below)
+- `../memory/` — Session logs
+- `../MEMORY.md` — Curated long-term memory
+
 ---
 
 ## 📁 Vault Structure
