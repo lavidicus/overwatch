@@ -1,0 +1,24 @@
+{
+  "agents": {
+    "defaults": {
+      "model": {
+        "primary": "olla/gpt-oss:latest",
+        "fallbacks": [
+          "olla/qwen3.5:35b",
+          "openai/openai-codex"
+        ]
+      },
+      "models": {
+        "olla/gpt-oss:latest": {
+          "alias": "gpt-oss:latest"
+        },
+        "olla/qwen3.5:35b": {
+          "alias": "qwen3.5"
+        },
+        "openai/openai-codex": {
+          "alias": "codex"
+        }
+      }
+    }
+  }
+}
