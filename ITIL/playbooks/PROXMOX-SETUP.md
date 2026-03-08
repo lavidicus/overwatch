@@ -126,12 +126,17 @@ apt update && apt upgrade -y
 
 1. **Create Cluster:**
    - Web UI: Datacenter → Cluster → Create Cluster
-   - Or CLI: `pvecluster create --name proxmox-cluster`
+   - Or CLI: `pvecm create 9XCLAB`
 
-2. **Add Nodes:**
-   - From other nodes, join cluster:
+2. **Add Nodes (pve-2 and pve-3):**
+   - Copy corosync.conf from pve-1 to other nodes:
    ```bash
-   pvecm add <pve-1-IP>
+   scp /etc/pve/corosync.conf root@pve-2:/etc/pve/corosync.conf
+   scp /etc/pve/corosync.conf root@pve-3:/etc/pve/corosync.conf
+   ```
+   - Restart corosync on all nodes:
+   ```bash
+   systemctl restart corosync
    ```
 
 ### Verify Cluster
@@ -141,10 +146,10 @@ apt update && apt upgrade -y
 pvecm status
 
 # View cluster nodes
-pvesh get /cluster/nodes
+pvecm nodes
 
 # Check quorum
-cat /var/lib/pve-cluster/corrupt/corosync.conf
+cat /etc/pve/corosync.conf
 ```
 
 ## Storage Configuration
