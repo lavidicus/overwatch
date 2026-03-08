@@ -129,14 +129,67 @@ apt update && apt upgrade -y
    - Or CLI: `pvecm create 9XCLAB`
 
 2. **Add Nodes (pve-2 and pve-3):**
-   - Copy corosync.conf from pve-1 to other nodes:
+
+   **Option A: Manual corosync.conf (Recommended for automation)**
    ```bash
+   # Update corosync.conf to include all nodes
+   cat > /etc/pve/corosync.conf << 'EOF'
+   logging {
+     debug: off
+     to_syslog: yes
+   }
+
+   nodelist {
+     node {
+       name: pve-1
+       nodeid: 1
+       quorum_votes: 1
+       ring0_addr: 172.16.254.240
+     }
+     node {
+       name: pve-2
+       nodeid: 2
+       quorum_votes: 1
+       ring0_addr: 172.16.254.241
+     }
+     node {
+       name: pve-3
+       nodeid: 3
+       quorum_votes: 1
+       ring0_addr: 172.16.254.242
+     }
+   }
+
+   quorum {
+     provider: corosync_votequorum
+   }
+
+   totem {
+     cluster_name: 9XCLAB
+     config_version: 1
+     interface {
+       linknumber: 0
+     }
+     ip_version: ipv4-6
+     link_mode: passive
+     secauth: on
+     version: 2
+   }
+   EOF
+
+   # Copy to all nodes
    scp /etc/pve/corosync.conf root@pve-2:/etc/pve/corosync.conf
    scp /etc/pve/corosync.conf root@pve-3:/etc/pve/corosync.conf
-   ```
-   - Restart corosync on all nodes:
-   ```bash
+
+   # Restart corosync on all nodes
    systemctl restart corosync
+   ```
+
+   **Option B: Interactive join (if SSH keys not configured)**
+   ```bash
+   # On pve-2 and pve-3
+   pvecm add 172.16.254.240
+   # Enter root password when prompted
    ```
 
 ### Verify Cluster
@@ -150,6 +203,9 @@ pvecm nodes
 
 # Check quorum
 cat /etc/pve/corosync.conf
+
+# If quorum is lost, force single-node quorum (for testing)
+pvecm expected 1
 ```
 
 ## Storage Configuration
