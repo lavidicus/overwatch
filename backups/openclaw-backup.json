@@ -39,8 +39,8 @@
               "cacheRead": 0,
               "cacheWrite": 0
             },
-            "contextWindow": 65536,
-            "maxTokens": 8192
+            "contextWindow": 262144,
+            "maxTokens": 16384
           }
         ]
       }
@@ -74,7 +74,7 @@
         "model": "olla/qwen3.5:latest",
         "session": "main",
         "target": "signal",
-        "prompt": "Report blockers/opportunities. No updates → 'No blockers — <time>'."
+        "prompt": "Report blockers/opportunities. No updates \u2192 'No blockers \u2014 <time>'."
       },
       "maxConcurrent": 4,
       "subagents": {
@@ -208,13 +208,6 @@
     "entries": {
       "gh-issues": {
         "apiKey": "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"
-      }
-    }
-  },
-  "plugins": {
-    "entries": {
-      "signal": {
-        "enabled": true
       }
     }
   }
