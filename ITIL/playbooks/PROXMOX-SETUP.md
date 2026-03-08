@@ -12,13 +12,21 @@ This guide covers complete setup procedures for Proxmox VE clusters and individu
 
 ### IP Address Scheme
 
+**Management Network (172.16.254.0/24):**
 ```
 pve-1:  172.16.254.240  (Primary node, cluster manager)
 pve-2:  172.16.254.241  (Secondary node)
 pve-3:  172.16.254.242  (Tertiary node)
 ```
 
-### Hostname Resolution
+**Storage/VM Network (172.16.253.0/24):**
+```
+pve-1:  172.16.253.240
+pve-2:  172.16.253.241
+pve-3:  172.16.253.242
+```
+
+### Hostname Resolution (Management Network)
 
 All hosts have `/etc/hosts` configured for mutual resolution:
 ```
@@ -32,17 +40,23 @@ All hosts have `/etc/hosts` configured for mutual resolution:
 ### Hardware Requirements
 - Minimum 4GB RAM (8GB+ recommended)
 - 2+ CPU cores
-- 2+ Network interfaces (1 for management, 1+ for storage/VM traffic)
+- **2+ Network interfaces:**
+  - Management NIC: 172.16.254.0/24 (web UI, SSH, cluster mgmt)
+  - Storage/VM NIC: 172.16.253.0/24 (VM traffic, storage, cluster comms)
 - SSD/NVMe for storage (recommended for VM disks)
 
 ### Network Requirements
-- Static IP addresses for all nodes
-- DNS resolution (or /etc/hosts entries)
+- **Two network interfaces per node:**
+  - Management network: 172.16.254.0/24 (for web UI, SSH, cluster mgmt)
+  - Storage/VM network: 172.16.253.0/24 (for VM traffic, storage, cluster comms)
+- DNS resolution (or /etc/hosts entries on management network)
 - Open ports:
   - 22 (SSH)
   - 8006 (Proxmox web UI)
   - 5404 (Cluster communication)
   - 2222 (Corosync/HA communication)
+  - 8007 (Ceph REST API if using Ceph)
+  - 3300-3302 (Ceph OSD communication)
 
 ## Installation
 
@@ -62,11 +76,41 @@ wget https://download.proxmox.com/isos/proxmox-ve_8.x.iso
 3. Reboot after installation
 
 ### Step 3: Post-Install Configuration
+
+#### Network Configuration (Second Network Interface)
+
+Configure the storage/VM network (172.16.253.0/24):
+
+```bash
+# Edit network configuration
+nano /etc/network/interfaces
+
+# Add second network interface (example for eth1):
+auto eth1
+iface eth1 inet static
+    address 172.16.253.240/24
+    # No gateway - management network handles routing
+    # bridge_ports none for L2 storage network
+```
+
+Replace 240 with appropriate host IP per node:
+- pve-1: 172.16.253.240
+- pve-2: 172.16.253.241
+- pve-3: 172.16.253.242
+
+```bash
+# Restart networking
+systemctl restart networking
+
+# Verify connectivity
+ping -I eth1 172.16.253.241  # Test to pve-2
+ping -I eth1 172.16.253.242  # Test to pve-3
+```
 ```bash
 # Access web UI at https://<IP>:8006
 # Login as root with your password
 
-# Update repository (Debian bookworm for PVE 8.x)
+# Update repository (Debian bookworm for PVE 9.x)
 nano /etc/apt/sources.list.d/pve-enterprise.list
 # Comment out enterprise repo
 nano /etc/apt/sources.list.d/pve-no-subscription.list
