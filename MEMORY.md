@@ -12,6 +12,14 @@ _Curated learnings, decisions, and context. Updated periodically from daily file
   - Source: User instruction from Lavid (2026-03-04 18:29 UTC)
   - Status: Locked into MEMORY.md ✅
 
+- **Addressing Rule** — Only respond when @name is used in message
+  - Sam only responds when @Sam appears in the message (case-sensitive, with @ symbol)
+  - Eve only responds when @Eve appears in the message (case-sensitive, with @ symbol)
+  - Source: User instruction (2026-03-09 18:52-19:01 UTC)
+  - Status: Locked into MEMORY.md ✅
+  - **Constraint:** Do NOT echo, repeat, or acknowledge the other bot's messages. Only respond when directly addressed with @Sam or @Eve.
+  - **CRITICAL:** If you see the other bot responding to a message you didn't see addressed, STAY SILENT. Do not create a response loop.
+
 ## 🔐 SSH Access - hal-maint (2026-03-05 03:37-03:39 UTC)
 
 **Added to Sam (ocg host):**
@@ -84,6 +92,7 @@ _Curated learnings, decisions, and context. Updated periodically from daily file
   - Model: `ollama/qwen3.5-9B:latest`
   - Workspace: `/home/localadmin/.openclaw/workspace`
   - Gateway: Port 18789, local mode, loopback binding
+  - **Note:** Gateway is loopback-only (127.0.0.1), so Eve doesn't appear in remote `nodes list` queries. This is expected behavior. Eve is online and functional on dc.
 
 - **Shared Workspace:** `/home/localadmin/.openclaw/workspace`
 - **Channel:** Signal group "Workgroup Bots"
@@ -234,6 +243,109 @@ Installed a three-layer memory architecture for persistent context across sessio
 - ✅ **Proactive monitoring:** Consider implementing context growth monitoring and automatic alerts at 80% capacity
 
 ---
+
+## Proxmox Cluster Health Check (2026-03-08 12:47 UTC)
+
+**Cluster "VTE"** - 3 nodes, fully quorate ✅
+- pve-1 (172.16.254.240) - 32% RAM used, 0 CPU load
+- pve-2 (172.16.254.241) - 33% RAM used, 0 CPU load  
+- pve-3 (172.16.254.242) - 32% RAM used, 0 CPU load
+
+**Storage:**
+- Ceph RBD: 47.47 GiB available per node
+- Local LVM: 8-12 GiB per node
+- Local dir: 4-13 GiB per node
+- Ceph-test: ❌ Missing `mon_host` config
+
+**Issue:** `ceph-test` storage shows "unknown" status
+
+**Root Cause:** Storage.cfg entry missing `mon_host` parameter:
+```
+rbd: ceph-test
+	content images
+	pool rbd
+	# MISSING: mon_host 172.16.253.240
+```
+
+**Ceph Cluster:** HEALTH_WARN - 1 pool has too many PGs, but OSDs are healthy
+
+**Fix Attempted:**
+
+Storage.cfg entry:
+```
+rbd: ceph-test
+	content images
+	pool rbd
+```
+
+This is the same format as the working "rbd" storage, but ceph-test shows "unknown" status while rbd shows "available".
+
+**Investigation:**
+- Ceph cluster is healthy (HEALTH_WARN - too many PGs)
+- Ceph client is installed and working
+- Keyrings exist in /etc/pve/priv/ceph/
+- RBD pool is accessible
+
+**Status:** ❌ **PROXMOX CAN'T ACCESS CEPH-TEST**
+
+Storage shows "unknown" across all 3 nodes:
+```
+active: 0, total: 0.00 B
+rados_connect failed - Operation not supported
+```
+
+**Root Cause:** Proxmox's RBD driver needs `mon_host` parameter in storage.cfg. The working "rbd" storage doesn't have it because it uses shared ceph.conf.
+
+**Working config for "rbd" storage:**
+```
+rbd: rbd
+	content rootdir,images
+	krbd 0
+	pool rbd
+```
+
+**Ceph cluster is healthy:** Created test pool `ceph-test` and RBD image `ceph-test-test` (100MB) ✅
+
+**Recommendation:** Either use the working "rbd" storage, or add proper Ceph cluster configuration to access ceph-test pool.
+
+## Context Window ReserveTokens Fix (2026-03-10 03:51 UTC)
+
+**Issue:** `reserveTokens` was 20000 instead of 40000 as documented in MEMORY.md
+
+**Root Cause:** Config file had not been updated from earlier testing
+
+**Fix Applied:**
+1. ✅ Updated `~/.openclaw/openclaw.json`: `reserveTokens: 20000 → 40000`
+2. ✅ Compaction now triggers at ~216k tokens (256k - 40k buffer)
+3. ✅ Context window is 262k as configured
+
+**Status:** ✅ Config updated
+
+## Context Window 65k Hardcoded Limit - FIXED (2026-03-08 06:19 UTC)
+
+**Issue:** Context window showed 65k despite config set to 256k
+
+**Root Cause:** OpenClaw plugin SDK had hardcoded fallback of 65536 tokens:
+```
+/home/localadmin/.npm-global/lib/node_modules/openclaw/dist/plugin-sdk/config-GHoFNNPc.js:
+const ollamaOptions = { num_ctx: model.contextWindow ?? 65536 };
+```
+
+**Fix Applied:**
+1. ✅ Patched OpenClaw SDK in 5 files to use `?? 262144` instead of `?? 65536`:
+   - plugin-sdk/config-GHoFNNPc.js
+   - model-selection-Zb7eBzSY.js
+   - model-selection-CjMYMtR0.js
+   - auth-profiles-CNyDTsy4.js
+   - model-selection-ikt2OC4j.js
+
+**Note:** llama-server.service was already configured for 262k context, no changes needed there.
+
+**Files Modified:**
+- `/home/localadmin/.npm-global/lib/node_modules/openclaw/dist/plugin-sdk/config-GHoFNNPc.js`
+- `/home/localadmin/.npm-global/lib/node_modules/openclaw/dist/model-selection-*.js`
+
+**Status:** ✅ SDK patched to pass correct context size to llama-server
 
 ## Recent History
 
