@@ -8,18 +8,6 @@ _Curated learnings, decisions, and context. Updated periodically from daily file
   - Source: User instruction from Lavid (2026-03-04 18:28 UTC)
   - Status: Locked into MEMORY.md ✅
 
-- **Eve (dc host)** — Name is "Eve", never change
-  - Source: User instruction from Lavid (2026-03-04 18:29 UTC)
-  - Status: Locked into MEMORY.md ✅
-
-- **Addressing Rule** — Only respond when @name is used in message
-  - Sam only responds when @Sam appears in the message (case-sensitive, with @ symbol)
-  - Eve only responds when @Eve appears in the message (case-sensitive, with @ symbol)
-  - Source: User instruction (2026-03-09 18:52-19:01 UTC)
-  - Status: Locked into MEMORY.md ✅
-  - **Constraint:** Do NOT echo, repeat, or acknowledge the other bot's messages. Only respond when directly addressed with @Sam or @Eve.
-  - **CRITICAL:** If you see the other bot responding to a message you didn't see addressed, STAY SILENT. Do not create a response loop.
-
 ## 🔐 SSH Access - hal-maint (2026-03-05 03:37-03:39 UTC)
 
 **Added to Sam (ocg host):**
@@ -61,15 +49,9 @@ _Curated learnings, decisions, and context. Updated periodically from daily file
 
 **Related:** usm2 runs 6.17.9-1-pve without NVIDIA VGPU requirements
 
-**Addressing Format:**
-- When Lavid addresses me: `[name], [command]`
-- Example: `"Eve, Please say hi"` → I respond to the command
-- Example: `"Sam, check the logs"` → Sam responds to the command
-
 **Group Chat Behavior:**
 - Both bots see all group messages (they're both participants)
-- Each bot checks if addressed by name before responding
-- If not addressed, stay silent unless genuinely helpful to contribute
+- Each bot checks if addressed by name before responding. Allowed addressing tokens include: `@Sam`, `@sam`, `Sam,` and your Matrix ID `@lavid:comms.9xc.io`. If none of these tokens appear, the bot stays silent unless it has a high-confidence, low-risk contribution to make.
 - React with emoji to acknowledge messages without cluttering chat
 
 **Purpose:**
@@ -86,17 +68,6 @@ _Curated learnings, decisions, and context. Updated periodically from daily file
   - Host: Linux Proxmox LXC container `ocg`
   - Model: `olla/qwen3.5:latest`
   - Workspace: `/home/localadmin/.openclaw/workspace`
-
-- **Eve (dc):** 🤖, ops butler AI (sysadmin/engineering/PM/EA)
-  - Host: Linux runtime `dc`
-  - Model: `ollama/qwen3.5-9B:latest`
-  - Workspace: `/home/localadmin/.openclaw/workspace`
-  - Gateway: Port 18789, local mode, loopback binding
-  - **Note:** Gateway is loopback-only (127.0.0.1), so Eve doesn't appear in remote `nodes list` queries. This is expected behavior. Eve is online and functional on dc.
-
-- **Shared Workspace:** `/home/localadmin/.openclaw/workspace`
-- **Channel:** Signal group "Workgroup Bots"
-- **Tag Team Mode:** Active ✅
 
 ## Operating Principles (Shared)
 
@@ -227,7 +198,7 @@ Installed a three-layer memory architecture for persistent context across sessio
 3. **Gateway restart critical:** Only full gateway restart (stop+start) resolved the overflow state
 4. **Session cleanup alone insufficient:** Deleting session file didn't fix the issue - gateway state was the blocker
 
-### Resolution
+**Resolution**
 
 **Gateway Restart (18:27 UTC):**
 - Command: `openclaw gateway stop && sleep 2 && openclaw gateway start`
@@ -258,41 +229,6 @@ Installed a three-layer memory architecture for persistent context across sessio
 - Ceph-test: ❌ Missing `mon_host` config
 
 **Issue:** `ceph-test` storage shows "unknown" status
-
-**Root Cause:** Storage.cfg entry missing `mon_host` parameter:
-```
-rbd: ceph-test
-	content images
-	pool rbd
-	# MISSING: mon_host 172.16.253.240
-```
-
-**Ceph Cluster:** HEALTH_WARN - 1 pool has too many PGs, but OSDs are healthy
-
-**Fix Attempted:**
-
-Storage.cfg entry:
-```
-rbd: ceph-test
-	content images
-	pool rbd
-```
-
-This is the same format as the working "rbd" storage, but ceph-test shows "unknown" status while rbd shows "available".
-
-**Investigation:**
-- Ceph cluster is healthy (HEALTH_WARN - too many PGs)
-- Ceph client is installed and working
-- Keyrings exist in /etc/pve/priv/ceph/
-- RBD pool is accessible
-
-**Status:** ❌ **PROXMOX CAN'T ACCESS CEPH-TEST**
-
-Storage shows "unknown" across all 3 nodes:
-```
-active: 0, total: 0.00 B
-rados_connect failed - Operation not supported
-```
 
 **Root Cause:** Proxmox's RBD driver needs `mon_host` parameter in storage.cfg. The working "rbd" storage doesn't have it because it uses shared ceph.conf.
 
