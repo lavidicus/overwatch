@@ -1,10 +1,7 @@
 {
   "meta": {
-    "lastTouchedVersion": "2026.3.2",
-    "lastTouchedAt": "2026-03-09T01:28:00.000Z"
-  },
-  "memory": {
-    "backend": "qmd"
+    "lastTouchedVersion": "2026.3.8",
+    "lastTouchedAt": "2026-03-09T21:01:52.493Z"
   },
   "wizard": {
     "lastRunAt": "2026-03-07T04:57:07.288Z",
@@ -64,7 +61,7 @@
       "workspace": "/home/localadmin/.openclaw/workspace",
       "compaction": {
         "mode": "safeguard",
-        "reserveTokens": 20000,
+        "reserveTokens": 40000,
         "memoryFlush": {
           "enabled": true,
           "softThresholdTokens": 21072,
@@ -77,7 +74,7 @@
         "model": "olla/qwen3.5:latest",
         "session": "main",
         "target": "signal",
-        "prompt": "Report blockers/opportunities. No updates \u2192 'No blockers \u2014 <time>'."
+        "prompt": "Report blockers/opportunities. No updates → 'No blockers — <time>'."
       },
       "maxConcurrent": 4,
       "subagents": {
@@ -92,9 +89,8 @@
         "id": "botbus",
         "groupChat": {
           "mentionPatterns": [
-            "^SAM\\b",
-            "^@SAM\\b",
-            "^SAM:"
+            "^SAM:",
+            "^@SAM\\b"
           ]
         },
         "tools": {
@@ -176,11 +172,18 @@
       "cliPath": "signal-cli",
       "dmPolicy": "pairing",
       "groupPolicy": "open"
+    },
+    "matrix": {
+      "enabled": true,
+      "homeserver": "https://comms.9xc.io",
+      "userId": "@sam:comms.9xc.io",
+      "password": "TheRightSam2026!",
+      "dmPolicy": "pairing"
     }
   },
   "gateway": {
-    "port": 18789,
     "mode": "local",
+    "port": 18789,
     "bind": "loopback",
     "auth": {
       "mode": "token",
@@ -189,20 +192,10 @@
     "tailscale": {
       "mode": "off",
       "resetOnExit": false
-    },
-    "nodes": {
-      "allowCommands": [
-        "exec"
-      ],
-      "denyCommands": [
-        "camera.snap",
-        "camera.clip",
-        "screen.record",
-        "calendar.add",
-        "contacts.add",
-        "reminders.add"
-      ]
     }
+  },
+  "memory": {
+    "backend": "builtin"
   },
   "skills": {
     "install": {
@@ -211,6 +204,28 @@
     "entries": {
       "gh-issues": {
         "apiKey": "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"
+      }
+    }
+  },
+  "plugins": {
+    "entries": {
+      "matrix": {
+        "enabled": true
+      }
+    },
+    "installs": {
+      "matrix": {
+        "source": "npm",
+        "spec": "@openclaw/matrix",
+        "installPath": "/home/localadmin/.openclaw/extensions/matrix",
+        "version": "2026.3.7",
+        "resolvedName": "@openclaw/matrix",
+        "resolvedVersion": "2026.3.7",
+        "resolvedSpec": "@openclaw/matrix@2026.3.7",
+        "integrity": "sha512-2Lh6F5te556Ks5UqNpKXOlpiaAU1qCaUEL7zlWyWHUvUQJ9Qg8Y8Fk1yCBCR2HVV2FVOBJqisqJ4STkJeT8QWw==",
+        "shasum": "e85786d012256a552b08095f780d5864383d5491",
+        "resolvedAt": "2026-03-09T21:01:21.973Z",
+        "installedAt": "2026-03-09T21:01:35.394Z"
       }
     }
   }
