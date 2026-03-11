@@ -1,12 +1,12 @@
 {
   "meta": {
     "lastTouchedVersion": "2026.3.8",
-    "lastTouchedAt": "2026-03-09T21:01:52.493Z"
+    "lastTouchedAt": "2026-03-10T14:18:42.817Z"
   },
   "wizard": {
-    "lastRunAt": "2026-03-07T04:57:07.288Z",
-    "lastRunVersion": "2026.3.2",
-    "lastRunCommand": "configure",
+    "lastRunAt": "2026-03-10T14:18:42.779Z",
+    "lastRunVersion": "2026.3.8",
+    "lastRunCommand": "doctor",
     "lastRunMode": "local"
   },
   "auth": {
@@ -29,10 +29,7 @@
             "id": "qwen3.5:latest",
             "name": "qwen3.5:latest (Custom Provider)",
             "reasoning": false,
-            "input": [
-              "text",
-              "image"
-            ],
+            "input": ["text", "image"],
             "cost": {
               "input": 0,
               "output": 0,
@@ -49,14 +46,19 @@
   "agents": {
     "defaults": {
       "model": {
-        "primary": "olla/qwen3.5:latest",
+        "primary": "github-copilot/gpt-5-mini",
         "fallbacks": [
+          "olla/qwen3.5:latest",
           "github-copilot/gpt-5.2-codex"
         ]
       },
       "models": {
-        "github-copilot/gpt-5.2-codex": {},
-        "olla/qwen3.5:latest": {}
+        "github-copilot/gpt-5.2-codex": {
+          "alias": "codex"
+        },
+        "olla/qwen3.5:latest": {
+          "alias": "qwen3.5"
+        }
       },
       "workspace": "/home/localadmin/.openclaw/workspace",
       "compaction": {
@@ -71,7 +73,7 @@
       },
       "heartbeat": {
         "every": "6h",
-        "model": "olla/qwen3.5:latest",
+        "model": "github-copilot/gpt-5-mini",
         "session": "main",
         "target": "signal",
         "prompt": "Report blockers/opportunities. No updates → 'No blockers — <time>'."
@@ -87,15 +89,9 @@
       },
       {
         "id": "botbus",
-        "groupChat": {
-          "mentionPatterns": [
-            "^SAM:",
-            "^@SAM\\b"
-          ]
-        },
         "tools": {
           "exec": {
-            "ask": "on-miss"
+            "ask": "off"
           }
         }
       }
@@ -146,6 +142,20 @@
   "session": {
     "dmScope": "per-channel-peer"
   },
+  "channels": {
+    "matrix": {
+      "enabled": true,
+      "homeserver": "https://comms.9xc.io",
+      "userId": "@sam:comms.9xc.io",
+      "password": "TheRightSam2026!",
+      "dmPolicy": "allowlist",
+      "allowFrom": [
+        "@eve:comms.9xc.io",
+        "@sam:comms.9xc.io",
+        "@lavid:comms.9xc.io"
+      ]
+    }
+  },
   "hooks": {
     "internal": {
       "enabled": true,
@@ -165,25 +175,9 @@
       }
     }
   },
-  "channels": {
-    "signal": {
-      "enabled": true,
-      "account": "+13184061402",
-      "cliPath": "signal-cli",
-      "dmPolicy": "pairing",
-      "groupPolicy": "open"
-    },
-    "matrix": {
-      "enabled": true,
-      "homeserver": "https://comms.9xc.io",
-      "userId": "@sam:comms.9xc.io",
-      "password": "TheRightSam2026!",
-      "dmPolicy": "pairing"
-    }
-  },
   "gateway": {
-    "mode": "local",
     "port": 18789,
+    "mode": "local",
     "bind": "loopback",
     "auth": {
       "mode": "token",
