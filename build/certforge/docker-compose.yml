@@ -1,0 +1,67 @@
+version: '3.8'
+
+services:
+  certforge-api:
+    build:
+      context: ./api
+      dockerfile: Dockerfile
+    container_name: certforge-api
+    ports:
+      - "5000:5000"
+    volumes:
+      - root-ca-data:/opt/certforge/root-ca
+      - intermediate-data:/opt/certforge/intermediate-ca
+    networks:
+      - certforge-net
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:5000/api/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 10s
+
+  root-ca:
+    build:
+      context: ./root-ca
+      dockerfile: Dockerfile
+    container_name: certforge-root-ca
+    volumes:
+      - root-ca-data:/opt/certforge/root-ca
+    networks:
+      - certforge-net
+    cap_drop:
+      - ALL
+    restart: no  # Manual execution only
+
+  intermediate-ca:
+    build:
+      context: ./intermediate-ca
+      dockerfile: Dockerfile
+    container_name: certforge-intermediate-ca
+    ports:
+      - "5001:5000"
+    volumes:
+      - intermediate-data:/opt/certforge/intermediate-ca
+    networks:
+      - certforge-net
+    cap_drop:
+      - ALL
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:5000/api/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 10s
+
+volumes:
+  root-ca-data:
+    driver: local
+  intermediate-data:
+    driver: local
+
+networks:
+  certforge-net:
+    driver: bridge
+    internal: false
