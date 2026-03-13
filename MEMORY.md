@@ -283,24 +283,111 @@ const ollamaOptions = { num_ctx: model.contextWindow ?? 65536 };
 
 **Status:** ✅ SDK patched to pass correct context size to llama-server
 
+## CertForge Dockerized PKI (2026-03-13 20:00-20:50 UTC)
+
+**Project:** Complete offline/online CA infrastructure with web management, auth, ACL, OCSP
+
+**Location:** `workspace/build/certforge/`
+
+**Architecture:**
+- **Root CA container:** Offline, no network, manual execution only (debian:bookworm-slim)
+- **Intermediate CA container:** Online, Flask API port 5001, restricted network (python:3.12-slim)
+- **Orchestrator API:** Central Flask API port 5000, Docker API client, cert management, JWT auth
+- **OCSP Responder:** Online certificate status port 8888 (python ocsp.py)
+- **Admin portal:** React web UI port 3000, dashboard for container and cert management
+
+**Files Created:**
+- `api/Dockerfile`, `api/app.py` (JWT + RBAC), `api/acl.py`, `api/ocsp.py`
+- `api/requirements.txt` (added pyjwt==2.8.0)
+- `api/.env.example`
+- `root-ca/Dockerfile`
+- `intermediate-ca/Dockerfile`, `backend/app.py`
+- `intermediate-ca/config/ocsp-extensions.cnf`
+- `docker-compose.yml` (added ocsp-responder service)
+- `admin-portal/` - Full React admin UI
+- `README.md` - Updated with complete architecture
+
+**Authentication (JWT):**
+- `generate_token()` - JWT with 24h expiry
+- `verify_token()` - Token validation
+- `@require_auth()` - Protects all endpoints
+- `@require_permission()` - RBAC (read/write/admin)
+- In-memory users: `admin` (all perms), `user` (read/write)
+- Endpoints: `/api/auth/login` - POST with username/password
+
+**ACL System:**
+- `ACLManager` class - File-based ACL (`acl.json`)
+- `add_user_acl()` - Grant permissions to users
+- `add_certificate_acl()` - Restrict cert access by user/role
+- `check_user_permission()` - Verify permissions
+- `check_certificate_access()` - Verify cert access
+- Blueprint endpoints: CRUD for user/cert ACLs
+
+**OCSP Responder:**
+- `OCSPResponder` class - Signs OCSP responses
+- `generate_responder_key()` - Creates responder cert/key pair
+- `sign_ocsp_response()` - Signs status (good/revoked/unknown)
+- `get_cert_status()` - Checks cert validity against CRL
+- HTTP endpoint: `POST /ocsp` (port 8888)
+- Uses intermediate CA to sign responses
+
+**Security:**
+- JWT-based authentication
+- Role-based access control (RBAC)
+- Certificate-level ACLs (per-cert user/role restrictions)
+- OCSP for real-time revocation checking
+- Non-root container users
+- Capability dropping (ALL)
+- Volume isolation
+
+**Deployment Command:**
+```bash
+cd workspace/build/certforge
+docker compose build
+docker compose up -d
+```
+
+**API Endpoints:**
+- `POST /api/auth/login` - JWT login
+- `GET /api/health` - Health check
+- `GET /api/containers` - List containers (auth)
+- `POST /api/containers/:name/{start|stop|restart}` - Container control (auth + write)
+- `GET /api/containers/:name/logs` - Get logs (auth)
+- `GET /api/certs` - List certificates (auth)
+- `GET /api/certs/:cert_name` - Download cert (auth)
+- `GET /api/crl` - Download CRL (auth)
+- `POST /api/intermediate/issue` - Issue cert (auth + write)
+- `POST /ocsp` - OCSP responder endpoint
+
+**Next Steps:**
+1. ✅ Docker architecture complete
+2. ✅ JWT authentication wired in
+3. ✅ ACL system implemented
+4. ✅ OCSP responder added
+5. ⏳ Build and test containers
+6. ⏳ Create React cert request form
+
+**Status:** ✅ All features implemented, ready for deployment testing
+
 ## Recent History
 
-- **2026-03-07 04:35:** PKB vault created (`workspace/pkb/`) — Obsidian personal knowledge base for mental models and cross-domain connections
-- **2026-03-04 16:44:** Updated llama-server config on olla with vision support and flash attention
+- **2026-03-13 20:35:** CertForge Dockerized PKI complete - web management portal built
+- **2026-03-13 19:55:** Context window 65k hardcoded limit - FIXED (SDK patched to 262k)
+- **2026-03-13 06:00:** Morning news briefing - Iran-Israel conflict, 4 US service members killed
+- **2026-03-10 03:51:** Context Window ReserveTokens fix applied (20000 → 40000)
+- **2026-03-08 06:19:** Context Window 65k hardcoded limit - FIXED (SDK patched)
+- **2026-03-08 12:47:** Proxmox cluster health check - 3 nodes, fully quorate ✅
+- **2026-03-07 04:35:** PKB vault created (`workspace/pkb/`) - Obsidian personal knowledge base
+- **2026-03-04 16:44:** Updated llama-server config on olla with vision support
 - **2026-03-04 12:26:** Logged ITIL-ISSUE-HEARTBEAT-NEWS-BRIEFING - missed 6AM CST news briefing
 - **2026-03-03 19:50:** Repository renamed to `sam` → https://github.com/lavidicus/sam
-- **2026-03-03 19:33:** Config cleanup - removed OpenAI dependencies, simplified Signal config
-- **2026-03-03 19:00:** ✅ Resolved Gateway Restart P2 (ITIL-ISSUE-GATEWAY-RESTART-AVAILABILITY)
-- **2026-03-03 18:52:** Tag team setup complete (Sam+Eve), MEMORY.md created, git tracking initialized
-- **2026-03-03 15:10:** System healthy, daily backup successful
-- **2026-03-03 13:15-15:10:** Fixed vLLM provider warnings (removed bad config)
-- **2026-03-03 13:08:** News briefing - Iran conflict escalating
-- **2026-03-03 07:02:** System healthy after overnight sleep
+- **2026-03-03 19:33:** Config cleanup - removed OpenAI dependencies
+- **2026-03-03 19:00:** ✅ Resolved Gateway Restart P2
+- **2026-03-03 18:52:** Tag team setup complete (Sam+Eve)
 - **2026-03-01:** Triple Memory System installed
-- **2026-03-01:** Context Window Fix documented and configured
 - **2026-02-28:** ITIL Issue Management workflow created
 - **2026-02-28:** Initial OpenClaw setup and configuration
 
 ---
 
-*Created: 2026-03-03 | Tag Team Setup: 2026-03-03 (Sam+Eve) | P2 Resolved: 2026-03-03 19:00 UTC*
+*Created: 2026-03-03 | Tag Team Setup: 2026-03-03 (Sam+Eve) | P2 Resolved: 2026-03-03 19:00 UTC | CertForge Dockerized: 2026-03-13 20:35 UTC*
