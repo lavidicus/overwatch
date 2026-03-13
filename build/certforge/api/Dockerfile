@@ -1,20 +1,22 @@
 FROM python:3.12-slim
 
-# Install OpenSSL
+# Install OpenSSL and dependencies
 RUN apt-get update && apt-get install -y \
     openssl \
     ca-certificates \
     && rm -rf /var/lib/apt/lists/*
 
 # Set working directory
-WORKDIR /opt/certforge/api
+WORKDIR /opt/certforge
 
 # Copy requirements and install dependencies
 COPY requirements.txt .
 RUN pip install --no-cache-dir -r requirements.txt
 
-# Copy application
+# Copy application files
 COPY app.py .
+COPY acl.py .
+COPY ocsp.py .
 
 # Expose port
 EXPOSE 5000

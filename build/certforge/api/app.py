@@ -1,5 +1,4 @@
-# CertForge Docker API Backend
-# Flask API for orchestrating CA containers and managing certificates
+# Flask API with JWT Authentication
 
 from flask import Flask, jsonify, request, send_from_directory
 from flask_cors import CORS
@@ -7,8 +6,11 @@ import docker
 import subprocess
 import os
 import uuid
-from datetime import datetime
+from datetime import datetime, timedelta
 import logging
+import jwt
+import hashlib
+import secrets
 
 app = Flask(__name__)
 CORS(app)
@@ -17,6 +19,10 @@ CORS(app)
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
 
+# Configuration
+app.config['JWT_SECRET_KEY'] = secrets.token_hex(32)
+app.config['JWT_EXPIRATION_HOURS'] = 24
+
 # Docker client
 client = docker.DockerClient()
 
@@ -24,6 +30,110 @@ client = docker.DockerClient()
 CERTFORGE_ROOT = "/opt/certforge"
 ROOT_CA_PATH = f"{CERTFORGE_ROOT}/root-ca"
 INTERMEDIATE_CA_PATH = f"{CERTFORGE_ROOT}/intermediate-ca"
+
+# In-memory user database (replace with actual DB in production)
+USERS = {
+    'admin': {
+        'password_hash': hashlib.sha256('admin123'.encode()).hexdigest(),
+        'role': 'admin',
+        'permissions': ['read', 'write', 'admin']
+    },
+    'user': {
+        'password_hash': hashlib.sha256('user123'.encode()).hexdigest(),
+        'role': 'user',
+        'permissions': ['read', 'write']
+    }
+}
+
+def generate_token(user_id):
+    """Generate JWT token"""
+    expiration = datetime.utcnow() + timedelta(hours=app.config['JWT_EXPIRATION_HOURS'])
+    payload = {
+        'user_id': user_id,
+        'exp': expiration,
+        'iat': datetime.utcnow()
+    }
+    return jwt.encode(payload, app.config['JWT_SECRET_KEY'], algorithm='HS256')
+
+def verify_token(token):
+    """Verify JWT token and return user info"""
+    try:
+        payload = jwt.decode(token, app.config['JWT_SECRET_KEY'], algorithms=['HS256'])
+        return payload
+    except jwt.ExpiredSignatureError:
+        return None
+    except jwt.InvalidTokenError:
+        return None
+
+def require_auth(f):
+    """Decorator for requiring authentication"""
+    def decorated(*args, **kwargs):
+        auth_header = request.headers.get('Authorization')
+        if not auth_header:
+            return jsonify({'error': 'Authorization header required'}), 401
+        
+        try:
+            token = auth_header.split(' ')[1]  # Bearer <token>
+        except IndexError:
+            return jsonify({'error': 'Invalid authorization format'}), 401
+        
+        payload = verify_token(token)
+        if not payload:
+            return jsonify({'error': 'Invalid or expired token'}), 401
+        
+        request.user = payload
+        return f(*args, **kwargs)
+    decorated.__name__ = f.__name__
+    return decorated
+
+def require_permission(permission):
+    """Decorator for requiring specific permission"""
+    def decorator(f):
+        def decorated(*args, **kwargs):
+            if not hasattr(request, 'user'):
+                return jsonify({'error': 'Authentication required'}), 401
+            
+            user = USERS.get(request.user['user_id'])
+            if not user or permission not in user.get('permissions', []):
+                return jsonify({'error': f'Permission {permission} required'}), 403
+            
+            return f(*args, **kwargs)
+        decorated.__name__ = f.__name__
+        return decorated
+    return decorator
+
+@app.route('/api/auth/login', methods=['POST'])
+def login():
+    """User login endpoint"""
+    try:
+        data = request.get_json()
+        username = data.get('username')
+        password = data.get('password')
+        
+        if not username or not password:
+            return jsonify({'error': 'Username and password required'}), 400
+        
+        user = USERS.get(username)
+        if not user:
+            return jsonify({'error': 'Invalid credentials'}), 401
+        
+        password_hash = hashlib.sha256(password.encode()).hexdigest()
+        if password_hash != user['password_hash']:
+            return jsonify({'error': 'Invalid credentials'}), 401
+        
+        token = generate_token(username)
+        
+        return jsonify({
+            'token': token,
+            'user': {
+                'id': username,
+                'role': user['role'],
+                'permissions': user['permissions']
+            }
+        })
+    except Exception as e:
+        logger.error(f"Login error: {e}")
+        return jsonify({'error': 'Login failed'}), 500
 
 @app.route('/api/health', methods=['GET'])
 def health():
@@ -35,6 +145,7 @@ def health():
     })
 
 @app.route('/api/containers', methods=['GET'])
+@require_auth
 def list_containers():
     """List all CertForge containers"""
     try:
@@ -58,6 +169,8 @@ def list_containers():
         return jsonify({'error': str(e)}), 500
 
 @app.route('/api/containers/<container_name>/start', methods=['POST'])
+@require_auth
+@require_permission('write')
 def start_container(container_name):
     """Start a container"""
     try:
@@ -71,6 +184,8 @@ def start_container(container_name):
         return jsonify({'error': str(e)}), 500
 
 @app.route('/api/containers/<container_name>/stop', methods=['POST'])
+@require_auth
+@require_permission('write')
 def stop_container(container_name):
     """Stop a container"""
     try:
@@ -84,6 +199,8 @@ def stop_container(container_name):
         return jsonify({'error': str(e)}), 500
 
 @app.route('/api/containers/<container_name>/restart', methods=['POST'])
+@require_auth
+@require_permission('write')
 def restart_container(container_name):
     """Restart a container"""
     try:
@@ -97,6 +214,7 @@ def restart_container(container_name):
         return jsonify({'error': str(e)}), 500
 
 @app.route('/api/containers/<container_name>/logs', methods=['GET'])
+@require_auth
 def get_logs(container_name):
     """Get container logs"""
     try:
@@ -110,6 +228,7 @@ def get_logs(container_name):
         return jsonify({'error': str(e)}), 500
 
 @app.route('/api/certs', methods=['GET'])
+@require_auth
 def list_certs():
     """List issued certificates"""
     try:
@@ -128,6 +247,7 @@ def list_certs():
         return jsonify({'error': str(e)}), 500
 
 @app.route('/api/certs/<cert_name>', methods=['GET'])
+@require_auth
 def get_cert(cert_name):
     """Download a certificate"""
     try:
@@ -145,6 +265,7 @@ def get_cert(cert_name):
         return jsonify({'error': str(e)}), 500
 
 @app.route('/api/crl', methods=['GET'])
+@require_auth
 def get_crl():
     """Get Certificate Revocation List"""
     try:
@@ -162,6 +283,8 @@ def get_crl():
         return jsonify({'error': str(e)}), 500
 
 @app.route('/api/intermediate/issue', methods=['POST'])
+@require_auth
+@require_permission('write')
 def issue_certificate():
     """Request certificate issuance from intermediate CA"""
     try:

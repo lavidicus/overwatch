@@ -21,6 +21,22 @@ services:
       retries: 3
       start_period: 10s
 
+  ocsp-responder:
+    build:
+      context: ./api
+      dockerfile: Dockerfile
+    container_name: certforge-ocsp-responder
+    ports:
+      - "8888:8888"
+    volumes:
+      - intermediate-data:/opt/certforge/intermediate-ca
+    networks:
+      - certforge-net
+    restart: unless-stopped
+    command: python ocsp.py
+    depends_on:
+      - certforge-api
+
   root-ca:
     build:
       context: ./root-ca
