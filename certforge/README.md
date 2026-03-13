@@ -1,95 +1,186 @@
-# CertForge - Certificate Authority Infrastructure
-**Version:** 1.0.0  
-**Date:** 2026-03-13
+# CertForge - Dockerized PKI Infrastructure
 
-## Overview
-
-CertForge is a complete PKI Certificate Authority system with:
-- **Offline Root CA** (4096-bit RSA, air-gapped)
-- **Online Intermediate CA** (2048/4096-bit RSA, public-facing)
-- **Public Validation Portal** (certificate lookup, CRL, validation)
-
-## Quick Start
-
-### 1. Initial Setup (Root CA - Offline)
-
-```bash
-# Go to root-ca directory
-cd /home/localadmin/.openclaw/workspace/certforge/root-ca
-
-# Run initial setup script (requires offline machine)
-./setup-root-ca.sh
-```
-
-### 2. Deploy Intermediate CA
-
-```bash
-# Go to intermediate-ca directory
-cd /home/localadmin/.openclaw/workspace/certforge/intermediate-ca
-
-# Deploy to public server
-./deploy-intermediate.sh
-```
-
-### 3. Start Public Portal
-
-```bash
-# Install dependencies
-cd backend
-pip install -r requirements.txt
-
-# Run server
-python app.py
-```
+Complete offline/online CA infrastructure with web management portal.
 
 ## Architecture
 
 ```
-┌─────────────────────┐     ┌─────────────────────┐
-│   OFFLINE ROOT CA   │     │  ONLINE INTERMEDIATE│
-│   (Air-gapped)      │────▶│     CA (Online)     │
-│   4096-bit RSA      │     │   2048/4096-bit     │
-│   20-year validity  │     │   10-year validity  │
-└─────────────────────┘     └─────────┬───────────┘
-                                      │
-                                      ▼
-                          ┌─────────────────────┐
-                          │  PUBLIC PORTAL      │
-                          │  pki.9xc.io         │
-                          │  - Certificate lookup│
-                          │  - CRL distribution  │
-                          │  - OCSP responder    │
-                          └─────────────────────┘
+┌─────────────────────────────────────────┐
+│  React Admin Portal                     │
+│  (http://localhost:3000)                │
+└─────────────────┬───────────────────────┘
+                  │
+┌─────────────────▼───────────────────────┐
+│  Flask API Orchestrator                 │
+│  (http://localhost:5000)                │
+│  - Docker API client                    │
+│  - Certificate management               │
+└─────────────────┬───────────────────────┘
+                  │
+    ┌─────────────┴─────────────┐
+    │                           │
+┌───▼───────┐           ┌──────▼───────┐
+│ root-ca   │           │ intermediate │
+│ container │           │ container    │
+│ (offline) │           │ (online)     │
+│ Port: N/A │           │ Port: 5001   │
+└───────────┘           └──────────────┘
 ```
 
-## Key Features
+## Quick Start
 
-- ✅ Offline root CA with air-gapped security
-- ✅ Configurable certificate key sizes (2048/4096 bits)
-- ✅ Public validation portal with real-time lookup
-- ✅ CRL (Certificate Revocation List) distribution
-- ✅ OCSP responder for real-time validation
-- ✅ PostgreSQL certificate database
-- ✅ Audit logging for all operations
-- ✅ Single-use download links for certificates
+### 1. Build and Start Containers
 
-## Security Model
+```bash
+cd /home/localadmin/.openclaw/workspace/certforge
 
-1. **Root CA**: Never touches the internet, stored offline
-2. **Intermediate CA**: Public-facing, signs leaf certificates
-3. **Leaf Certificates**: User-requested, signed by intermediate
+# Build all images
+docker-compose build
 
-## Documentation
+# Start services
+docker-compose up -d
 
-- [Setup Guide](docs/setup/root-ca-setup.md)
-- [API Reference](docs/api/portal-api.md)
-- [Client Guide](docs/client-guides/install-root-cert.md)
+# Check status
+docker-compose ps
+```
 
-## License
+### 2. Setup Root CA (One-time, offline)
 
-Proprietary - Internal Use Only
+```bash
+# Enter root CA container
+docker exec -it certforge-root-ca bash
+
+# Run setup script (offline key generation)
+./setup-root-ca.sh
+
+# Exit
+exit
+```
+
+### 3. Deploy Intermediate CA
+
+```bash
+# Enter intermediate CA container
+docker exec -it certforge-intermediate-ca bash
+
+# Deploy intermediate CA
+./deploy-intermediate.sh
+
+# Exit
+exit
+```
+
+### 4. Access Admin Portal
+
+```bash
+# Start React dev server
+cd admin-portal
+npm install
+npm start
+
+# Open browser
+# http://localhost:3000
+```
+
+## API Endpoints
+
+### Health Check
+```
+GET /api/health
+```
+
+### Container Management
+```
+GET    /api/containers              # List all containers
+POST   /api/containers/:name/start  # Start container
+POST   /api/containers/:name/stop   # Stop container
+POST   /api/containers/:name/restart# Restart container
+GET    /api/containers/:name/logs   # Get container logs
+```
+
+### Certificate Management
+```
+GET  /api/certs                    # List issued certificates
+GET  /api/certs/:cert_name         # Download certificate
+GET  /api/crl                      # Download CRL
+POST /api/intermediate/issue       # Request certificate issuance
+```
+
+## Security Features
+
+- **Root CA Container**: No network access, manual execution only
+- **Intermediate CA Container**: Network restricted to Flask port
+- **Non-root users**: Both containers run as `certforge` user
+- **Capability dropping**: ALL capabilities dropped
+- **Volume isolation**: Separate volumes for root and intermediate data
+
+## Directory Structure
+
+```
+certforge/
+├── api/
+│   ├── Dockerfile
+│   ├── app.py
+│   ├── requirements.txt
+│   └── .env.example
+├── root-ca/
+│   ├── Dockerfile
+│   ├── setup-root-ca.sh
+│   └── config/
+├── intermediate-ca/
+│   ├── Dockerfile
+│   ├── deploy-intermediate.sh
+│   ├── config/
+│   └── backend/
+│       ├── app.py
+│       ├── requirements.txt
+│       └── db/
+├── admin-portal/
+│   ├── public/
+│   ├── src/
+│   └── package.json
+├── docker-compose.yml
+└── README.md
+```
+
+## Troubleshooting
+
+### Containers won't start
+```bash
+# Check Docker socket permissions
+ls -la /var/run/docker.sock
+
+# Restart Docker daemon
+sudo systemctl restart docker
+```
+
+### Certificate issuance fails
+```bash
+# Check intermediate CA logs
+docker logs certforge-intermediate-ca
+
+# Verify intermediate CA files exist
+docker exec certforge-intermediate-ca ls -la /opt/certforge/intermediate-ca/certs/
+```
+
+### Admin portal won't connect
+```bash
+# Verify API is running
+curl http://localhost:5000/api/health
+
+# Check API logs
+docker logs certforge-api
+```
+
+## Next Steps
+
+1. ✅ Docker containerization complete
+2. 🔄 Wire in authentication (JWT-based)
+3. 🔄 Add access control lists (ACL)
+4. 🔄 Add OCSP responder
+5. 🔄 Create React cert request form
+6. 🔄 Add monitoring and alerts
 
 ---
 
-**Built with:** Python, PostgreSQL, React, OpenSSL
-**Author:** Sam (🧑‍💼)
+**Built by Sam** 🧑‍💼
