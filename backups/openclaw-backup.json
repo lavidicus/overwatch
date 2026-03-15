@@ -1,11 +1,11 @@
 {
   "meta": {
-    "lastTouchedVersion": "2026.3.8",
-    "lastTouchedAt": "2026-03-14T05:43:01.160Z"
+    "lastTouchedVersion": "2026.3.11",
+    "lastTouchedAt": "2026-03-15T05:23:57.353Z"
   },
   "wizard": {
-    "lastRunAt": "2026-03-10T14:18:42.779Z",
-    "lastRunVersion": "2026.3.8",
+    "lastRunAt": "2026-03-14T17:52:49.450Z",
+    "lastRunVersion": "2026.3.11",
     "lastRunCommand": "doctor",
     "lastRunMode": "local"
   },
@@ -23,7 +23,6 @@
       "olla": {
         "baseUrl": "http://olla:11434/v1",
         "apiKey": "local",
-        "api": "openai-completions",
         "models": [
           {
             "id": "qwen3.5:latest",
@@ -39,7 +38,7 @@
               "cacheRead": 0,
               "cacheWrite": 0
             },
-            "contextWindow": 131072,
+            "contextWindow": 262144,
             "maxTokens": 8192
           }
         ]
@@ -52,6 +51,7 @@
         "primary": "olla/qwen3.5:latest",
         "fallbacks": [
           "github-copilot/gpt-5-mini",
+          "github-copilot/claude-opus-4.6",
           "github-copilot/gpt-5.2-codex"
         ]
       },
@@ -61,41 +61,507 @@
         },
         "olla/qwen3.5:latest": {
           "alias": "qwen3.5"
-        }
-      },
-      "workspace": "/home/localadmin/.openclaw/workspace",
-      "compaction": {
-        "mode": "safeguard",
-        "reserveTokens": 40000,
-        "memoryFlush": {
-          "enabled": true,
-          "softThresholdTokens": 100000,
-          "prompt": "\nBefore context compaction, write important context to memory files:\n- Update memory/YYYY-MM-DD.md with today's decisions, blockers, and next steps\n- Capture any CR/issue tickets created\n- Document configuration changes made\n- Record lessons learned or technical notes\n- Summarize any project updates or state changes\n\nUse NO_REPLY so this doesn't appear in the chat.\n",
-          "systemPrompt": "\nYou are about to trigger context compaction. Before that happens, perform a silent memory flush:\n\n1. Review the conversation for important decisions, changes, or context\n2. Write to memory files (memory/YYYY-MM-DD.md)\n3. Keep it concise but complete\n4. DO NOT send this to the user - use NO_REPLY\n\nThis ensures valuable context survives compaction.\n"
-        }
-      },
-      "heartbeat": {
-        "every": "6h",
-        "model": "olla/qwen3.5:latest",
-        "session": "main",
-        "target": "signal",
-        "prompt": "Report blockers/opportunities. No updates → 'No blockers — <time>'."
-      },
-      "maxConcurrent": 4,
-      "subagents": {
-        "maxConcurrent": 8
+        },
+        "github-copilot/claude-opus-4.6": {
+          "alias": "opus"
+        },
+        "github-copilot/gpt-5-mini": {
+          "alias": "mini"
+        },
+        "github-copilot/gpt-5.3-codex": {}
       }
     },
     "list": [
       {
-        "id": "main"
+        "id": "main",
+        "default": true
       },
       {
-        "id": "botbus",
+        "id": "feature-dev_planner",
+        "name": "Planner",
+        "workspace": "/home/localadmin/.openclaw/workspaces/workflows/feature-dev/agents/planner",
+        "agentDir": "/home/localadmin/.openclaw/agents/feature-dev_planner/agent",
+        "subagents": {
+          "allowAgents": []
+        },
         "tools": {
-          "exec": {
-            "ask": "off"
-          }
+          "profile": "coding",
+          "deny": [
+            "gateway",
+            "cron",
+            "message",
+            "nodes",
+            "canvas",
+            "sessions_send",
+            "write",
+            "edit",
+            "apply_patch",
+            "image",
+            "tts",
+            "group:ui"
+          ]
+        }
+      },
+      {
+        "id": "feature-dev_setup",
+        "name": "Setup",
+        "workspace": "/home/localadmin/.openclaw/workspaces/workflows/feature-dev/agents/setup",
+        "agentDir": "/home/localadmin/.openclaw/agents/feature-dev_setup/agent",
+        "subagents": {
+          "allowAgents": []
+        },
+        "tools": {
+          "profile": "coding",
+          "deny": [
+            "gateway",
+            "cron",
+            "message",
+            "nodes",
+            "canvas",
+            "sessions_send",
+            "image",
+            "tts",
+            "group:ui"
+          ]
+        }
+      },
+      {
+        "id": "feature-dev_developer",
+        "name": "Developer",
+        "workspace": "/home/localadmin/.openclaw/workspaces/workflows/feature-dev/agents/developer",
+        "agentDir": "/home/localadmin/.openclaw/agents/feature-dev_developer/agent",
+        "subagents": {
+          "allowAgents": []
+        },
+        "tools": {
+          "profile": "coding",
+          "deny": [
+            "gateway",
+            "cron",
+            "message",
+            "nodes",
+            "canvas",
+            "sessions_send",
+            "image",
+            "tts",
+            "group:ui"
+          ]
+        }
+      },
+      {
+        "id": "feature-dev_verifier",
+        "name": "Verifier",
+        "workspace": "/home/localadmin/.openclaw/workspaces/workflows/feature-dev/agents/verifier",
+        "agentDir": "/home/localadmin/.openclaw/agents/feature-dev_verifier/agent",
+        "subagents": {
+          "allowAgents": []
+        },
+        "tools": {
+          "profile": "coding",
+          "deny": [
+            "gateway",
+            "cron",
+            "message",
+            "nodes",
+            "canvas",
+            "sessions_send",
+            "write",
+            "edit",
+            "apply_patch",
+            "image",
+            "tts",
+            "group:ui"
+          ]
+        }
+      },
+      {
+        "id": "feature-dev_tester",
+        "name": "Tester",
+        "workspace": "/home/localadmin/.openclaw/workspaces/workflows/feature-dev/agents/tester",
+        "agentDir": "/home/localadmin/.openclaw/agents/feature-dev_tester/agent",
+        "subagents": {
+          "allowAgents": []
+        },
+        "tools": {
+          "profile": "coding",
+          "alsoAllow": [
+            "browser",
+            "web_search",
+            "web_fetch"
+          ],
+          "deny": [
+            "gateway",
+            "cron",
+            "message",
+            "nodes",
+            "canvas",
+            "sessions_send",
+            "write",
+            "edit",
+            "apply_patch",
+            "image",
+            "tts"
+          ]
+        }
+      },
+      {
+        "id": "feature-dev_reviewer",
+        "name": "Reviewer",
+        "workspace": "/home/localadmin/.openclaw/workspaces/workflows/feature-dev/agents/reviewer",
+        "agentDir": "/home/localadmin/.openclaw/agents/feature-dev_reviewer/agent",
+        "subagents": {
+          "allowAgents": []
+        },
+        "tools": {
+          "profile": "coding",
+          "deny": [
+            "gateway",
+            "cron",
+            "message",
+            "nodes",
+            "canvas",
+            "sessions_send",
+            "write",
+            "edit",
+            "apply_patch",
+            "image",
+            "tts",
+            "group:ui"
+          ]
+        }
+      },
+      {
+        "id": "bug-fix_triager",
+        "name": "Triager",
+        "workspace": "/home/localadmin/.openclaw/workspaces/workflows/bug-fix/agents/triager",
+        "agentDir": "/home/localadmin/.openclaw/agents/bug-fix_triager/agent",
+        "subagents": {
+          "allowAgents": []
+        },
+        "tools": {
+          "profile": "coding",
+          "deny": [
+            "gateway",
+            "cron",
+            "message",
+            "nodes",
+            "canvas",
+            "sessions_send",
+            "write",
+            "edit",
+            "apply_patch",
+            "image",
+            "tts",
+            "group:ui"
+          ]
+        }
+      },
+      {
+        "id": "bug-fix_investigator",
+        "name": "Investigator",
+        "workspace": "/home/localadmin/.openclaw/workspaces/workflows/bug-fix/agents/investigator",
+        "agentDir": "/home/localadmin/.openclaw/agents/bug-fix_investigator/agent",
+        "subagents": {
+          "allowAgents": []
+        },
+        "tools": {
+          "profile": "coding",
+          "deny": [
+            "gateway",
+            "cron",
+            "message",
+            "nodes",
+            "canvas",
+            "sessions_send",
+            "write",
+            "edit",
+            "apply_patch",
+            "image",
+            "tts",
+            "group:ui"
+          ]
+        }
+      },
+      {
+        "id": "bug-fix_setup",
+        "name": "Setup",
+        "workspace": "/home/localadmin/.openclaw/workspaces/workflows/bug-fix/agents/setup",
+        "agentDir": "/home/localadmin/.openclaw/agents/bug-fix_setup/agent",
+        "subagents": {
+          "allowAgents": []
+        },
+        "tools": {
+          "profile": "coding",
+          "deny": [
+            "gateway",
+            "cron",
+            "message",
+            "nodes",
+            "canvas",
+            "sessions_send",
+            "image",
+            "tts",
+            "group:ui"
+          ]
+        }
+      },
+      {
+        "id": "bug-fix_fixer",
+        "name": "Fixer",
+        "workspace": "/home/localadmin/.openclaw/workspaces/workflows/bug-fix/agents/fixer",
+        "agentDir": "/home/localadmin/.openclaw/agents/bug-fix_fixer/agent",
+        "subagents": {
+          "allowAgents": []
+        },
+        "tools": {
+          "profile": "coding",
+          "deny": [
+            "gateway",
+            "cron",
+            "message",
+            "nodes",
+            "canvas",
+            "sessions_send",
+            "image",
+            "tts",
+            "group:ui"
+          ]
+        }
+      },
+      {
+        "id": "bug-fix_verifier",
+        "name": "Verifier",
+        "workspace": "/home/localadmin/.openclaw/workspaces/workflows/bug-fix/agents/verifier",
+        "agentDir": "/home/localadmin/.openclaw/agents/bug-fix_verifier/agent",
+        "subagents": {
+          "allowAgents": []
+        },
+        "tools": {
+          "profile": "coding",
+          "deny": [
+            "gateway",
+            "cron",
+            "message",
+            "nodes",
+            "canvas",
+            "sessions_send",
+            "write",
+            "edit",
+            "apply_patch",
+            "image",
+            "tts",
+            "group:ui"
+          ]
+        }
+      },
+      {
+        "id": "bug-fix_pr",
+        "name": "PR Creator",
+        "workspace": "/home/localadmin/.openclaw/workspaces/workflows/bug-fix/agents/pr",
+        "agentDir": "/home/localadmin/.openclaw/agents/bug-fix_pr/agent",
+        "subagents": {
+          "allowAgents": []
+        },
+        "tools": {
+          "profile": "coding",
+          "deny": [
+            "gateway",
+            "cron",
+            "message",
+            "nodes",
+            "canvas",
+            "sessions_send",
+            "write",
+            "edit",
+            "apply_patch",
+            "image",
+            "tts",
+            "group:ui"
+          ]
+        }
+      },
+      {
+        "id": "security-audit_scanner",
+        "name": "Scanner",
+        "workspace": "/home/localadmin/.openclaw/workspaces/workflows/security-audit/agents/scanner",
+        "agentDir": "/home/localadmin/.openclaw/agents/security-audit_scanner/agent",
+        "subagents": {
+          "allowAgents": []
+        },
+        "tools": {
+          "profile": "coding",
+          "alsoAllow": [
+            "web_search",
+            "web_fetch"
+          ],
+          "deny": [
+            "gateway",
+            "cron",
+            "message",
+            "nodes",
+            "canvas",
+            "sessions_send",
+            "write",
+            "edit",
+            "apply_patch",
+            "image",
+            "tts",
+            "group:ui"
+          ]
+        }
+      },
+      {
+        "id": "security-audit_prioritizer",
+        "name": "Prioritizer",
+        "workspace": "/home/localadmin/.openclaw/workspaces/workflows/security-audit/agents/prioritizer",
+        "agentDir": "/home/localadmin/.openclaw/agents/security-audit_prioritizer/agent",
+        "subagents": {
+          "allowAgents": []
+        },
+        "tools": {
+          "profile": "coding",
+          "deny": [
+            "gateway",
+            "cron",
+            "message",
+            "nodes",
+            "canvas",
+            "sessions_send",
+            "write",
+            "edit",
+            "apply_patch",
+            "image",
+            "tts",
+            "group:ui"
+          ]
+        }
+      },
+      {
+        "id": "security-audit_setup",
+        "name": "Setup",
+        "workspace": "/home/localadmin/.openclaw/workspaces/workflows/security-audit/agents/setup",
+        "agentDir": "/home/localadmin/.openclaw/agents/security-audit_setup/agent",
+        "subagents": {
+          "allowAgents": []
+        },
+        "tools": {
+          "profile": "coding",
+          "deny": [
+            "gateway",
+            "cron",
+            "message",
+            "nodes",
+            "canvas",
+            "sessions_send",
+            "image",
+            "tts",
+            "group:ui"
+          ]
+        }
+      },
+      {
+        "id": "security-audit_fixer",
+        "name": "Fixer",
+        "workspace": "/home/localadmin/.openclaw/workspaces/workflows/security-audit/agents/fixer",
+        "agentDir": "/home/localadmin/.openclaw/agents/security-audit_fixer/agent",
+        "subagents": {
+          "allowAgents": []
+        },
+        "tools": {
+          "profile": "coding",
+          "deny": [
+            "gateway",
+            "cron",
+            "message",
+            "nodes",
+            "canvas",
+            "sessions_send",
+            "image",
+            "tts",
+            "group:ui"
+          ]
+        }
+      },
+      {
+        "id": "security-audit_verifier",
+        "name": "Verifier",
+        "workspace": "/home/localadmin/.openclaw/workspaces/workflows/security-audit/agents/verifier",
+        "agentDir": "/home/localadmin/.openclaw/agents/security-audit_verifier/agent",
+        "subagents": {
+          "allowAgents": []
+        },
+        "tools": {
+          "profile": "coding",
+          "deny": [
+            "gateway",
+            "cron",
+            "message",
+            "nodes",
+            "canvas",
+            "sessions_send",
+            "write",
+            "edit",
+            "apply_patch",
+            "image",
+            "tts",
+            "group:ui"
+          ]
+        }
+      },
+      {
+        "id": "security-audit_tester",
+        "name": "Tester",
+        "workspace": "/home/localadmin/.openclaw/workspaces/workflows/security-audit/agents/tester",
+        "agentDir": "/home/localadmin/.openclaw/agents/security-audit_tester/agent",
+        "subagents": {
+          "allowAgents": []
+        },
+        "tools": {
+          "profile": "coding",
+          "alsoAllow": [
+            "browser",
+            "web_search",
+            "web_fetch"
+          ],
+          "deny": [
+            "gateway",
+            "cron",
+            "message",
+            "nodes",
+            "canvas",
+            "sessions_send",
+            "write",
+            "edit",
+            "apply_patch",
+            "image",
+            "tts"
+          ]
+        }
+      },
+      {
+        "id": "security-audit_pr",
+        "name": "PR Creator",
+        "workspace": "/home/localadmin/.openclaw/workspaces/workflows/security-audit/agents/pr",
+        "agentDir": "/home/localadmin/.openclaw/agents/security-audit_pr/agent",
+        "subagents": {
+          "allowAgents": []
+        },
+        "tools": {
+          "profile": "coding",
+          "deny": [
+            "gateway",
+            "cron",
+            "message",
+            "nodes",
+            "canvas",
+            "sessions_send",
+            "write",
+            "edit",
+            "apply_patch",
+            "image",
+            "tts",
+            "group:ui"
+          ]
         }
       }
     ]
@@ -109,6 +575,30 @@
       "fetch": {
         "enabled": true
       }
+    },
+    "agentToAgent": {
+      "enabled": true,
+      "allow": [
+        "feature-dev_planner",
+        "feature-dev_setup",
+        "feature-dev_developer",
+        "feature-dev_verifier",
+        "feature-dev_tester",
+        "feature-dev_reviewer",
+        "bug-fix_triager",
+        "bug-fix_investigator",
+        "bug-fix_setup",
+        "bug-fix_fixer",
+        "bug-fix_verifier",
+        "bug-fix_pr",
+        "security-audit_scanner",
+        "security-audit_prioritizer",
+        "security-audit_setup",
+        "security-audit_fixer",
+        "security-audit_verifier",
+        "security-audit_tester",
+        "security-audit_pr"
+      ]
     },
     "exec": {
       "host": "gateway",
@@ -143,7 +633,16 @@
     }
   },
   "session": {
-    "dmScope": "per-channel-peer"
+    "dmScope": "per-channel-peer",
+    "maintenance": {
+      "mode": "enforce",
+      "pruneAfter": "7d",
+      "maxEntries": 500,
+      "rotateBytes": "10mb"
+    }
+  },
+  "cron": {
+    "sessionRetention": "24h"
   },
   "hooks": {
     "internal": {
@@ -186,6 +685,11 @@
       "mode": "token",
       "token": "9d801f111a4eaf2921e815803c4d9b98452c25354d2153b3"
     },
+    "tools": {
+      "allow": [
+        "cron"
+      ]
+    },
     "tailscale": {
       "mode": "off",
       "resetOnExit": false
@@ -205,7 +709,9 @@
     }
   },
   "plugins": {
-  "allow": ["matrix"],
+    "allow": [
+      "matrix"
+    ],
     "entries": {
       "matrix": {
         "enabled": true
@@ -216,14 +722,14 @@
         "source": "npm",
         "spec": "@openclaw/matrix",
         "installPath": "/home/localadmin/.openclaw/extensions/matrix",
-        "version": "2026.3.13",
+        "version": "2026.3.11",
         "resolvedName": "@openclaw/matrix",
-        "resolvedVersion": "2026.3.13",
-        "resolvedSpec": "@openclaw/matrix@2026.3.13",
+        "resolvedVersion": "2026.3.11",
+        "resolvedSpec": "@openclaw/matrix@2026.3.11",
         "integrity": "sha512-xPXsS7NJQiGU4T/6mOEbqEqOTcvkyK9dbCOzJfYfsk7dmmZ7UffXf5F9FugHpOjv5NMzBCw1wQnjk3Ign5TyFw==",
         "shasum": "120fe2136c1bc34d52e97a97beae35d683062172",
-        "resolvedAt": "2026-03-14T05:42:53.636Z",
-        "installedAt": "2026-03-14T05:43:01.115Z"
+        "resolvedAt": "2026-03-15T05:23:46.416Z",
+        "installedAt": "2026-03-15T05:23:57.293Z"
       }
     }
   }
