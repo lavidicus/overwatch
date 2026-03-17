@@ -1,7 +1,7 @@
 {
   "meta": {
-    "lastTouchedVersion": "2026.3.11",
-    "lastTouchedAt": "2026-03-15T05:23:57.353Z"
+    "lastTouchedVersion": "2026.3.13",
+    "lastTouchedAt": "2026-03-16T19:21:52.842Z"
   },
   "wizard": {
     "lastRunAt": "2026-03-14T17:52:49.450Z",
@@ -69,499 +69,25 @@
           "alias": "mini"
         },
         "github-copilot/gpt-5.3-codex": {}
+      },
+      "compaction": {
+        "mode": "safeguard",
+        "reserveTokens": 40000
       }
     },
     "list": [
       {
         "id": "main",
-        "default": true
-      },
-      {
-        "id": "feature-dev_planner",
-        "name": "Planner",
-        "workspace": "/home/localadmin/.openclaw/workspaces/workflows/feature-dev/agents/planner",
-        "agentDir": "/home/localadmin/.openclaw/agents/feature-dev_planner/agent",
-        "subagents": {
-          "allowAgents": []
-        },
+        "default": true,
         "tools": {
-          "profile": "coding",
-          "deny": [
-            "gateway",
-            "cron",
-            "message",
-            "nodes",
-            "canvas",
-            "sessions_send",
-            "write",
-            "edit",
-            "apply_patch",
-            "image",
-            "tts",
-            "group:ui"
-          ]
-        }
-      },
-      {
-        "id": "feature-dev_setup",
-        "name": "Setup",
-        "workspace": "/home/localadmin/.openclaw/workspaces/workflows/feature-dev/agents/setup",
-        "agentDir": "/home/localadmin/.openclaw/agents/feature-dev_setup/agent",
-        "subagents": {
-          "allowAgents": []
-        },
-        "tools": {
-          "profile": "coding",
-          "deny": [
-            "gateway",
-            "cron",
-            "message",
-            "nodes",
-            "canvas",
-            "sessions_send",
-            "image",
-            "tts",
-            "group:ui"
-          ]
-        }
-      },
-      {
-        "id": "feature-dev_developer",
-        "name": "Developer",
-        "workspace": "/home/localadmin/.openclaw/workspaces/workflows/feature-dev/agents/developer",
-        "agentDir": "/home/localadmin/.openclaw/agents/feature-dev_developer/agent",
-        "subagents": {
-          "allowAgents": []
-        },
-        "tools": {
-          "profile": "coding",
-          "deny": [
-            "gateway",
-            "cron",
-            "message",
-            "nodes",
-            "canvas",
-            "sessions_send",
-            "image",
-            "tts",
-            "group:ui"
-          ]
-        }
-      },
-      {
-        "id": "feature-dev_verifier",
-        "name": "Verifier",
-        "workspace": "/home/localadmin/.openclaw/workspaces/workflows/feature-dev/agents/verifier",
-        "agentDir": "/home/localadmin/.openclaw/agents/feature-dev_verifier/agent",
-        "subagents": {
-          "allowAgents": []
-        },
-        "tools": {
-          "profile": "coding",
-          "deny": [
-            "gateway",
-            "cron",
-            "message",
-            "nodes",
-            "canvas",
-            "sessions_send",
-            "write",
-            "edit",
-            "apply_patch",
-            "image",
-            "tts",
-            "group:ui"
-          ]
-        }
-      },
-      {
-        "id": "feature-dev_tester",
-        "name": "Tester",
-        "workspace": "/home/localadmin/.openclaw/workspaces/workflows/feature-dev/agents/tester",
-        "agentDir": "/home/localadmin/.openclaw/agents/feature-dev_tester/agent",
-        "subagents": {
-          "allowAgents": []
-        },
-        "tools": {
-          "profile": "coding",
-          "alsoAllow": [
-            "browser",
-            "web_search",
-            "web_fetch"
-          ],
-          "deny": [
-            "gateway",
-            "cron",
-            "message",
-            "nodes",
-            "canvas",
-            "sessions_send",
-            "write",
-            "edit",
-            "apply_patch",
-            "image",
-            "tts"
-          ]
-        }
-      },
-      {
-        "id": "feature-dev_reviewer",
-        "name": "Reviewer",
-        "workspace": "/home/localadmin/.openclaw/workspaces/workflows/feature-dev/agents/reviewer",
-        "agentDir": "/home/localadmin/.openclaw/agents/feature-dev_reviewer/agent",
-        "subagents": {
-          "allowAgents": []
-        },
-        "tools": {
-          "profile": "coding",
-          "deny": [
-            "gateway",
-            "cron",
-            "message",
-            "nodes",
-            "canvas",
-            "sessions_send",
-            "write",
-            "edit",
-            "apply_patch",
-            "image",
-            "tts",
-            "group:ui"
-          ]
-        }
-      },
-      {
-        "id": "bug-fix_triager",
-        "name": "Triager",
-        "workspace": "/home/localadmin/.openclaw/workspaces/workflows/bug-fix/agents/triager",
-        "agentDir": "/home/localadmin/.openclaw/agents/bug-fix_triager/agent",
-        "subagents": {
-          "allowAgents": []
-        },
-        "tools": {
-          "profile": "coding",
-          "deny": [
-            "gateway",
-            "cron",
-            "message",
-            "nodes",
-            "canvas",
-            "sessions_send",
-            "write",
-            "edit",
-            "apply_patch",
-            "image",
-            "tts",
-            "group:ui"
-          ]
-        }
-      },
-      {
-        "id": "bug-fix_investigator",
-        "name": "Investigator",
-        "workspace": "/home/localadmin/.openclaw/workspaces/workflows/bug-fix/agents/investigator",
-        "agentDir": "/home/localadmin/.openclaw/agents/bug-fix_investigator/agent",
-        "subagents": {
-          "allowAgents": []
-        },
-        "tools": {
-          "profile": "coding",
-          "deny": [
-            "gateway",
-            "cron",
-            "message",
-            "nodes",
-            "canvas",
-            "sessions_send",
-            "write",
-            "edit",
-            "apply_patch",
-            "image",
-            "tts",
-            "group:ui"
-          ]
-        }
-      },
-      {
-        "id": "bug-fix_setup",
-        "name": "Setup",
-        "workspace": "/home/localadmin/.openclaw/workspaces/workflows/bug-fix/agents/setup",
-        "agentDir": "/home/localadmin/.openclaw/agents/bug-fix_setup/agent",
-        "subagents": {
-          "allowAgents": []
-        },
-        "tools": {
-          "profile": "coding",
-          "deny": [
-            "gateway",
-            "cron",
-            "message",
-            "nodes",
-            "canvas",
-            "sessions_send",
-            "image",
-            "tts",
-            "group:ui"
-          ]
-        }
-      },
-      {
-        "id": "bug-fix_fixer",
-        "name": "Fixer",
-        "workspace": "/home/localadmin/.openclaw/workspaces/workflows/bug-fix/agents/fixer",
-        "agentDir": "/home/localadmin/.openclaw/agents/bug-fix_fixer/agent",
-        "subagents": {
-          "allowAgents": []
-        },
-        "tools": {
-          "profile": "coding",
-          "deny": [
-            "gateway",
-            "cron",
-            "message",
-            "nodes",
-            "canvas",
-            "sessions_send",
-            "image",
-            "tts",
-            "group:ui"
-          ]
-        }
-      },
-      {
-        "id": "bug-fix_verifier",
-        "name": "Verifier",
-        "workspace": "/home/localadmin/.openclaw/workspaces/workflows/bug-fix/agents/verifier",
-        "agentDir": "/home/localadmin/.openclaw/agents/bug-fix_verifier/agent",
-        "subagents": {
-          "allowAgents": []
-        },
-        "tools": {
-          "profile": "coding",
-          "deny": [
-            "gateway",
-            "cron",
-            "message",
-            "nodes",
-            "canvas",
-            "sessions_send",
-            "write",
-            "edit",
-            "apply_patch",
-            "image",
-            "tts",
-            "group:ui"
-          ]
-        }
-      },
-      {
-        "id": "bug-fix_pr",
-        "name": "PR Creator",
-        "workspace": "/home/localadmin/.openclaw/workspaces/workflows/bug-fix/agents/pr",
-        "agentDir": "/home/localadmin/.openclaw/agents/bug-fix_pr/agent",
-        "subagents": {
-          "allowAgents": []
-        },
-        "tools": {
-          "profile": "coding",
-          "deny": [
-            "gateway",
-            "cron",
-            "message",
-            "nodes",
-            "canvas",
-            "sessions_send",
-            "write",
-            "edit",
-            "apply_patch",
-            "image",
-            "tts",
-            "group:ui"
-          ]
-        }
-      },
-      {
-        "id": "security-audit_scanner",
-        "name": "Scanner",
-        "workspace": "/home/localadmin/.openclaw/workspaces/workflows/security-audit/agents/scanner",
-        "agentDir": "/home/localadmin/.openclaw/agents/security-audit_scanner/agent",
-        "subagents": {
-          "allowAgents": []
-        },
-        "tools": {
-          "profile": "coding",
-          "alsoAllow": [
-            "web_search",
-            "web_fetch"
-          ],
-          "deny": [
-            "gateway",
-            "cron",
-            "message",
-            "nodes",
-            "canvas",
-            "sessions_send",
-            "write",
-            "edit",
-            "apply_patch",
-            "image",
-            "tts",
-            "group:ui"
-          ]
-        }
-      },
-      {
-        "id": "security-audit_prioritizer",
-        "name": "Prioritizer",
-        "workspace": "/home/localadmin/.openclaw/workspaces/workflows/security-audit/agents/prioritizer",
-        "agentDir": "/home/localadmin/.openclaw/agents/security-audit_prioritizer/agent",
-        "subagents": {
-          "allowAgents": []
-        },
-        "tools": {
-          "profile": "coding",
-          "deny": [
-            "gateway",
-            "cron",
-            "message",
-            "nodes",
-            "canvas",
-            "sessions_send",
-            "write",
-            "edit",
-            "apply_patch",
-            "image",
-            "tts",
-            "group:ui"
-          ]
-        }
-      },
-      {
-        "id": "security-audit_setup",
-        "name": "Setup",
-        "workspace": "/home/localadmin/.openclaw/workspaces/workflows/security-audit/agents/setup",
-        "agentDir": "/home/localadmin/.openclaw/agents/security-audit_setup/agent",
-        "subagents": {
-          "allowAgents": []
-        },
-        "tools": {
-          "profile": "coding",
-          "deny": [
-            "gateway",
-            "cron",
-            "message",
-            "nodes",
-            "canvas",
-            "sessions_send",
-            "image",
-            "tts",
-            "group:ui"
-          ]
-        }
-      },
-      {
-        "id": "security-audit_fixer",
-        "name": "Fixer",
-        "workspace": "/home/localadmin/.openclaw/workspaces/workflows/security-audit/agents/fixer",
-        "agentDir": "/home/localadmin/.openclaw/agents/security-audit_fixer/agent",
-        "subagents": {
-          "allowAgents": []
-        },
-        "tools": {
-          "profile": "coding",
-          "deny": [
-            "gateway",
-            "cron",
-            "message",
-            "nodes",
-            "canvas",
-            "sessions_send",
-            "image",
-            "tts",
-            "group:ui"
-          ]
-        }
-      },
-      {
-        "id": "security-audit_verifier",
-        "name": "Verifier",
-        "workspace": "/home/localadmin/.openclaw/workspaces/workflows/security-audit/agents/verifier",
-        "agentDir": "/home/localadmin/.openclaw/agents/security-audit_verifier/agent",
-        "subagents": {
-          "allowAgents": []
-        },
-        "tools": {
-          "profile": "coding",
-          "deny": [
-            "gateway",
-            "cron",
-            "message",
-            "nodes",
-            "canvas",
-            "sessions_send",
-            "write",
-            "edit",
-            "apply_patch",
-            "image",
-            "tts",
-            "group:ui"
-          ]
-        }
-      },
-      {
-        "id": "security-audit_tester",
-        "name": "Tester",
-        "workspace": "/home/localadmin/.openclaw/workspaces/workflows/security-audit/agents/tester",
-        "agentDir": "/home/localadmin/.openclaw/agents/security-audit_tester/agent",
-        "subagents": {
-          "allowAgents": []
-        },
-        "tools": {
-          "profile": "coding",
-          "alsoAllow": [
-            "browser",
-            "web_search",
-            "web_fetch"
-          ],
-          "deny": [
-            "gateway",
-            "cron",
-            "message",
-            "nodes",
-            "canvas",
-            "sessions_send",
-            "write",
-            "edit",
-            "apply_patch",
-            "image",
-            "tts"
-          ]
-        }
-      },
-      {
-        "id": "security-audit_pr",
-        "name": "PR Creator",
-        "workspace": "/home/localadmin/.openclaw/workspaces/workflows/security-audit/agents/pr",
-        "agentDir": "/home/localadmin/.openclaw/agents/security-audit_pr/agent",
-        "subagents": {
-          "allowAgents": []
-        },
-        "tools": {
-          "profile": "coding",
-          "deny": [
-            "gateway",
-            "cron",
-            "message",
-            "nodes",
-            "canvas",
-            "sessions_send",
-            "write",
-            "edit",
-            "apply_patch",
-            "image",
-            "tts",
-            "group:ui"
-          ]
+          "elevated": {
+            "enabled": true,
+            "allowFrom": {
+              "matrix": [
+                "@lavid:comms.9xc.io"
+              ]
+            }
+          }
         }
       }
     ]
@@ -576,50 +102,11 @@
         "enabled": true
       }
     },
-    "agentToAgent": {
-      "enabled": true,
-      "allow": [
-        "feature-dev_planner",
-        "feature-dev_setup",
-        "feature-dev_developer",
-        "feature-dev_verifier",
-        "feature-dev_tester",
-        "feature-dev_reviewer",
-        "bug-fix_triager",
-        "bug-fix_investigator",
-        "bug-fix_setup",
-        "bug-fix_fixer",
-        "bug-fix_verifier",
-        "bug-fix_pr",
-        "security-audit_scanner",
-        "security-audit_prioritizer",
-        "security-audit_setup",
-        "security-audit_fixer",
-        "security-audit_verifier",
-        "security-audit_tester",
-        "security-audit_pr"
-      ]
-    },
     "exec": {
       "host": "gateway",
       "security": "full",
       "ask": "off"
     }
-  },
-  "bindings": [
-    {
-      "agentId": "botbus",
-      "match": {
-        "channel": "signal",
-        "peer": {
-          "kind": "group",
-          "id": "d+dlhvhUvsOSQi4zpIj2tBKsIqgYLWFZelLe7oAWWq0="
-        }
-      }
-    }
-  ],
-  "messages": {
-    "ackReactionScope": "group-mentions"
   },
   "commands": {
     "native": "auto",
@@ -633,13 +120,7 @@
     }
   },
   "session": {
-    "dmScope": "per-channel-peer",
-    "maintenance": {
-      "mode": "enforce",
-      "pruneAfter": "7d",
-      "maxEntries": 500,
-      "rotateBytes": "10mb"
-    }
+    "dmScope": "per-channel-peer"
   },
   "cron": {
     "sessionRetention": "24h"
@@ -669,10 +150,10 @@
       "homeserver": "https://comms.9xc.io",
       "userId": "@sam:comms.9xc.io",
       "password": "TheRightSam2026!",
+      "encryption": true,
       "dmPolicy": "allowlist",
       "allowFrom": [
         "@eve:comms.9xc.io",
-        "@sam:comms.9xc.io",
         "@lavid:comms.9xc.io"
       ]
     }
@@ -709,27 +190,9 @@
     }
   },
   "plugins": {
-    "allow": [
-      "matrix"
-    ],
     "entries": {
       "matrix": {
         "enabled": true
-      }
-    },
-    "installs": {
-      "matrix": {
-        "source": "npm",
-        "spec": "@openclaw/matrix",
-        "installPath": "/home/localadmin/.openclaw/extensions/matrix",
-        "version": "2026.3.11",
-        "resolvedName": "@openclaw/matrix",
-        "resolvedVersion": "2026.3.11",
-        "resolvedSpec": "@openclaw/matrix@2026.3.11",
-        "integrity": "sha512-xPXsS7NJQiGU4T/6mOEbqEqOTcvkyK9dbCOzJfYfsk7dmmZ7UffXf5F9FugHpOjv5NMzBCw1wQnjk3Ign5TyFw==",
-        "shasum": "120fe2136c1bc34d52e97a97beae35d683062172",
-        "resolvedAt": "2026-03-15T05:23:46.416Z",
-        "installedAt": "2026-03-15T05:23:57.293Z"
       }
     }
   }
