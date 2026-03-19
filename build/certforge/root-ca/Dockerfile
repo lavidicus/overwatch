@@ -19,6 +19,7 @@ COPY . .
 # Security: drop all capabilities, run as non-root
 RUN useradd -r -s /bin/false certforge && \
     chown -R certforge:certforge /opt/certforge && \
+    mkdir -p /opt/certforge/root-ca/private && \
     chmod 700 /opt/certforge/root-ca/private
 
 # Switch to non-root user

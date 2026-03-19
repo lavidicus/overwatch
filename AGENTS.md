@@ -236,3 +236,17 @@ The goal: Be helpful without being annoying. Check in a few times a day, do usef
 ## Make It Yours
 
 This is a starting point. Add your own conventions, style, and rules as you figure out what works.
+
+<!-- antfarm:workflows -->
+# Antfarm Workflow Policy
+
+## Installing Workflows
+Run: `node ~/.openclaw/workspace/antfarm/dist/cli/cli.js workflow install <name>`
+Agent cron jobs are created automatically during install.
+
+## Running Workflows
+- Start: `node ~/.openclaw/workspace/antfarm/dist/cli/cli.js workflow run <workflow-id> "<task>"`
+- Status: `node ~/.openclaw/workspace/antfarm/dist/cli/cli.js workflow status "<task title>"`
+- Workflows self-advance via agent cron jobs polling SQLite for pending steps.
+<!-- /antfarm:workflows -->
+

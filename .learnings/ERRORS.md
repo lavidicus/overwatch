@@ -253,6 +253,48 @@ Retry restart after confirming session stability; consider restarting outside ac
 
 ---
 
+## [ERR-20260319-001] qwen3.5-tool-call-emission-failure
+
+**Logged**: 2026-03-19T13:45:00Z
+**Priority**: high
+**Status**: pending
+**Area**: infra
+
+### Summary
+qwen3.5 model emits tool call XML as plain text instead of actually invoking tools. Function calls render in the chat output but never execute.
+
+### Error
+```
+User sees raw XML in chat:
+<tool_call>
+exec
+command="find /home/localadmin/.openclaw/workspace/playbooks -name '*.md' -type f"
+```
+Tool is never actually invoked. No exec happens.
+
+### Context
+- Model: olla/qwen3.5:latest via Ollama on usm1 (olla host)
+- Server: llama-server with `--ctx-size 131072`
+- Missing: `--jinja` flag and/or `--chat-template chatml` for proper tool call formatting
+- OpenClaw sends function calling schema; model responds with raw text instead of structured tool calls
+- Switching to github-copilot/claude-opus-4.6 resolves immediately
+
+### Root Cause (suspected)
+llama-server is not configured with the correct chat template for Qwen 3.5's function calling format. Qwen models use ChatML-based tool calling that requires either:
+1. `--jinja` flag to enable Jinja2 template processing (supports tool_call blocks)
+2. Correct chat template that maps OpenAI-style function calls to Qwen's format
+3. Possibly an outdated llama.cpp build that doesn't support Qwen 3.5 tool calling
+
+### Suggested Fix
+See plan below — recompile llama.cpp and add `--jinja` / chat template flags.
+
+### Metadata
+- Reproducible: yes (every tool call on qwen3.5)
+- Related Files: /home/localadmin/.openclaw/workspace/llama-server.service
+- See Also: None
+
+---
+
 ## [ERR-20260307-002] ssh-usm2-unresolved
 
 **Logged**: 2026-03-07T19:35:00Z

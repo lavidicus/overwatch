@@ -23,8 +23,18 @@ logger = logging.getLogger(__name__)
 app.config['JWT_SECRET_KEY'] = secrets.token_hex(32)
 app.config['JWT_EXPIRATION_HOURS'] = 24
 
-# Docker client
-client = docker.DockerClient()
+# Docker client - use subprocess to avoid docker-py socket issues
+import subprocess
+import json
+
+def docker_command(cmd):
+    """Execute docker command and return JSON result"""
+    try:
+        result = subprocess.run(['docker'] + cmd, capture_output=True, text=True, check=True)
+        return json.loads(result.stdout)
+    except subprocess.CalledProcessError as e:
+        logger.error(f"Docker command failed: {e.stderr}")
+        return None
 
 # Paths
 CERTFORGE_ROOT = "/opt/certforge"
@@ -149,21 +159,23 @@ def health():
 def list_containers():
     """List all CertForge containers"""
     try:
-        containers = client.containers.list(all=True)
-        result = []
+        data = docker_command(['ps', '--filter', 'name=certforge', '--format', '{{json .}}'])
+        if not data:
+            return jsonify({'containers': []})
         
-        for container in containers:
-            if 'certforge' in container.name:
-                result.append({
-                    'id': container.id[:12],
-                    'name': container.name,
-                    'status': container.status,
-                    'image': container.image.tags[0] if container.image.tags else container.image.short_id,
-                    'ports': container.ports,
-                    'created': datetime.fromtimestamp(container.attrs['Created']).isoformat()
+        if isinstance(data, list):
+            containers = []
+            for c in data:
+                containers.append({
+                    'id': c.get('ID', '')[:12],
+                    'name': c.get('Names', ''),
+                    'status': c.get('Status', ''),
+                    'image': c.get('Image', ''),
+                    'ports': c.get('Ports', ''),
+                    'created': datetime.fromtimestamp(c.get('Created', 0)).isoformat() if c.get('Created') else ''
                 })
-        
-        return jsonify({'containers': result})
+            return jsonify({'containers': containers})
+        return jsonify({'containers': []})
     except Exception as e:
         logger.error(f"Error listing containers: {e}")
         return jsonify({'error': str(e)}), 500
@@ -174,11 +186,12 @@ def list_containers():
 def start_container(container_name):
     """Start a container"""
     try:
-        container = client.containers.get(container_name)
-        container.start()
+        result = subprocess.run(['docker', 'start', container_name], capture_output=True, text=True)
+        if result.returncode != 0:
+            if 'No such container' in result.stderr:
+                return jsonify({'error': f'Container {container_name} not found'}), 404
+            return jsonify({'error': result.stderr}), 500
         return jsonify({'status': 'started', 'container': container_name})
-    except docker.errors.NotFound:
-        return jsonify({'error': f'Container {container_name} not found'}), 404
     except Exception as e:
         logger.error(f"Error starting container: {e}")
         return jsonify({'error': str(e)}), 500
@@ -189,11 +202,12 @@ def start_container(container_name):
 def stop_container(container_name):
     """Stop a container"""
     try:
-        container = client.containers.get(container_name)
-        container.stop()
+        result = subprocess.run(['docker', 'stop', container_name], capture_output=True, text=True)
+        if result.returncode != 0:
+            if 'No such container' in result.stderr:
+                return jsonify({'error': f'Container {container_name} not found'}), 404
+            return jsonify({'error': result.stderr}), 500
         return jsonify({'status': 'stopped', 'container': container_name})
-    except docker.errors.NotFound:
-        return jsonify({'error': f'Container {container_name} not found'}), 404
     except Exception as e:
         logger.error(f"Error stopping container: {e}")
         return jsonify({'error': str(e)}), 500

@@ -9,6 +9,7 @@ services:
     ports:
       - "5000:5000"
     volumes:
+      - /var/run/docker.sock:/var/run/docker.sock
       - root-ca-data:/opt/certforge/root-ca
       - intermediate-data:/opt/certforge/intermediate-ca
     networks:

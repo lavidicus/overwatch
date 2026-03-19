@@ -25,6 +25,7 @@ RUN pip install --no-cache-dir -r backend/requirements.txt
 # Security: drop all capabilities, run as non-root
 RUN useradd -r -s /bin/false certforge && \
     chown -R certforge:certforge /opt/certforge && \
+    mkdir -p /opt/certforge/intermediate-ca/private && \
     chmod 700 /opt/certforge/intermediate-ca/private
 
 # Switch to non-root user

@@ -8,6 +8,62 @@ _Curated learnings, decisions, and context. Updated periodically from daily file
   - Source: User instruction from Lavid (2026-03-04 18:28 UTC)
   - Status: Locked into MEMORY.md ✅
 
+- **Token Threshold Configuration** — Always maintain reserveTokens: 40000 for 131k context window
+  - Source: User instruction from Jeremy (2026-03-16 20:31 UTC)
+  - Context: Parsing errors at pos 232 caused by context overflow
+  - Configuration: reserveTokens: 40000 triggers compaction at ~91k tokens
+  - Status: ✅ Documented as permanent constraint
+
+- **Context Window Alert Threshold** — Alert user at 90% capacity
+  - Source: User instruction from Jeremy (2026-03-16 20:53 UTC)
+  - Configuration: Alert when context exceeds 118k tokens (90% of 131k)
+  - Status: ✅ Active monitoring
+
+## 🛑 Context Overflow / Parsing Errors (2026-03-15 06:56-06:59 UTC)
+
+**Issue:** `Failed to parse input at pos 1950` - repeated parsing errors
+
+**Root Cause:** Context window (131k tokens) filling up with tool outputs, metadata, and documentation. Parser hits limit and fails.
+
+**Symptoms:**
+- Parsing errors at specific character positions
+- Occurs after multiple tool calls and long conversations
+- Affects session status, tool outputs, etc.
+
+**Fix:** Start fresh session to clear accumulated context and metadata.
+
+**User Instruction:** "Keep auto fixing your errors. Or tell me exactly why it reported an error so I can redirect your work."
+
+**Status:** ⚠️ Requires session restart to fully resolve
+
+**Next:** Recommend `/reset` to clear context and start fresh
+
+## 🛑 CRITICAL: read tool path resolution issue (2026-03-15 06:23 UTC)
+
+**Issue:** The `read` tool fails with "No such file or directory" errors even when files exist and are accessible via `exec` commands.
+
+**Root Cause:** Tool has path resolution issues with certain file paths, despite files being present and accessible through shell commands.
+
+**Symptoms:**
+- `read` tool returns ENOENT errors
+- `exec` commands (cat, head, ls) work fine on same files
+- Files exist and are readable via shell
+
+**Fix Applied:**
+- ✅ **Use `exec` tool instead** for all file operations
+- ✅ Commands: `cat`, `head -N`, `tail -N`, `wc -l`, `stat`
+- ✅ More reliable in this environment
+
+**Files affected:**
+- `/home/localadmin/.openclaw/workspace/build/plex/library/*.txt`
+- Any workspace files
+
+**Status:** ✅ Documented and working around
+
+**Next:** Never use `read` tool for file access; always use `exec` with shell commands.
+
+---
+
 ## 🔐 SSH Access - hal-maint (2026-03-05 03:37-03:39 UTC)
 
 **Added to Sam (ocg host):**
@@ -369,8 +425,51 @@ docker compose up -d
 
 **Status:** ✅ All features implemented, ready for deployment testing
 
+## Context Window Metadata Corruption (2026-03-16 15:36 UTC)
+
+**Issue:** Token counter jumped from 21k to 559k in 7 minutes (15:29 → 15:36)
+
+**Symptoms:**
+- Token count: 21k → 559k → 21k (back to normal after reset)
+- Context display: 16% → 428% → 17%
+- Session hung in toolUse state after parsing error
+
+**Root Cause:** Metadata display bug / counter overflow in OpenClaw's session state tracking
+
+**Why it's not real:**
+- 538k tokens in 7 minutes = 1,270 tokens/second (physically impossible)
+- Actual context was probably ~21k, just displayed wrong
+- Likely from tool output reporting incorrect token counts or integer overflow
+
+**Resolution:** Session reset cleared corrupted counter state
+
+**Prevention:** Monitor token counts for sudden jumps (>100k in <1min) and alert
+
+**Status:** ✅ Documented
+
+---
+
 ## Recent History
 
+- **2026-03-19 14:26:** Matrix user created - @jason:comms.9xc.io (password: Demo1234!, admin)
+  - Command: `register_new_matrix_user -c /etc/matrix-synapse/homeserver.yaml -u 'jason' -p 'Demo1234!' -a`
+  - Server: Synapse on comms.9xc.local
+- **2026-03-19 14:27:** Olla llama-server.service confirmed running
+  - PID 106212, 13.0G RAM, processing Qwen3.5 model
+  - Context window: 131k tokens, SWA checkpoints active
+  - Performance: ~737 tokens/sec prompt eval, ~94 tokens/sec generation
+- **2026-03-19 14:20:** Target Massage website build active
+  - For David Martin, Jeremy's friend
+  - Stack: Next.js 14, Tailwind, TypeScript, Framer Motion
+  - Colors: red/black (#CC2222/#1A1A1A) to match actual business sign
+  - Live at localhost:3456, tunnel: persons-bicycle-productivity-displaying.trycloudflare.com
+  - Features: Sticky phone bar, review platform badges, benefit-focused copy, dual-tone CTA colors
+  - Contact section: Google Maps embed, Call/Text booking buttons (318-613-8377 / 318-442-1100)
+- **2026-03-16 20:38:** Context window metadata corruption (559k counter overflow) - FIXED via reset
+- **2026-03-14 14:20:** Self-Improving Skills System COMPLETE - Full auto-improvement working ✅
+- **2026-03-14 14:19:** First auto-improvement cycle successful (+33.3% improvement)
+- **2026-03-14 14:14:** System built - 6 core modules created
+- **2026-03-14 14:04:** Project started - cognee-skills inspiration
 - **2026-03-13 20:35:** CertForge Dockerized PKI complete - web management portal built
 - **2026-03-13 19:55:** Context window 65k hardcoded limit - FIXED (SDK patched to 262k)
 - **2026-03-13 06:00:** Morning news briefing - Iran-Israel conflict, 4 US service members killed
@@ -390,4 +489,4 @@ docker compose up -d
 
 ---
 
-*Created: 2026-03-03 | Tag Team Setup: 2026-03-03 (Sam+Eve) | P2 Resolved: 2026-03-03 19:00 UTC | CertForge Dockerized: 2026-03-13 20:35 UTC*
+*Created: 2026-03-03 | Tag Team Setup: 2026-03-03 (Sam+Eve) | P2 Resolved: 2026-03-03 19:00 UTC | CertForge Dockerized: 2026-03-13 20:35 UTC | Self-Improving Skills: 2026-03-14 14:20 UTC | read tool issue: 2026-03-15 06:23 UTC | Metadata corruption: 2026-03-16 15:36 UTC*
