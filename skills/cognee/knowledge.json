@@ -1,0 +1,21 @@
+{
+  "failure_solutions": {},
+  "improvement_patterns": [
+    {
+      "skill": "self-improving",
+      "type": "error_handling",
+      "impact": 0.333
+    },
+    {
+      "skill": "self-improving",
+      "type": "error_handling",
+      "impact": 0.333
+    },
+    {
+      "skill": "weather",
+      "type": "timeout_handling",
+      "impact": 0.15
+    }
+  ],
+  "skill_relationships": []
+}

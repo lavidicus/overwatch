@@ -1,0 +1,89 @@
+{
+  "skills": {
+    "self-improving": {
+      "name": "self-improving",
+      "slug": "self-improving",
+      "version": "1.2.16",
+      "location": "skills/self-improving/SKILL.md",
+      "success_rate": 0.667,
+      "failure_count": 3,
+      "improvement_count": 2,
+      "last_improved": "2026-03-14T16:11:36.617523",
+      "dependencies": [],
+      "tags": [
+        "automation",
+        "self-improvement",
+        "learning"
+      ]
+    },
+    "weather": {
+      "name": "weather",
+      "slug": "weather",
+      "version": "1.0.0",
+      "location": "skills/weather/SKILL.md",
+      "success_rate": 0.85,
+      "failure_count": 1,
+      "improvement_count": 3,
+      "last_improved": "2026-03-14T16:11:36.617862",
+      "dependencies": [],
+      "tags": [
+        "automation",
+        "external-api",
+        "learning"
+      ]
+    }
+  },
+  "failure_patterns": {
+    "context_error": {
+      "pattern_type": "context_error",
+      "description": "Context window exceeded limit",
+      "affected_skills": [
+        "self-improving"
+      ],
+      "frequency": 1,
+      "solution": null
+    },
+    "api_timeout": {
+      "pattern_type": "api_timeout",
+      "description": "External API timeout",
+      "affected_skills": [
+        "weather",
+        "self-improving"
+      ],
+      "frequency": 2,
+      "solution": null
+    }
+  },
+  "improvements": [
+    {
+      "skill_name": "self-improving",
+      "old_version": "1.2.15",
+      "new_version": "1.2.16",
+      "improvement_type": "error_handling",
+      "success_rate_change": 0.333,
+      "timestamp": "2026-03-14T15:40:12.421414",
+      "description": "Added auto-improvement notes to SKILL.md",
+      "validated": true
+    },
+    {
+      "skill_name": "self-improving",
+      "old_version": "1.2.15",
+      "new_version": "1.2.16",
+      "improvement_type": "error_handling",
+      "success_rate_change": 0.333,
+      "timestamp": "2026-03-14T16:11:36.617523",
+      "description": "Added auto-improvement notes to SKILL.md",
+      "validated": true
+    },
+    {
+      "skill_name": "weather",
+      "old_version": "0.9.0",
+      "new_version": "1.0.0",
+      "improvement_type": "timeout_handling",
+      "success_rate_change": 0.15,
+      "timestamp": "2026-03-14T16:11:36.617862",
+      "description": "Added retry logic for API timeouts",
+      "validated": true
+    }
+  ]
+}
