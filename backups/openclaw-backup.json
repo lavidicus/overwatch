@@ -1,11 +1,11 @@
 {
   "meta": {
     "lastTouchedVersion": "2026.3.13",
-    "lastTouchedAt": "2026-03-16T19:21:52.842Z"
+    "lastTouchedAt": "2026-03-20T02:18:34.502Z"
   },
   "wizard": {
-    "lastRunAt": "2026-03-14T17:52:49.450Z",
-    "lastRunVersion": "2026.3.11",
+    "lastRunAt": "2026-03-20T02:18:34.466Z",
+    "lastRunVersion": "2026.3.13",
     "lastRunCommand": "doctor",
     "lastRunMode": "local"
   },
@@ -22,7 +22,7 @@
     "providers": {
       "olla": {
         "baseUrl": "http://olla:11434/v1",
-        "apiKey": "local",
+        "api": "openai-completions",
         "models": [
           {
             "id": "qwen3.5:latest",
