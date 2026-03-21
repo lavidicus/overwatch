@@ -1,0 +1,17 @@
+{
+  "name": "yandex-reverse-image-search",
+  "version": "1.0.0",
+  "description": "**Free reverse image search using Yandex Images**   **No API key required**   **Created:** 2026-03-20",
+  "main": "index.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "dependencies": {
+    "@browserbasehq/sdk": "^2.9.0",
+    "dotenv": "^17.3.1",
+    "playwright": "^1.58.2"
+  }
+}
