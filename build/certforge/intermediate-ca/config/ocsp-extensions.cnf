@@ -1,7 +1,0 @@
-# OCSP Responder Extensions
-# Used for signing OCSP responder certificates
-
-basicConstraints = critical, CA:FALSE
-keyUsage = critical, digitalSignature, keyEncipherment
-extendedKeyUsage = critical, OCSPSigning
-subjectKeyIdentifier = hash
