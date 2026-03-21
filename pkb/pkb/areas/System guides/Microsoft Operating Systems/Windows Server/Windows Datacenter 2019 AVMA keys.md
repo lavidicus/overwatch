@@ -1,0 +1,36 @@
+```js
+AVMA keys
+The following AVMA keys can be used for Windows Server 2022:
+
+Edition	AVMA key
+Datacenter	W3GNR-8DDXR-2TFRP-H8P33-DV9BG
+Standard	YDFWN-MJ9JR-3DYRK-FXXRW-78VHK
+The following AVMA keys can be used for Windows Server 2019:
+
+Edition	AVMA key
+Datacenter	H3RNG-8C32Q-Q8FRX-6TDXV-WMBMW
+Standard	TNK62-RXVTB-4P47B-2D623-4GF74
+Essentials	2CTP7-NHT64-BP62M-FV6GG-HFV28
+The following AVMA keys can be used for Windows Server, versions 1909, 1903, and 1809:
+
+Edition	AVMA key
+Datacenter	H3RNG-8C32Q-Q8FRX-6TDXV-WMBMW
+Standard	TNK62-RXVTB-4P47B-2D623-4GF74
+The following AVMA keys can be used for Windows Server, version 1803 and 1709:
+
+Edition	AVMA key
+Datacenter	TMJ3Y-NTRTM-FJYXT-T22BY-CWG3J
+Standard	C3RCX-M6NRP-6CXC9-TW2F2-4RHYD
+The following AVMA keys can be used for Windows Server 2016:
+
+Edition	AVMA key
+Datacenter	TMJ3Y-NTRTM-FJYXT-T22BY-CWG3J
+Standard	C3RCX-M6NRP-6CXC9-TW2F2-4RHYD
+Essentials	B4YNW-62DX9-W8V6M-82649-MHBKQ
+The following AVMA keys can be used for Windows Server 2012 R2:
+
+Edition	AVMA key
+Datacenter	Y4TGP-NPTV9-HTC2H-7MGQ3-DV4TW
+Standard	DBGBW-NPF86-BJVTX-K3WKJ-MTB6V
+Essentials	K2XGM-NMBT3-2R6Q8-WF2FK-P36R2
+```
