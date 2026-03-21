@@ -1,0 +1,233 @@
+{
+  "main": {
+    "id": "d4f4e66f5f846975",
+    "type": "split",
+    "children": [
+      {
+        "id": "4356916ef0cc391e",
+        "type": "tabs",
+        "children": [
+          {
+            "id": "ccf3e3cec3246d2d",
+            "type": "leaf",
+            "state": {
+              "type": "markdown",
+              "state": {
+                "file": "areas/System guides/AI/llama.cpp/Install llama.cpp on Olla (CUDA).md",
+                "mode": "source",
+                "source": false
+              },
+              "icon": "lucide-file",
+              "title": "Install llama.cpp on Olla (CUDA)"
+            }
+          }
+        ]
+      }
+    ],
+    "direction": "vertical"
+  },
+  "left": {
+    "id": "c9a8769744cc502a",
+    "type": "split",
+    "children": [
+      {
+        "id": "3ac1d9ab8d9eaa10",
+        "type": "tabs",
+        "children": [
+          {
+            "id": "024a76aa48f7e13c",
+            "type": "leaf",
+            "state": {
+              "type": "file-explorer",
+              "state": {
+                "sortOrder": "alphabetical",
+                "autoReveal": false
+              },
+              "icon": "lucide-folder-closed",
+              "title": "Files"
+            }
+          },
+          {
+            "id": "ea95861c621d8996",
+            "type": "leaf",
+            "state": {
+              "type": "search",
+              "state": {
+                "query": "",
+                "matchingCase": false,
+                "explainSearch": false,
+                "collapseAll": false,
+                "extraContext": false,
+                "sortOrder": "alphabetical"
+              },
+              "icon": "lucide-search",
+              "title": "Search"
+            }
+          },
+          {
+            "id": "79257ba6f1790d16",
+            "type": "leaf",
+            "state": {
+              "type": "bookmarks",
+              "state": {},
+              "icon": "lucide-bookmark",
+              "title": "Bookmarks"
+            }
+          }
+        ]
+      }
+    ],
+    "direction": "horizontal",
+    "width": 300
+  },
+  "right": {
+    "id": "01bdda5ea40a55f2",
+    "type": "split",
+    "children": [
+      {
+        "id": "ed7b4b4c611b83b5",
+        "type": "tabs",
+        "children": [
+          {
+            "id": "d88190728592de47",
+            "type": "leaf",
+            "state": {
+              "type": "backlink",
+              "state": {
+                "collapseAll": false,
+                "extraContext": false,
+                "sortOrder": "alphabetical",
+                "showSearch": false,
+                "searchQuery": "",
+                "backlinkCollapsed": false,
+                "unlinkedCollapsed": true
+              },
+              "icon": "links-coming-in",
+              "title": "Backlinks"
+            }
+          },
+          {
+            "id": "e18babbe526a1853",
+            "type": "leaf",
+            "state": {
+              "type": "outgoing-link",
+              "state": {
+                "linksCollapsed": false,
+                "unlinkedCollapsed": true
+              },
+              "icon": "links-going-out",
+              "title": "Outgoing links"
+            }
+          },
+          {
+            "id": "e6dd5d42a79224db",
+            "type": "leaf",
+            "state": {
+              "type": "tag",
+              "state": {
+                "sortOrder": "frequency",
+                "useHierarchy": true,
+                "showSearch": false,
+                "searchQuery": ""
+              },
+              "icon": "lucide-tags",
+              "title": "Tags"
+            }
+          },
+          {
+            "id": "988e79956d68063a",
+            "type": "leaf",
+            "state": {
+              "type": "all-properties",
+              "state": {
+                "sortOrder": "frequency",
+                "showSearch": false,
+                "searchQuery": ""
+              },
+              "icon": "lucide-archive",
+              "title": "All properties"
+            }
+          },
+          {
+            "id": "264267c6d5be5c6f",
+            "type": "leaf",
+            "state": {
+              "type": "outline",
+              "state": {
+                "followCursor": false,
+                "showSearch": false,
+                "searchQuery": ""
+              },
+              "icon": "lucide-list",
+              "title": "Outline"
+            }
+          }
+        ]
+      }
+    ],
+    "direction": "horizontal",
+    "width": 300,
+    "collapsed": true
+  },
+  "left-ribbon": {
+    "hiddenItems": {
+      "switcher:Open quick switcher": false,
+      "graph:Open graph view": false,
+      "canvas:Create new canvas": false,
+      "daily-notes:Open today's daily note": false,
+      "templates:Insert template": false,
+      "command-palette:Open command palette": false,
+      "bases:Create new base": false,
+      "templater-obsidian:Templater": false
+    }
+  },
+  "active": "ccf3e3cec3246d2d",
+  "lastOpenFiles": [
+    "README.md",
+    "templates/Project.md",
+    "daily/2026-03-07.md",
+    "areas/System guides/Proxmox/PVE Guides/PVE Storage Guides/Configure ZFS disks after Proxmox Installation.md",
+    "areas/System guides/Proxmox/PVE Guides/PVE NVIDIA Guides/Proxmox LXC Container GPU Passthrough.md",
+    "areas/System guides/Proxmox/PVE Guides/PVE NVIDIA Guides/Kernel Pinning in Proxmox.md",
+    "areas/System guides/Proxmox/PVE Custom Scripts/SSH Certificate Transfer Script.md",
+    "areas/System guides/Proxmox/PVE Custom Scripts/NVIDIA VGPU Service Manager.md",
+    "areas/System guides/Linux Operating System/Bind9 Service/Installation.md",
+    "areas/System guides/Cisco 2960X Switch/Config 2.md",
+    "areas/System guides/AI Guides/Open-WebUI/Open-WebUI Update Guide.md",
+    "areas/System guides/AI Guides/Ollama/Ollama IP - Port Change.md",
+    "areas/System guides/Nvidia GRID/NVIDIA Driver Uninstall.md",
+    "templates/Daily Note.md",
+    "templates/PKB-GUIDE-TEMPLATE.md",
+    "areas/System guides/Linux Operating System/Redhat-based Linux Server/Fail2Ban.md",
+    "areas/Radio/GMSR/Helpful websites.md",
+    "areas/Radio/GMSR/Frequency Table.md",
+    "areas/System guides/Microsoft Operating Systems/Windows 10 Pro Product Key.md",
+    "areas/System guides/Proxmox/PVE Guides/PVE System Tools/TailScale Container Setup Guide.md",
+    "areas/System guides/Proxmox/PVE Guides/PVE System Tools/System-V Tools.md",
+    "areas/System guides/Proxmox/PVE Guides/PVE System Tools/IPMI Tool Management.md",
+    "areas/System guides/Proxmox/PVE Guides/PVE System Configurations/Removing the Proxmox Subscription Notice.md",
+    "areas/System guides/Proxmox/PVE Guides/PVE System Configurations/PVE System Name IP Change Guide.md",
+    "areas/System guides/Proxmox/PVE Guides/PVE System Configurations/PVE on a Hosted 3rd-party Server.md",
+    "areas/System guides/Proxmox/PVE Guides/PVE System Configurations/PVE Container Add Sudo User.md",
+    "areas/System guides/Microsoft Operating Systems/Windows Server/images/Pasted image 20230208011923.png",
+    "areas/System guides/Microsoft Operating Systems/Windows Server/images/Pasted image 20230207222114.png",
+    "areas/System guides/Microsoft Operating Systems/Windows Server/images/Pasted image 20230207112800.png",
+    "areas/System guides/Microsoft Operating Systems/Windows Server/images/Pasted image 20230207112745.png",
+    "areas/System guides/Microsoft Operating Systems/Windows Server/images/Pasted image 20230207093408.png",
+    "areas/System guides/Microsoft Operating Systems/Windows Server/images/Pasted image 20230207092651.png",
+    "areas/Radio/GMSR/Frequency Information",
+    "areas/Radio/GMSR/FCC Registration/What-does-it-cost-for-a-license-and-how-do-I-apply-for-one.pdf",
+    "areas/Radio/GMSR/FCC Registration/Payment-Invoice.pdf",
+    "areas/Radio/GMSR/FCC Registration/Authorization.pdf",
+    "areas/Radio/GMSR/FCC Registration",
+    "areas/Radio/GMSR",
+    "areas/Radio",
+    "areas/System guides/Proxmox/PVE Guides/PVE System Tools",
+    "areas/System guides/Proxmox/PVE Guides/PVE System Configurations",
+    "areas/System guides/Proxmox/PVE Guides/PVE Storage Guides",
+    "areas/System guides/Microsoft Operating Systems/Windows Server/images/Pasted image 20230208011945.png",
+    "resources/System manuals/Supermicro X9DRi-LN4F 1U Server/MB Photos/Layout (PNG).png",
+    "resources/System manuals/Supermicro X9DRi-LN4F 1U Server/MB Photos/Layout (JPG).jpg",
+    "resources/System manuals/Supermicro X9DRi-LN4F 1U Server/MB Photos/Arrangments/Option 1.png"
+  ]
+}
