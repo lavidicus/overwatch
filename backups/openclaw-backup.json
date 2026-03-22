@@ -1,10 +1,10 @@
 {
   "meta": {
     "lastTouchedVersion": "2026.3.13",
-    "lastTouchedAt": "2026-03-20T02:18:34.502Z"
+    "lastTouchedAt": "2026-03-20T23:27:07.665Z"
   },
   "wizard": {
-    "lastRunAt": "2026-03-20T02:18:34.466Z",
+    "lastRunAt": "2026-03-20T19:00:42.029Z",
     "lastRunVersion": "2026.3.13",
     "lastRunCommand": "doctor",
     "lastRunMode": "local"
@@ -22,6 +22,7 @@
     "providers": {
       "olla": {
         "baseUrl": "http://olla:11434/v1",
+        "apiKey": "local",
         "api": "openai-completions",
         "models": [
           {
@@ -38,7 +39,7 @@
               "cacheRead": 0,
               "cacheWrite": 0
             },
-            "contextWindow": 131072,
+            "contextWindow": 262144,
             "maxTokens": 8192
           }
         ]
