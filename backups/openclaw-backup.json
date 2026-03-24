@@ -1,11 +1,16 @@
 {
   "meta": {
-    "lastTouchedVersion": "2026.3.13",
-    "lastTouchedAt": "2026-03-20T23:27:07.665Z"
+    "lastTouchedVersion": "2026.3.23-1",
+    "lastTouchedAt": "2026-03-24T04:27:13.442Z"
+  },
+  "env": {
+    "vars": {
+      "GOG_KEYRING_PASSWORD": "openclaw"
+    }
   },
   "wizard": {
-    "lastRunAt": "2026-03-20T19:00:42.029Z",
-    "lastRunVersion": "2026.3.13",
+    "lastRunAt": "2026-03-24T04:27:13.434Z",
+    "lastRunVersion": "2026.3.23-1",
     "lastRunCommand": "doctor",
     "lastRunMode": "local"
   },
@@ -96,8 +101,7 @@
   "tools": {
     "web": {
       "search": {
-        "enabled": true,
-        "apiKey": "BSAPBHIyE3j3dPC4zXvazuyfX6ZUFeM"
+        "enabled": true
       },
       "fetch": {
         "enabled": true
@@ -152,11 +156,23 @@
       "userId": "@sam:comms.9xc.io",
       "password": "TheRightSam2026!",
       "encryption": true,
-      "dmPolicy": "allowlist",
-      "allowFrom": [
-        "@eve:comms.9xc.io",
-        "@lavid:comms.9xc.io"
-      ]
+      "dm": {
+        "policy": "allowlist",
+        "allowFrom": [
+          "@eve:comms.9xc.io",
+          "@maria:comms.9xc.io",
+          "@lavid:comms.9xc.io"
+        ]
+      },
+      "groupPolicy": "open",
+      "autoJoin": "true",
+      "groups": {
+        "!EUdiHxsqrqcwblPVBq:comms.9xc.io": {
+          "requireMention": false
+        }
+      },
+      "allowPrivateNetwork": true,
+      "accessToken": "syt_c2Ft_UXVKFaShHONyuwioujBs_4045aI"
     }
   },
   "gateway": {
@@ -191,6 +207,14 @@
     }
   },
   "plugins": {
+    "load": {
+      "paths": [
+        "/home/localadmin/.npm-global/lib/node_modules/openclaw/dist/extensions/matrix"
+      ]
+    },
+    "slots": {
+      "memory": "memory-core"
+    },
     "entries": {
       "matrix": {
         "enabled": true
