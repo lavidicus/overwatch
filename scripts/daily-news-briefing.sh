@@ -30,13 +30,13 @@ fetch_news() {
 
 # Get current news
 # AP News
-web_search "breaking news today $DATE" --count 5 > /tmp/ap_news.json 2>/dev/null || true
+curl -s 'https://rss.apnews.com/rss/aptopheadlines' > /tmp/ap_news.xml 2>/dev/null || true
 
 # Reuters
-web_search "reuters news today $DATE" --count 5 > /tmp/reuters_news.json 2>/dev/null || true
+curl -s 'https://feeds.reuters.com/reuters/topNews' > /tmp/reuters_news.xml 2>/dev/null || true
 
 # BBC
-web_search "bbc news today $DATE" --count 5 > /tmp/bbc_news.json 2>/dev/null || true
+curl -s 'https://feeds.bbci.co.uk/news/world/rss.xml' > /tmp/bbc_news.xml 2>/dev/null || true
 
 # Compile briefing (placeholder - actual implementation uses OpenClaw tools)
 BRIEFING="

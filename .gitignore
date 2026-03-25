@@ -1,0 +1,17 @@
+# Credentials - never commit
+credentials/
+
+# Media files
+media/
+
+# OpenClaw internal state
+.openclaw/
+
+# Node modules
+node_modules/
+
+# Cron state
+cron/
+
+# Home directory artifacts
+home/

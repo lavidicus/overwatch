@@ -1532,6 +1532,8 @@
 /mas/Library/Movies/D/Death of a Unicorn (2025)/Death of a Unicorn (2025).srt
 /mas/Library/Movies/D/Die Hard (1988)/Die Hard (1988).mp4
 /mas/Library/Movies/D/Despicable Me 2 (2013)/Despicable me 2.mkv
+/mas/Library/Movies/D/The Dresden Sun (2026)/The Dresden Sun (2026).srt
+/mas/Library/Movies/D/The Dresden Sun (2026)/The Dresden Sun (2026).mp4
 /mas/Library/Movies/D/Despicable Me 4 (2024)/Despicable Me 4 (2024).srt
 /mas/Library/Movies/D/Despicable Me 4 (2024)/Despicable Me 4 (2024).mp4
 /mas/Library/Movies/D/Dirty Dancing (1987)/Dirty Dancing 1987.MP4
@@ -1820,6 +1822,7 @@
 /mas/Library/Movies/T/Tremors (1990)/Tremors (1990).srt
 /mas/Library/Movies/T/Top Gun (1986)/Top Gun (1986).mp4
 /mas/Library/Movies/T/Theres Something About Mary (1998)/Theres Something About Mary (1998).mp4
+/mas/Library/Movies/T/Terminator Skynet Rising (2024)/Terminator Skynet Rising (2024).mp4
 /mas/Library/Movies/T/The Transporter Refueled (2015)/The Transporter Refueled (2015).mp4
 /mas/Library/Movies/T/The Time Machine (1960)/The Time Machine 1960.mp4
 /mas/Library/Movies/T/True Lies (1994)/True Lies (1994).mkv
@@ -3873,6 +3876,7 @@
 /mas/Library/Movies/#/101 Dalmatians (2003)/101 Dalmatians (2003)-fanart.jpg
 /mas/Library/Movies/#/101 Dalmatians (2003)/101 Dalmatians (2003)-poster.jpg
 /mas/Library/Movies/#/28 Weeks Later (2007)/28 Weeks Later (2007).mkv
+/mas/Library/Movies/#/57 Seconds (2023)/57 Seconds (2023).mp4
 /mas/Library/Movies/#/300 (2006)/.actors/Michael_Fassbender.jpg
 /mas/Library/Movies/#/300 (2006)/.actors/Dominic_West.jpg
 /mas/Library/Movies/#/300 (2006)/.actors/Tom_Wisdom.jpg
@@ -4842,6 +4846,7 @@
 /mas/Library/Movies/H/Hitch (2005)/Hitch 2005.srt
 /mas/Library/Movies/H/Hitch (2005)/Hitch 2005.mp4
 /mas/Library/Movies/H/Honey, I Blew Up the Kid (1992)/Honey, I Blew Up the Kid (1992).mp4
+/mas/Library/Movies/H/How I Live Now (2013)/How I Live Now (2013).mp4
 /mas/Library/Movies/H/The Holiday (2006)/.actors/Kate_Winslet.jpg
 /mas/Library/Movies/H/The Holiday (2006)/.actors/Kathryn_Hahn.jpg
 /mas/Library/Movies/H/The Holiday (2006)/.actors/Jack_Black.jpg
