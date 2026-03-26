@@ -99,6 +99,14 @@
     ]
   },
   "tools": {
+    "elevated": {
+      "enabled": true,
+      "allowFrom": {
+        "matrix": [
+          "@lavid:comms.9xc.io"
+        ]
+      }
+    },
     "web": {
       "search": {
         "enabled": true
