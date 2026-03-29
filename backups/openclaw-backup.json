@@ -1,7 +1,7 @@
 {
   "meta": {
     "lastTouchedVersion": "2026.3.23-2",
-    "lastTouchedAt": "2026-03-27T15:35:02.413Z"
+    "lastTouchedAt": "2026-03-28T16:36:14.766Z"
   },
   "env": {
     "vars": {
@@ -205,6 +205,16 @@
   "memory": {
     "backend": "builtin"
   },
+  "mcp": {
+    "servers": {
+      "n8n": {
+        "url": "http://ocg.9xc.local:5678/mcp-server/http",
+        "headers": {
+          "Authorization": "Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiIzMWIxM2ViYi0yOTBmLTQzYzYtOTEyNy0xMDEyYjNiM2UyYTUiLCJpc3MiOiJuOG4iLCJhdWQiOiJtY3Atc2VydmVyLWFwaSIsImp0aSI6IjM5ODk1Mzk1LWE5ZWYtNGRkMC05MDM0LTdhZjBiNDBhZDcyNCIsImlhdCI6MTc3NDcxNTc0OX0.LlwXgnX3Yh_doAQPScoZsiCOH9bGH653zGp2aQSBG8g"
+        }
+      }
+    }
+  },
   "skills": {
     "install": {
       "nodeManager": "npm"
@@ -212,6 +222,20 @@
     "entries": {
       "gh-issues": {
         "apiKey": "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"
+      },
+      "n8n-mcp": {
+        "enabled": true,
+        "config": {
+          "baseUrl": "http://ocg.9xc.local:5678",
+          "apiKey": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiIzMWIxM2ViYi0yOTBmLTQzYzYtOTEyNy0xMDEyYjNiM2UyYTUiLCJpc3MiOiJuOG4iLCJhdWQiOiJwdWJsaWMtYXBpIiwianRpIjoiMWYwZDc4ZDAtNzgwMC00ZWI1LWIxYTItMzlmNTFiMmQ1Y2IyIiwiaWF0IjoxNzc0NzExOTQ4fQ.lwANkisWjGcXPTm3hF7O-1mk5RzuUVS-1pNq7OoXS8g",
+          "workflows": [
+            {
+              "name": "daily-email-monitor",
+              "path": "/webhook/sam-trigger",
+              "method": "POST"
+            }
+          ]
+        }
       }
     }
   },
