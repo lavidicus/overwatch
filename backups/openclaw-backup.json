@@ -1,7 +1,7 @@
 {
   "meta": {
     "lastTouchedVersion": "2026.3.23-2",
-    "lastTouchedAt": "2026-03-30T05:44:58.029Z"
+    "lastTouchedAt": "2026-03-30T23:55:02.681Z"
   },
   "env": {
     "vars": {
@@ -147,7 +147,8 @@
     "exec": {
       "host": "gateway",
       "security": "full",
-      "ask": "off"
+      "ask": "off",
+      "strictInlineEval": false
     }
   },
   "commands": {
