@@ -36,6 +36,55 @@
 
 ---
 
+## 🔧 N8n Workflow Automation (CRITICAL — READ BEFORE ANY N8N CALL)
+
+**Server:** `http://ocg.9xc.local:5678` (NEVER `localhost`)
+**Owner:** Jeremy Ingalls (`jeremy.ingalls@gmail.com`)
+**Service:** `systemctl status n8n`
+**API Key:** stored in `openclaw.json` → `skills.entries.n8n-mcp.config.apiKey`
+
+**API Rules:**
+- Endpoint: `/api/v1/` (NOT `/rest/`)
+- Auth header: `X-N8N-API-KEY: <key>` (NOT `Authorization: Bearer`)
+- Activate: `POST /api/v1/workflows/{id}/activate` (NOT via PUT body)
+- `active` field is **READ-ONLY** in PUT requests
+- Wait 5+ seconds after activation before testing webhooks
+
+**⚠️ CRITICAL (learned the hard way):**
+- **`webhookId` is REQUIRED** on webhook nodes — without it webhooks never register
+- **Code nodes are SANDBOXED** — `child_process`, `fs`, `net` are all blocked
+- **Use gog-bridge service** (port 18790) to run CLI tools from workflows
+- **Use `127.0.0.1` not `localhost`** in HTTP Request nodes (IPv6 mismatch)
+- **Restart n8n after creating workflows via API** — `sudo systemctl restart n8n && sleep 12`
+- **Write JSON to file, use `curl -d @file`** — avoids shell escaping nightmares
+- **Only ONE workflow per webhook path** — duplicates cause silent failures
+
+**Quick Reference:**
+```bash
+# List workflows
+curl -s "http://ocg.9xc.local:5678/api/v1/workflows" -H "X-N8N-API-KEY: $KEY"
+
+# Create workflow (from file — always use file to avoid escaping)
+curl -s -X POST "http://ocg.9xc.local:5678/api/v1/workflows" -H "X-N8N-API-KEY: $KEY" -H "Content-Type: application/json" -d @workflow.json
+
+# Activate
+curl -s -X POST "http://ocg.9xc.local:5678/api/v1/workflows/{id}/activate" -H "X-N8N-API-KEY: $KEY"
+
+# Trigger webhook
+curl -s -X POST "http://ocg.9xc.local:5678/webhook/{path}" -H "Content-Type: application/json" -d '{}'
+```
+
+**Gog Bridge (for CLI tools in workflows):**
+- Service: `gog-bridge.service` on port 18790
+- URL in workflows: `http://127.0.0.1:18790/fetch-emails`
+- Management: `sudo systemctl {start|stop|restart} gog-bridge`
+
+**Full playbook:** `ITIL/playbooks/openclaw-n8n-integration.md`
+**PKB reference:** `pkb/resources/n8n-workflow-automation.md`
+**Integration script:** `scripts/sam-n8n-integration.sh`
+
+---
+
 ## 🚨 File Edit Tool Constraint (CRITICAL)
 
 **Problem:** The `edit` tool fails silently with "Invalid diff" errors when text doesn't match exactly (whitespace, line endings, etc.)

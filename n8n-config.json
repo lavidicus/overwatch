@@ -1,0 +1,42 @@
+# N8n Integration Config
+# Location: /home/localadmin/.openclaw/workspace/n8n-config.json
+
+{
+  "n8n": {
+    "enabled": true,
+    "baseUrl": "http://localhost:5678",
+    "webInterface": "http://localhost:5678",
+    "credentials": {
+      "basicAuthUser": "n8n",
+      "basicAuthPassword": "N8n!SecurePass2026!"
+    },
+    "samTriggerWebhook": {
+      "path": "/webhook/sam-trigger",
+      "method": "POST",
+      "authType": "bearer",
+      "secret": "n8n-secret-key-2026"
+    },
+    "workflows": {
+      "dailyEmailCheck": {
+        "name": "Daily Email Check",
+        "description": "Monitor ops@claw-sync.com for new emails",
+        "trigger": "webhook",
+        "enabled": true
+      },
+      "morningNewsBriefing": {
+        "name": "Morning News Briefing",
+        "description": "Fetch and summarize news for Jeremy",
+        "trigger": "cron",
+        "schedule": "0 12 * * *",
+        "enabled": true
+      },
+      "gitStatusCheck": {
+        "name": "Git Status Check",
+        "description": "Monitor workspace for changes",
+        "trigger": "cron",
+        "schedule": "*/120 * * * *",
+        "enabled": true
+      }
+    }
+  }
+}

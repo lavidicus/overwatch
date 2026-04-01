@@ -1,0 +1,23 @@
+{
+  "type": "mcp",
+  "name": "n8n",
+  "description": "N8n workflow automation server",
+  "mcp": {
+    "transport": {
+      "type": "http",
+      "url": "http://localhost:5678"
+    },
+    "api": {
+      "key": "YOUR_N8N_API_KEY",
+      "endpoint": "/rest/workflows"
+    },
+    "workflows": {
+      "daily-email-monitor": {
+        "name": "Daily Email Monitor",
+        "path": "/webhook/sam-trigger",
+        "method": "POST",
+        "description": "Monitor ops@claw-sync.com for new emails"
+      }
+    }
+  }
+}
