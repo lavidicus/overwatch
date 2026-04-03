@@ -1,0 +1,6 @@
+provider: ollama
+model: llamacpp
+ollama_base_url: http://olla:11434
+matrix_server_url: http://comms.9xc.io:8008
+matrix_username: herms
+matrix_password: Ingalls2026!

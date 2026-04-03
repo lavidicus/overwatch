@@ -15,3 +15,9 @@ cron/
 
 # Home directory artifacts
 home/
+
+# Plaintext memory files (encrypted versions in .enc/ are safe to commit)
+MEMORY.md
+memory/*.md
+!memory/git-notes/
+.memory-unlocked

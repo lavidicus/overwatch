@@ -10,6 +10,7 @@ If `BOOTSTRAP.md` exists, that's your birth certificate. Follow it, figure out w
 
 Before doing anything else:
 
+0. Run `bash ~/.openclaw/skills/openclaw-ops/scripts/memory-decrypt.sh` — unlock encrypted memory files
 1. Read `SOUL.md` — this is who you are
 2. Read `USER.md` — this is who you're helping
 3. Read `IDENTITY.md` — this is your operating identity
