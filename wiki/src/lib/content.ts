@@ -30,9 +30,9 @@ export type NavItem = {
 
 const BASE_DIR = "/home/localadmin/.openclaw/workspace";
 
-const SECTION_CONFIG: Record<SectionKey, { title: string; dir: string } > = {
+const SECTION_CONFIG: Record<SectionKey, { title: string; dir: string; exclude?: string[] }> = {
   playbooks: { title: "Playbooks", dir: "ITIL/playbooks" },
-  pkb: { title: "PKB Resources", dir: "pkb/resources" },
+  pkb: { title: "PKB Resources", dir: "pkb/resources", exclude: ["Concepts", "System manuals"] },
   concepts: { title: "Concepts", dir: "pkb/resources/Concepts" },
   manuals: { title: "System Manuals", dir: "pkb/resources/System manuals" },
 };
@@ -135,13 +135,16 @@ function buildNavForSection(section: SectionKey, docs: DocMeta[]): NavItem[] {
 }
 
 function scanFiles(section: SectionKey): DocMeta[] {
-  const { dir } = SECTION_CONFIG[section];
+  const { dir, exclude } = SECTION_CONFIG[section] as { dir: string; exclude?: string[] };
   const root = path.join(BASE_DIR, dir);
   if (!fs.existsSync(root)) return [];
 
+  const excludeDirs = (exclude || []).map((e) => path.join(root, e));
   const results: DocMeta[] = [];
 
   const walk = (current: string) => {
+    // Skip excluded subdirectories
+    if (excludeDirs.some((ex) => current === ex || current.startsWith(ex + path.sep))) return;
     const entries = fs.readdirSync(current, { withFileTypes: true });
     for (const entry of entries) {
       const fullPath = path.join(current, entry.name);

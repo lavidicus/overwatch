@@ -13,14 +13,22 @@ type Props = {
 export default function Toc({ items }: Props) {
   if (!items.length) return null;
   return (
-    <div className="rounded-lg border border-slate-800 bg-[#111122] p-4">
-      <div className="mb-2 text-xs font-semibold uppercase tracking-wide text-slate-400">
+    <div className="sticky top-24 rounded-lg border border-[var(--notion-border)] bg-[var(--notion-sidebar)] p-4 text-sm">
+      <div className="mb-2 text-xs font-semibold uppercase tracking-wide text-[var(--notion-secondary)]">
         On this page
       </div>
-      <ul className="space-y-1 text-sm text-slate-300">
+      <ul className="space-y-1 text-[var(--notion-secondary)]">
         {items.map((item) => (
-          <li key={item.id} style={{ paddingLeft: `${Math.min(item.level * 8, 32)}px` }}>
-            <Link href={`#${item.id}`} className="hover:text-slate-100">
+          <li
+            key={item.id}
+            style={{ paddingLeft: `${Math.min(item.level * 8, 32)}px` }}
+          >
+            <Link
+              href={`#${item.id}`}
+              target="_blank"
+              rel="noopener noreferrer"
+              className="hover:text-[var(--notion-text)]"
+            >
               {item.text}
             </Link>
           </li>

@@ -1,30 +1,96 @@
 @import "tailwindcss";
-@import "highlight.js/styles/github-dark.css";
+@import "highlight.js/styles/github.css";
 
 :root {
-  --background: #f7f7fb;
-  --foreground: #121212;
-}
-
-@theme inline {
-  --color-background: var(--background);
-  --color-foreground: var(--foreground);
-  --font-sans: var(--font-geist-sans);
-  --font-mono: var(--font-geist-mono);
+  --notion-bg: #ffffff;
+  --notion-sidebar: #f7f6f3;
+  --notion-text: #37352f;
+  --notion-secondary: #787774;
+  --notion-hover: #e8e7e4;
+  --notion-accent: #2383e2;
+  --notion-code: #f7f6f3;
+  --notion-border: #e8e7e4;
+  --notion-callout: #f5f4f2;
 }
 
 .dark {
-  --background: #1a1a2e;
-  --foreground: #e6e6f0;
+  --notion-bg: #191919;
+  --notion-sidebar: #202020;
+  --notion-text: #e6e6e5;
+  --notion-secondary: #9b9a97;
+  --notion-hover: #2f2f2f;
+  --notion-accent: #2383e2;
+  --notion-code: #2f2f2f;
+  --notion-border: #2a2a2a;
+  --notion-callout: #262626;
 }
 
 body {
-  background: var(--background);
-  color: var(--foreground);
-  font-family: var(--font-geist-sans), system-ui, sans-serif;
+  background: var(--notion-bg);
+  color: var(--notion-text);
+  font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Inter, system-ui, sans-serif;
+  font-size: 16px;
+  line-height: 1.7;
 }
 
-code, pre {
-  font-family: var(--font-geist-mono), ui-monospace, SFMono-Regular, Menlo,
-    monospace;
+code,
+pre {
+  font-family: var(--font-geist-mono), ui-monospace, SFMono-Regular, Menlo, monospace;
+}
+
+/* Mobile fixes: prevent content overflow */
+pre {
+  overflow-x: auto;
+  max-width: 100%;
+}
+
+table {
+  display: block;
+  overflow-x: auto;
+  max-width: 100%;
+}
+
+img {
+  max-width: 100%;
+  height: auto;
+}
+
+/* Prevent long URLs/strings from breaking layout */
+.prose,
+.markdown-content {
+  overflow-wrap: break-word;
+  word-break: break-word;
+}
+
+.heading-anchor {
+  margin-left: 0.35rem;
+  opacity: 0;
+  text-decoration: none;
+  color: var(--notion-secondary);
+  transition: opacity 0.2s ease;
+}
+
+.markdown-content h1:hover .heading-anchor,
+.markdown-content h2:hover .heading-anchor,
+.markdown-content h3:hover .heading-anchor,
+.markdown-content h4:hover .heading-anchor {
+  opacity: 1;
+}
+
+.heading-anchor::after {
+  content: "#";
+}
+
+.markdown-content table {
+  width: 100%;
+  border-collapse: collapse;
+}
+
+.markdown-content table tr:nth-child(even) {
+  background: var(--notion-hover);
+}
+
+.markdown-content table th,
+.markdown-content table td {
+  border-bottom: 1px solid var(--notion-border);
 }

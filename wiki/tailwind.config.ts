@@ -6,8 +6,16 @@ const config: Config = {
   theme: {
     extend: {
       colors: {
-        base: "#1a1a2e",
-        accent: "#3498db",
+        notion: {
+          bg: "#ffffff",
+          sidebar: "#f7f6f3",
+          text: "#37352f",
+          secondary: "#787774",
+          hover: "#e8e7e4",
+          accent: "#2383e2",
+          code: "#f7f6f3",
+          border: "#e8e7e4",
+        },
       },
     },
   },

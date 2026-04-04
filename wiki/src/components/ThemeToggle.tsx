@@ -1,16 +1,22 @@
 "use client";
 
 import { useTheme } from "next-themes";
+import clsx from "clsx";
 
-export default function ThemeToggle() {
+export default function ThemeToggle({ compact = false }: { compact?: boolean }) {
   const { theme, setTheme } = useTheme();
+  const isDark = theme === "dark";
+
   return (
     <button
       type="button"
-      onClick={() => setTheme(theme === "dark" ? "light" : "dark")}
-      className="rounded border border-slate-700 bg-slate-900 px-2 py-1 text-xs text-slate-200 hover:border-[#3498db]"
+      onClick={() => setTheme(isDark ? "light" : "dark")}
+      className={clsx(
+        "rounded-md border border-[var(--notion-border)] bg-[var(--notion-bg)] text-xs text-[var(--notion-secondary)] hover:bg-[var(--notion-hover)]",
+        compact ? "px-2 py-1" : "px-3 py-2"
+      )}
     >
-      {theme === "dark" ? "Light" : "Dark"}
+      {isDark ? "Light" : "Dark"}
     </button>
   );
 }
