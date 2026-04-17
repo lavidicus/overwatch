@@ -21,3 +21,9 @@ MEMORY.md
 memory/*.md
 !memory/git-notes/
 .memory-unlocked
+
+# Build artifacts
+build/
+
+# Legacy scripts
+.hermes_workspace/
