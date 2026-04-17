@@ -1,0 +1,13 @@
+#!/bin/bash
+# TS Temperature Monitor - Quick access script
+# Usage: ts-temp [--alert]
+
+SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+MONITOR_SCRIPT="$SCRIPT_DIR/../skills/ts-temp-monitor/monitor.sh"
+
+if [[ -f "$MONITOR_SCRIPT" ]]; then
+    exec "$MONITOR_SCRIPT" "$@"
+else
+    echo "Error: Monitor script not found at $MONITOR_SCRIPT"
+    exit 1
+fi

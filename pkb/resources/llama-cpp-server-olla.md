@@ -1,17 +1,22 @@
-# llama.cpp Server — Olla Host
+# llama.cpp Server — Olla VM (Proxmox LXC on usm2)
 
 ## Overview
 
-Local LLM inference server running on the `olla` VM (172.16.254.231) via llama.cpp's `llama-server`. Serves OpenAI-compatible API on port 11434 for both OpenClaw and Hermes.
+Local LLM inference server running on the **olla VM** (172.16.254.231) via llama.cpp's `llama-server`. Serves OpenAI-compatible API on port 11434 for both OpenClaw and Hermes.
+
+**Note:** usm1 removed from network (2026-04-04). **olla** is VM 101 running on **usm2** Proxmox host.
 
 ## Architecture
 
+- **Host:** usm2 Proxmox server (172.16.254.231)
+- **VM:** olla (VM 101) running on usm2
 - **Hardware:** NVIDIA RTX 3090 (24GB VRAM), 16 CPU threads
 - **Binary:** `/opt/llama.cpp/build/bin/llama-server`
 - **Source:** `/opt/llama.cpp` (git clone of ggml-org/llama.cpp)
 - **Models:** `/opt/models/gguf/` (active model symlinked to `llama.gguf`)
-- **Port:** 11434 (same as Ollama convention)
+- **Port:** 11434 (OpenAI-compatible API)
 - **Service:** `llama-server.service`
+- **Kernel:** 6.17.9-1 (newer than usm1's 6.5.x)
 
 ## Consumers
 
@@ -71,10 +76,20 @@ journalctl -u llama-server -f  # Live logs
 
 ## Constraints
 
-- ⚠️ **usm1 kernel:** NEVER update kernel on usm1 (NVIDIA vGPU driver dependency on 6.5.x)
+- ⚠️ **usm1 host:** NEVER update kernel on usm1 (NVIDIA vGPU driver dependency on 6.5.x)
+- **olla VM kernel:** Running 6.17.9-1 (newer than usm1)
 - 24GB VRAM limits model size — typically Q4 quants of 27B-35B models
 - Single slot (`-np 1`) means sequential request handling
 - No HTTPS (OpenSSL not installed — internal network only)
+
+## Host/VM History
+
+| Date | Event |
+|------|-------|
+| 2026-03-05 | usm2 verified via SSH (VM 101 running) |
+| 2026-03-05 | usm2 kernel confirmed 6.17.9-1 (newer than usm1) |
+| 2026-04-04 | usm1 removed from network |
+| 2026-04-04 | Olla VM (VM 101) verified on usm2 |
 
 ## Build History
 
@@ -88,3 +103,4 @@ journalctl -u llama-server -f  # Live logs
 - Playbook: [[llama-cpp-rebuild-upgrade]]
 - ITIL: [[llama-server-failures]]
 - Related: [[olla-vm-rebuild]]
+- Memory: [[MEMORY.md]] (usm1 removed, usm2/olla active)

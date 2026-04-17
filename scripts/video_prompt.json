@@ -1,0 +1,15 @@
+{
+  "prompt": {
+    "3": {
+      "class_type": "LtxvApiTextToVideo",
+      "inputs": {
+        "model": "LTX-2 (Pro)",
+        "prompt": "beautiful naked woman laying on a bed, cinematic lighting, soft focus, high quality",
+        "duration": 8,
+        "resolution": "1920x1080",
+        "fps": 25,
+        "seed": 12345
+      }
+    }
+  }
+}

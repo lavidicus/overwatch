@@ -1,0 +1,629 @@
+{
+  "version": 1,
+  "updatedAt": "2026-04-16T14:51:42.533Z",
+  "entries": {
+    "memory:memory/2026-03-04.md:92:150": {
+      "key": "memory:memory/2026-03-04.md:92:150",
+      "path": "memory/2026-03-04.md",
+      "startLine": 92,
+      "endLine": 150,
+      "source": "memory",
+      "snippet": "**Service:** llama-server **Model:** qwen3.5:latest.gguf ### New Command Line ```bash ExecStart=/opt/llama.cpp/build/bin/llama-server \\ -m /opt/models/gguf/qwen3.5:latest.gguf \\ --mmproj /opt/models/gguf/mmproj-F16.gguf \\ --host 0.0.0.0 \\ --port 11434 \\ -c 65536 \\ -ngl all \\ -t 12 \\ -tb 12 \\ -b 2048 \\ -ub 512 \\ -fa on ``` ### Key Changes 1. **Multimodal/Vision Support:** - Added `--mmproj /opt/models/gguf/mmproj-F16.gguf` - Enables image input capabilities - Vision model loaded for multimodal features 2. **Network Binding:** - Changed from `localhost` to `0.0.0.0` - llama-server now accessible externally - ⚠️ Security consideration: ensure firew",
+      "recallCount": 2,
+      "dailyCount": 0,
+      "groundedCount": 0,
+      "totalScore": 1.6860178677430393,
+      "maxScore": 0.8624364538359394,
+      "firstRecalledAt": "2026-04-07T03:52:50.685Z",
+      "lastRecalledAt": "2026-04-12T23:22:01.430Z",
+      "queryHashes": [
+        "fd0f5923971a",
+        "a40fcbfb4195"
+      ],
+      "recallDays": [
+        "2026-04-07",
+        "2026-04-12"
+      ],
+      "conceptTags": [
+        "network",
+        "llama-server",
+        "qwen3.5",
+        "latest.gguf",
+        "opt/models/gguf/qwen3.5",
+        "opt/models/gguf/mmproj-f16.gguf",
+        "0.0.0.0",
+        "multimodal/vision"
+      ]
+    },
+    "memory:memory/2026-03-28.md:143:195": {
+      "key": "memory:memory/2026-03-28.md:143:195",
+      "path": "memory/2026-03-28.md",
+      "startLine": 143,
+      "endLine": 195,
+      "source": "memory",
+      "snippet": "**3. IPv6 localhost mismatch (NETWORK)** - N8n resolves `localhost` to IPv6 `::1` - Bridge service listens on IPv4 `127.0.0.1:18790` - Fix: Use `http://127.0.0.1:18790` in HTTP Request nodes (not `localhost`) ### The Fix: Gog Bridge Service Created a local HTTP server to proxy CLI commands: - **Service:** `gog-bridge.service` on port 18790 - **Script:** `/home/localadmin/.n8n/scripts/gog-bridge.js` - **Endpoint:** `http://127.0.0.1:18790/fetch-emails` - **Runs:** `/home/linuxbrew/.linuxbrew/bin/gog gmail messages search ...` - **Systemd:** `sudo systemctl {start|stop|restart} gog-bridge` ### Workflow Architecture (Final Version) ``` POST http://ocg.9xc.local:5678/webhook/sam-trigger ↓ N",
+      "recallCount": 1,
+      "dailyCount": 0,
+      "groundedCount": 0,
+      "totalScore": 0.8875138698350676,
+      "maxScore": 0.8875138698350676,
+      "firstRecalledAt": "2026-04-11T06:19:50.051Z",
+      "lastRecalledAt": "2026-04-11T06:19:50.051Z",
+      "queryHashes": [
+        "2aad51f0fe09"
+      ],
+      "recallDays": [
+        "2026-04-11"
+      ],
+      "conceptTags": [
+        "network",
+        "127.0.0.1",
+        "gog-bridge.service",
+        "home/localadmin",
+        "n8n/scripts/gog-bridge.js",
+        "18790/fetch-emails",
+        "home/linuxbrew",
+        "linuxbrew/bin/gog"
+      ]
+    },
+    "memory:memory/2026-03-23.md:33:71": {
+      "key": "memory:memory/2026-03-23.md:33:71",
+      "path": "memory/2026-03-23.md",
+      "startLine": 33,
+      "endLine": 71,
+      "source": "memory",
+      "snippet": "## 🔧 Workspace Updates - Multiple ComfyUI/LTX script variants created - `build-llama-server-olla.sh`, `install-comfyui-*.sh`, `start-comfyui-*.sh` active - Git status: 6 modified files, 30+ untracked scripts - MEMORY.md: 13,444 bytes (67% of 20k limit) --- ## 🎯 Active Tasks - Monitoring Iran-Israel conflict developments - ComfyUI setup for LTX video generation - Olla llama-server optimization --- *Last updated: 13:23 UTC* --- ## 📧 AgentMail + Google Workspace Setup (18:00-19:49 UTC) ### AgentMail Email Notifications — COMPLETE ✅ - Working script: `scripts/agentmail-newest-only.py` — polls every 10s, newest-only via Matrix - Inbox: `youthfuldriver243@agentmail.to` | Display: `Sam As",
+      "recallCount": 1,
+      "dailyCount": 0,
+      "groundedCount": 0,
+      "totalScore": 0.8805703723646547,
+      "maxScore": 0.8805703723646547,
+      "firstRecalledAt": "2026-04-11T06:19:50.051Z",
+      "lastRecalledAt": "2026-04-11T06:19:50.051Z",
+      "queryHashes": [
+        "2aad51f0fe09"
+      ],
+      "recallDays": [
+        "2026-04-11"
+      ],
+      "conceptTags": [
+        "comfyui/ltx",
+        "build-llama-server-olla.sh",
+        "install-comfyui",
+        "start-comfyui",
+        "memory.md",
+        "iran-israel",
+        "llama-server",
+        "00-19"
+      ]
+    },
+    "memory:memory/2026-03-23.md:68:95": {
+      "key": "memory:memory/2026-03-23.md:68:95",
+      "path": "memory/2026-03-23.md",
+      "startLine": 68,
+      "endLine": 95,
+      "source": "memory",
+      "snippet": "- Service account key creation blocked by org policy - gog uses its **own built-in OAuth client** (ID `481908441556-...`), NOT the user's custom one - **Solution found:** `gog auth add ops@claw-sync.com --services gmail,calendar,drive,contacts,docs,sheets --manual` - Prints auth URL → open in local browser → sign in as ops@claw-sync.com → grant perms - Browser redirects to 127.0.0.1 (won't load — expected) → copy full URL from address bar - Paste URL back into SSH terminal → done - **Status:** Solution identified, awaiting Jeremy to execute `--manual` flow ### Calendar Setup — PENDING - Options discussed: Radicale (self-hosted CalDAV, free, port 8080/443), Google Calendar API, Nextclo",
+      "recallCount": 1,
+      "dailyCount": 0,
+      "groundedCount": 0,
+      "totalScore": 0.879195468053843,
+      "maxScore": 0.879195468053843,
+      "firstRecalledAt": "2026-04-11T06:19:50.051Z",
+      "lastRecalledAt": "2026-04-11T06:19:50.051Z",
+      "queryHashes": [
+        "2aad51f0fe09"
+      ],
+      "recallDays": [
+        "2026-04-11"
+      ],
+      "conceptTags": [
+        "built-in",
+        "claw-sync.com",
+        "127.0.0.1",
+        "self-hosted",
+        "8080/443",
+        "service",
+        "account",
+        "key"
+      ]
+    },
+    "memory:memory/2026-03-07.md:899:949": {
+      "key": "memory:memory/2026-03-07.md:899:949",
+      "path": "memory/2026-03-07.md",
+      "startLine": 899,
+      "endLine": 949,
+      "source": "memory",
+      "snippet": "**1. Build llama.cpp with CUDA** - Cloned `ggml/llama.cpp` to `/opt/llama.cpp` - Built with CMake: `-DLLAMA_CUDA=ON -DCMAKE_CUDA_ARCHITECTURES=86 -DLLAMA_NATIVE=ON` - Build completed successfully (~100%) **2. Created service infrastructure** - User: `llamacpp` (system user, no login) - Directories: `/opt/models/gguf`, `/etc/llamacpp` - Environment file: `/etc/llamacpp/llamacpp.env` **3. Created systemd service file** - Path: `/etc/systemd/system/llamacpp.service` - ExecStart with user's production flags **4. Created model download script** - `hugpull.sh` — downloads GGUF from URL to `/opt/models/gguf` **5. Updated documentation** - **Playbook:** `ITIL/playbooks/llama-cpp-installation.md`",
+      "recallCount": 1,
+      "dailyCount": 0,
+      "groundedCount": 0,
+      "totalScore": 0.9388251379137144,
+      "maxScore": 0.9388251379137144,
+      "firstRecalledAt": "2026-04-12T06:14:03.725Z",
+      "lastRecalledAt": "2026-04-12T06:14:03.725Z",
+      "queryHashes": [
+        "6bc2d3f1795e"
+      ],
+      "recallDays": [
+        "2026-04-12"
+      ],
+      "conceptTags": [
+        "llama.cpp",
+        "ggml/llama.cpp",
+        "opt/llama.cpp",
+        "dllama-cuda",
+        "dcmake-cuda-architectures",
+        "dllama-native",
+        "opt/models/gguf",
+        "etc/llamacpp"
+      ]
+    },
+    "memory:memory/2026-03-04.md:40:107": {
+      "key": "memory:memory/2026-03-04.md:40:107",
+      "path": "memory/2026-03-04.md",
+      "startLine": 40,
+      "endLine": 107,
+      "source": "memory",
+      "snippet": "### Issue 2: Session Overflow Continues (16:11 UTC) **Symptom:** Context overflow error persists after config changes **Root Cause:** Config changes not applied (services not restarted) **Fix Applied:** - Manually cleared session history - Session file reduced from 910KB to 4 lines **Status:** ✅ Session cleared - Eve can continue --- ## 🔄 Configuration Updates for Eve (dc) | Setting | Before | After | |---------|--------|-------| | **Model** | `qwen3.5-9B:latest` | `gpt-oss:20b` | | **Context limit** | 131,072 | 262,144 (256k) | | **reserveTokens** | 40,000 | 50,000 | --- *Generated: 2026-03-04 16:12 UTC | Tag Team: Sam + Eve* --- ## ✅ Recovery Complete (16:17 UTC) **Subagent Eve",
+      "recallCount": 2,
+      "dailyCount": 0,
+      "groundedCount": 0,
+      "totalScore": 1.7155619594795963,
+      "maxScore": 0.9364447465400748,
+      "firstRecalledAt": "2026-04-12T06:14:03.725Z",
+      "lastRecalledAt": "2026-04-12T23:22:01.430Z",
+      "queryHashes": [
+        "6bc2d3f1795e",
+        "a40fcbfb4195"
+      ],
+      "recallDays": [
+        "2026-04-12"
+      ],
+      "conceptTags": [
+        "gpt",
+        "qwen3.5-9b",
+        "gpt-oss",
+        "issue",
+        "overflow",
+        "continues",
+        "utc",
+        "symptom"
+      ]
+    },
+    "memory:memory/2026-03-04.md:393:445": {
+      "key": "memory:memory/2026-03-04.md:393:445",
+      "path": "memory/2026-03-04.md",
+      "startLine": 393,
+      "endLine": 445,
+      "source": "memory",
+      "snippet": "- **18:29:** ✅ All activity stopped, standing by for next instruction - **18:28:** 🔒 Name constraints locked into MEMORY.md - **18:27:** ✅ Gateway restart resolved context overflow crisis - **16:44:** 🖼️ llama-server updated with vision support + flash attention - **16:17:** ✅ Session cleanup completed - **16:11:** 🚨 Context overflow issue detected - **15:21:** 🚨 Initial context overflow error (400 request exceeded context size) - **12:13:** 📰 Morning news briefing (manually requested) --- ## 📋 Status Update Summary (18:41 UTC) **System Health:** All Green ✅ ### Infrastructure - **Gateway:** Running normally ✅ - **Queue:** Empty (depth 0) ✅ - **Session Context:** 23% capacity (29k/",
+      "recallCount": 1,
+      "dailyCount": 0,
+      "groundedCount": 0,
+      "totalScore": 0.7547241602236807,
+      "maxScore": 0.7547241602236807,
+      "firstRecalledAt": "2026-04-12T23:22:01.430Z",
+      "lastRecalledAt": "2026-04-12T23:22:01.430Z",
+      "queryHashes": [
+        "a40fcbfb4195"
+      ],
+      "recallDays": [
+        "2026-04-12"
+      ],
+      "conceptTags": [
+        "gateway",
+        "memory.md",
+        "llama-server",
+        "all",
+        "activity",
+        "stopped",
+        "standing",
+        "instruction"
+      ]
+    },
+    "memory:memory/2026-03-04.md:362:398": {
+      "key": "memory:memory/2026-03-04.md:362:398",
+      "path": "memory/2026-03-04.md",
+      "startLine": 362,
+      "endLine": 398,
+      "source": "memory",
+      "snippet": "✅ **Tag Team Mode:** Active ✅ **Channel:** Signal group \"Workgroup Bots\" ✅ **Memory:** All changes synced to GitHub ### Configuration State **Sam (ocg host):** - Model: `olla/qwen3.5:latest` - Context: 131k tokens - Workspace: `/home/localadmin/.openclaw/workspace` **Eve (dc host):** - Model: `olla/qwen3.5-9B:latest` - Context: 131k tokens - Gateway: Port 18789, local mode - Workspace: `/home/localadmin/.openclaw/workspace` ### Recent Activity Log - **19:10:** ✅ Full stop acknowledged - activity ceased - **19:09:** ✅ Memory flush - all context captured for compaction - **19:08:** ✅ All activity stopped - tag team standby mode - **19:03:** ✅ System health check - all systems operatio",
+      "recallCount": 1,
+      "dailyCount": 0,
+      "groundedCount": 0,
+      "totalScore": 0.7487917832661307,
+      "maxScore": 0.7487917832661307,
+      "firstRecalledAt": "2026-04-12T23:22:01.430Z",
+      "lastRecalledAt": "2026-04-12T23:22:01.430Z",
+      "queryHashes": [
+        "a40fcbfb4195"
+      ],
+      "recallDays": [
+        "2026-04-12"
+      ],
+      "conceptTags": [
+        "gateway",
+        "olla/qwen3.5",
+        "home/localadmin",
+        "openclaw/workspace",
+        "olla/qwen3.5-9b",
+        "tag",
+        "team",
+        "mode"
+      ]
+    },
+    "memory:memory/2026-03-01.md:34:62": {
+      "key": "memory:memory/2026-03-01.md:34:62",
+      "path": "memory/2026-03-01.md",
+      "startLine": 34,
+      "endLine": 62,
+      "source": "memory",
+      "snippet": "3. **Code-level guard** (pending): - Prompt builder should check before sending: `if (tokens > ctx_size * 0.9) trigger_compaction()` - Requires OpenClaw source modification ### Files Created/Updated - `ITIL/ITIL-ISSUE-CONTEXT-WINDOW-ROLLOVER.md` - Issue tracking - `llama-server.service` - Updated server config - `DEPLOY-LLAMA-SERVER.md` - Deployment instructions - `update-compaction-settings.sh` - Config update script - `memory/2026-03-01.md` - This file ### Next Steps 1. Deploy updated llama-server.service to olla (manual sudo required) 2. Test with long-running conversation 3. Monitor logs for any context errors 4. Submit code-level fix to OpenClaw repository ### Notes - Server",
+      "recallCount": 1,
+      "dailyCount": 0,
+      "groundedCount": 0,
+      "totalScore": 0.6576417745220751,
+      "maxScore": 0.6576417745220751,
+      "firstRecalledAt": "2026-04-12T23:22:01.430Z",
+      "lastRecalledAt": "2026-04-12T23:22:01.430Z",
+      "queryHashes": [
+        "a40fcbfb4195"
+      ],
+      "recallDays": [
+        "2026-04-12"
+      ],
+      "conceptTags": [
+        "code-level",
+        "ctx-size",
+        "0.9",
+        "trigger-compaction",
+        "created/updated",
+        "llama-server.service",
+        "deploy-llama-server.md",
+        "update-compaction-settings.sh"
+      ]
+    },
+    "memory:memory/2026-04-10.md:1:1": {
+      "key": "memory:memory/2026-04-10.md:1:1",
+      "path": "memory/2026-04-10.md",
+      "startLine": 1,
+      "endLine": 1,
+      "source": "memory",
+      "snippet": "2026-04-10 01:00 UTC: Fixed model fallback chain in openclaw.json (primary olla/llamacpp, fallback llama/llamacpp, failover github-copilot/claude-opus-4.6). Removed Antfarm folder, updated invoice for P6000 cost, verified model Qwen-3.5-35B-... on llama host. No more Opus usage expected. Verified gateway no timeout after stale device cleanup.",
+      "recallCount": 1,
+      "dailyCount": 0,
+      "groundedCount": 0,
+      "totalScore": 0.8712628211753537,
+      "maxScore": 0.8712628211753537,
+      "firstRecalledAt": "2026-04-13T02:57:15.599Z",
+      "lastRecalledAt": "2026-04-13T02:57:15.599Z",
+      "queryHashes": [
+        "c22acbf475bd"
+      ],
+      "recallDays": [
+        "2026-04-13"
+      ],
+      "conceptTags": [
+        "failover",
+        "gateway",
+        "openclaw.json",
+        "olla/llamacpp",
+        "llama/llamacpp",
+        "github-copilot/claude-opus-4.6",
+        "qwen-3.5-35b",
+        "utc"
+      ]
+    },
+    "memory:memory/2026-04-08.md:27:49": {
+      "key": "memory:memory/2026-04-08.md:27:49",
+      "path": "memory/2026-04-08.md",
+      "startLine": 27,
+      "endLine": 49,
+      "source": "memory",
+      "snippet": "4. **sudo NOPASSWD override** — `%sudo` group rule came after NOPASSWD line in sudoers, overriding it. Fixed with `/etc/sudoers.d/localadmin`. ### Cron jobs recreated (5): 1. 6AM CST Morning News Brief (daily 12:00 UTC) 2. Daily Olla Cost Report (daily 12:00 UTC) 3. Daily Self-Improvement Review (daily 14:00 UTC) 4. Monthly Invoice (1st of month, 09:00 UTC) 5. Memory Monitor (daily 08:00 UTC) ### Connectivity from claw: - ✅ SSH to MAS (root@173.214.163.78) - ✅ SSH to Olla (localadmin@olla) - ✅ Local model (olla:11434 — Qwen3.5 35B, 262k ctx) - ✅ Matrix (comms.9xc.io — 281ms) - ❌ SSH to NC (password auth only, needs key push) - ❌ gog not installed yet ### Still TODO: - Install gog (Google",
+      "recallCount": 1,
+      "dailyCount": 0,
+      "groundedCount": 0,
+      "totalScore": 0.8461277526710083,
+      "maxScore": 0.8461277526710083,
+      "firstRecalledAt": "2026-04-13T02:57:15.599Z",
+      "lastRecalledAt": "2026-04-13T02:57:15.599Z",
+      "queryHashes": [
+        "c22acbf475bd"
+      ],
+      "recallDays": [
+        "2026-04-13"
+      ],
+      "conceptTags": [
+        "etc/sudoers.d/localadmin",
+        "self-improvement",
+        "173.214.163.78",
+        "qwen3.5",
+        "comms.9xc.io",
+        "sudo",
+        "nopasswd",
+        "override"
+      ]
+    },
+    "memory:memory/2026-04-14.md:25:33": {
+      "key": "memory:memory/2026-04-14.md:25:33",
+      "path": "memory/2026-04-14.md",
+      "startLine": 25,
+      "endLine": 33,
+      "source": "memory",
+      "snippet": "- 5 fans unmonitored (FAN3, FAN4, FAN6, FANA, FANB show \"no reading\") — 62.5% of cooling system - CPU temps: 36-38°C (very cool), PCH: 48°C - CPU load: 0.4-0.6 (minimal) - Fan sensors stable in IPMI, but physical fans may oscillate **Root cause:** Unmonitored fans on Supermicro chassis may be running in fallback mode or have hardware issues **Recommendation:** Physically check server chassis for dust, loose fans, or failing fans on the unmonitored 5 fans",
+      "recallCount": 1,
+      "dailyCount": 0,
+      "groundedCount": 0,
+      "totalScore": 1,
+      "maxScore": 1,
+      "firstRecalledAt": "2026-04-15T21:05:44.296Z",
+      "lastRecalledAt": "2026-04-15T21:05:44.296Z",
+      "queryHashes": [
+        "e692384705b4"
+      ],
+      "recallDays": [
+        "2026-04-15"
+      ],
+      "conceptTags": [
+        "62.5",
+        "36-38",
+        "0.4-0.6",
+        "fans",
+        "unmonitored",
+        "fan3",
+        "fan4",
+        "fan6"
+      ]
+    },
+    "memory:memory/2026-04-14.md:1:31": {
+      "key": "memory:memory/2026-04-14.md:1:31",
+      "path": "memory/2026-04-14.md",
+      "startLine": 1,
+      "endLine": 31,
+      "source": "memory",
+      "snippet": "## 2026-04-14 00:06 UTC - Lucas Pairing Complete **Task:** Pair Sam and Lucas on Matrix so Sam can delegate tasks to Lucas **Setup completed:** - Created Matrix DM room `!rWdBjiVhBJuqnCaoBz:comms.9xc.io` with @lavid, @sam, @lucas - Added @sam:comms.9xc.io to Lucas's DM allowlist - Configured Lucas's Matrix: `autoJoin: \"always\"`, `dmPolicy: \"allowlist\"` - Set `requireMention: true` for Lucas in group room (uses proper HTML matrix pills) - Configured Lucas to use `node1/llamacpp` as default model (262k ctx, $0 cost) - Fixed DNS issue: comms.9xc.io resolves to 64.20.43.204 (public IP, not 10.50.15.201) - Restarted both Sam and Lucas gateways **How to mention Lucas:** - Use Element's autocomp",
+      "recallCount": 1,
+      "dailyCount": 0,
+      "groundedCount": 0,
+      "totalScore": 1,
+      "maxScore": 1,
+      "firstRecalledAt": "2026-04-15T21:05:44.296Z",
+      "lastRecalledAt": "2026-04-15T21:05:44.296Z",
+      "queryHashes": [
+        "e692384705b4"
+      ],
+      "recallDays": [
+        "2026-04-15"
+      ],
+      "conceptTags": [
+        "gateway",
+        "comms.9xc.io",
+        "node1/llamacpp",
+        "64.20.43.204",
+        "10.50.15.201",
+        "utc",
+        "lucas",
+        "pairing"
+      ]
+    },
+    "memory:memory/2026-04-12.md:1:31": {
+      "key": "memory:memory/2026-04-12.md:1:31",
+      "path": "memory/2026-04-12.md",
+      "startLine": 1,
+      "endLine": 31,
+      "source": "memory",
+      "snippet": "# 2026-04-12 ## Network Infrastructure Update ### Proxmox Server Migration - **USM1 & USM2:** Physically removed, drives wiped and repurposed (never to return) - **New server:** `ts.9xc.local` (172.16.254.5) - Hardware: Supermicro SYS-6028R-T-2-TR013 - CPU: 2× Intel Xeon E5-2680 v4 (28 cores / 56 threads @ 2.4GHz) - RAM: 251 GiB (68 GiB used, 183 GiB available) - Storage: 17.3 TiB SAS pool (69.6% used) + 2.7 TiB FAST pool (6.1% used) - OS: Proxmox VE 9.1 (Debian 13 trixie) - VM 100: `node1` running with 48 GB RAM, 128 GB disk (contains 2× P6000 GPUs) - **Access:** SSH as `root@ts.9xc.local` ### TOOLS.md Updated - Added `ts.9xc.local` host details - Marked USM1/USM2 as decommis",
+      "recallCount": 1,
+      "dailyCount": 0,
+      "groundedCount": 0,
+      "totalScore": 1,
+      "maxScore": 1,
+      "firstRecalledAt": "2026-04-15T21:05:44.296Z",
+      "lastRecalledAt": "2026-04-15T21:05:44.296Z",
+      "queryHashes": [
+        "e692384705b4"
+      ],
+      "recallDays": [
+        "2026-04-15"
+      ],
+      "conceptTags": [
+        "network",
+        "ts.9xc.local",
+        "172.16.254.5",
+        "sys-6028r-t-2-tr013",
+        "e5-2680",
+        "2.4ghz",
+        "17.3",
+        "69.6"
+      ]
+    },
+    "memory:memory/2026-03-07.md:148:197": {
+      "key": "memory:memory/2026-03-07.md:148:197",
+      "path": "memory/2026-03-07.md",
+      "startLine": 148,
+      "endLine": 197,
+      "source": "memory",
+      "snippet": "- Cross-reference document helps navigate between them ### Lessons Learned - **File count matters**: 141 notes is substantial — categorization helps - **Concept notes add value**: Raw guides are reference; concept notes enable synthesis - **Wikilinks work well**: Obsidian's `[[link]]` syntax integrates well with existing note structure - **Separation of concerns**: PKB for knowledge, ITIL for ops, Memory for session logs ### Next Steps 1. User to explore PKB in Obsidian desktop 2. Consider periodic extraction of OpenClaw session learnings into PKB 3. Update concept notes as new knowledge domains emerge 4. Potentially create additional concept notes for: - AI/ML (Ollama, Open-WebUI)",
+      "recallCount": 1,
+      "dailyCount": 0,
+      "groundedCount": 0,
+      "totalScore": 1,
+      "maxScore": 1,
+      "firstRecalledAt": "2026-04-15T21:05:44.296Z",
+      "lastRecalledAt": "2026-04-15T21:05:44.296Z",
+      "queryHashes": [
+        "e692384705b4"
+      ],
+      "recallDays": [
+        "2026-04-15"
+      ],
+      "conceptTags": [
+        "cross-reference",
+        "ai/ml",
+        "open-webui",
+        "cross",
+        "reference",
+        "document",
+        "helps",
+        "navigate"
+      ]
+    },
+    "memory:memory/2026-03-07.md:76:117": {
+      "key": "memory:memory/2026-03-07.md:76:117",
+      "path": "memory/2026-03-07.md",
+      "startLine": 76,
+      "endLine": 117,
+      "source": "memory",
+      "snippet": "- Full file listing via `find pkb/ -name \"*.md\"` - Identified categories from directory structure and filenames - Mapped content domains to existing ITIL playbooks **Phase 2: Knowledge Synthesis (Concept Notes)** Created 6 concept notes in `pkb/resources/Concepts/`: 1. **System Administration Knowledge Base.md** — Master topic index - Organized by domain (Linux, Windows, Proxmox, Network, etc.) - Wikilinks to related notes - Cross-references to ITIL playbooks 2. **Docker Containers.md** — Containerization concepts - Container management - Application containers (Plex, Mattermost, Minecraft, OwnCloud) - VGPU configuration 3. **Storage Systems.md** — Storage technologies",
+      "recallCount": 1,
+      "dailyCount": 0,
+      "groundedCount": 0,
+      "totalScore": 1,
+      "maxScore": 1,
+      "firstRecalledAt": "2026-04-15T21:05:44.296Z",
+      "lastRecalledAt": "2026-04-15T21:05:44.296Z",
+      "queryHashes": [
+        "e692384705b4"
+      ],
+      "recallDays": [
+        "2026-04-15"
+      ],
+      "conceptTags": [
+        "network",
+        "pkb/resources/concepts",
+        "base.md",
+        "cross-references",
+        "containers.md",
+        "systems.md",
+        "full",
+        "listing"
+      ]
+    },
+    "memory:memory/2026-04-06.md:1:31": {
+      "key": "memory:memory/2026-04-06.md:1:31",
+      "path": "memory/2026-04-06.md",
+      "startLine": 1,
+      "endLine": 31,
+      "source": "memory",
+      "snippet": "# 2026-04-06 — Daily Notes ## llama.cpp Server on llama VM (VM 199) ### CUDA Architecture Fix - **Problem:** llama-server crashing with `CUDA error: no kernel image is available for execution on the device` - **Root cause:** llama.cpp was compiled for newer CUDA arch (Ampere/Ada 8.0+) but P6000s are Pascal (CC 6.1) - **Fix:** Rebuilt with `-DCMAKE_CUDA_ARCHITECTURES=61` - **Build path:** `/opt/llama.cpp/build` (owned by `llamacpp` user) - **Service:** `llama-server.service` — running, model loads and serves completions ✅ - **Endpoint:** `http://llama:11434/v1` - **GPUs:** 2x Quadro P6000 (48GB total VRAM) ### SSH Config Fix (ocg → llama) - **Problem:** `~/.ssh/config` had `User root` for",
+      "recallCount": 1,
+      "dailyCount": 0,
+      "groundedCount": 0,
+      "totalScore": 1,
+      "maxScore": 1,
+      "firstRecalledAt": "2026-04-15T21:55:09.394Z",
+      "lastRecalledAt": "2026-04-15T21:55:09.394Z",
+      "queryHashes": [
+        "a88d0dc19329"
+      ],
+      "recallDays": [
+        "2026-04-15"
+      ],
+      "conceptTags": [
+        "llama.cpp",
+        "llama-server",
+        "ampere/ada",
+        "8.0",
+        "6.1",
+        "dcmake-cuda-architectures",
+        "opt/llama.cpp/build",
+        "llama-server.service"
+      ]
+    },
+    "memory:memory/2026-04-06.md:26:51": {
+      "key": "memory:memory/2026-04-06.md:26:51",
+      "path": "memory/2026-04-06.md",
+      "startLine": 26,
+      "endLine": 51,
+      "source": "memory",
+      "snippet": "- **Added:** `llama` provider in `openclaw.json` → `models.providers.llama` - **Added:** `llama/llamacpp` in `agents.defaults.models` with alias `llama` - **Config:** baseUrl `http://llama:11434/v1`, apiKey `local`, contextWindow 262144, maxTokens 8192 - **Usage:** `/model llama` or `llama/llamacpp` ## Lessons Learned - Previous model (qwen3.5) got stuck in infinite loop trying `ssh root@llama` and `process write` without sessionId - Always use `localadmin@llama` for SSH — now enforced via `~/.ssh/config` - P6000 = Pascal CC 6.1 — must compile CUDA code with `-DCMAKE_CUDA_ARCHITECTURES=61` - Provider needs BOTH `models.providers.<name>` AND `agents.defaults.models.<provider/model>` entries",
+      "recallCount": 1,
+      "dailyCount": 0,
+      "groundedCount": 0,
+      "totalScore": 1,
+      "maxScore": 1,
+      "firstRecalledAt": "2026-04-15T21:55:09.394Z",
+      "lastRecalledAt": "2026-04-15T21:55:09.394Z",
+      "queryHashes": [
+        "a88d0dc19329"
+      ],
+      "recallDays": [
+        "2026-04-15"
+      ],
+      "conceptTags": [
+        "openclaw.json",
+        "models.providers.llama",
+        "llama/llamacpp",
+        "agents.defaults.models",
+        "11434/v1",
+        "qwen3.5",
+        "ssh/config",
+        "6.1"
+      ]
+    },
+    "memory:memory/2026-04-06.md:45:71": {
+      "key": "memory:memory/2026-04-06.md:45:71",
+      "path": "memory/2026-04-06.md",
+      "startLine": 45,
+      "endLine": 71,
+      "source": "memory",
+      "snippet": "- **Build path:** `/opt/llama.cpp/build` (owned by `llamacpp` user) - **Service:** `llama-server.service` — running, model loads and serves completions ✅ - **Endpoint:** `http://llama:11434/v1` - **GPUs:** 2x Quadro P6000 (48GB total VRAM) ### SSH Config Fix (ocg → llama) - **Problem:** `~/.ssh/config` had `User root` for llama host — should be `localadmin` - **Problem:** `UserKnownHostsFile /dev/null` was discarding host keys every time - **Fix:** Changed `User root` → `User localadmin`, removed `UserKnownHostsFile /dev/null` - **Result:** `ssh llama` now works correctly with key auth ### Sudoers Fix (llama) - **Problem:** NOPASSWD rule in `/etc/sudoers` was overridden by `%sudo` group ru",
+      "recallCount": 1,
+      "dailyCount": 0,
+      "groundedCount": 0,
+      "totalScore": 1,
+      "maxScore": 1,
+      "firstRecalledAt": "2026-04-15T21:55:09.394Z",
+      "lastRecalledAt": "2026-04-15T21:55:09.394Z",
+      "queryHashes": [
+        "a88d0dc19329"
+      ],
+      "recallDays": [
+        "2026-04-15"
+      ],
+      "conceptTags": [
+        "opt/llama.cpp/build",
+        "llama-server.service",
+        "11434/v1",
+        "ssh/config",
+        "dev/null",
+        "etc/sudoers",
+        "path",
+        "opt"
+      ]
+    },
+    "memory:memory/2026-04-15.md:40:65": {
+      "key": "memory:memory/2026-04-15.md:40:65",
+      "path": "memory/2026-04-15.md",
+      "startLine": 40,
+      "endLine": 65,
+      "source": "memory",
+      "snippet": "5. **GPU Persistence Check** — Updated to check node2 6. **Daily Self-Improvement Review** — Removed broken `gpt-5.1` model override (was causing failures) ## Daily Systems Status Report - Generated and emailed HTML dashboard at 03:53 UTC - TS temps: CPU1=43°C, CPU2=39°C, System=42°C - Node2: llama-server active, 10.7GB RAM, GPU0 79°C/23.5GB, GPU1 69°C/20.3GB - SAS /dev/sdd still failing (36,704 reallocated sectors) ## IDENTITY.md Updated - Changed critical infrastructure note from node1 to node2 --- ## Session: Pre-compaction memory flush (appended 2026-04-15 20:22 UTC) What I worked on: - Repaired and deployed a Real-time Systems Dashboard (HTTP server + WebSocket) running on node2, ac",
+      "recallCount": 1,
+      "dailyCount": 0,
+      "groundedCount": 0,
+      "totalScore": 1,
+      "maxScore": 1,
+      "firstRecalledAt": "2026-04-16T14:51:42.533Z",
+      "lastRecalledAt": "2026-04-16T14:51:42.533Z",
+      "queryHashes": [
+        "6b735966adfe"
+      ],
+      "recallDays": [
+        "2026-04-16"
+      ],
+      "conceptTags": [
+        "gpt",
+        "self-improvement",
+        "gpt-5.1",
+        "llama-server",
+        "10.7gb",
+        "c/23.5gb",
+        "c/20.3gb",
+        "dev/sdd"
+      ]
+    }
+  }
+}

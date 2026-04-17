@@ -1,0 +1,20 @@
+{
+  "3": {
+    "class_type": "LTXVImgToVideo",
+    "inputs": {
+      "images": ["4", 0],
+      "width": 768,
+      "height": 512,
+      "num_frames": 64,
+      "fps": 24,
+      "prompt": "beautiful naked woman laying on a bed, cinematic lighting, soft focus, high quality"
+    }
+  },
+  "4": {
+    "class_type": "LoadImage",
+    "inputs": {
+      "image": "placeholder.jpg",
+      "upload": "image"
+    }
+  }
+}
