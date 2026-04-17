@@ -99,6 +99,26 @@ curl -s -X POST "http://ocg.9xc.local:5678/webhook/{path}" -H "Content-Type: app
 
 Skills define _how_ tools work. This file is for _your_ specifics — the stuff that's unique to your setup.
 
+## 🔧 SSH Hosts & Infrastructure
+
+### Proxmox ESXi Server
+- **Hostname:** `ts.9xc.local` (formerly USM1/USM2)
+- **IP:** `172.16.254.5`
+- **Access:** `ssh root@ts.9xc.local`
+- **Hardware:** Supermicro SYS-6028R-T-2-TR013
+- **CPU:** 2× Xeon E5-2680 v4 (56 cores / 112 threads)
+- **RAM:** 251 GB
+- **Storage:** 17.3 TiB SAS pool + 2.7 TiB FAST pool
+- **VMs:** node1 (VM 100) — GPU machine with 2× P6000
+
+### Decommissioned
+- **USM1:** Physically removed (drives wiped)
+- **USM2:** Physically removed (drives wiped)
+
+### Other SSH Aliases
+
+- `home-server` → 192.168.1.100, user: admin
+
 ## What Goes Here
 
 Things like:
@@ -117,10 +137,6 @@ Things like:
 
 - living-room → Main area, 180° wide angle
 - front-door → Entrance, motion-triggered
-
-### SSH
-
-- home-server → 192.168.1.100, user: admin
 
 ### TTS
 

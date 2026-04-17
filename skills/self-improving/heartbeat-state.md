@@ -1,22 +1,26 @@
-# Heartbeat State Template
-
-Use this file as the baseline for `~/self-improving/heartbeat-state.md`.
-It stores only lightweight run markers and maintenance notes.
-
-```markdown
 # Self-Improving Heartbeat State
 
-last_heartbeat_started_at: never
-last_reviewed_change_at: never
-last_heartbeat_result: never
+**Last heartbeat started:** 2026-04-05T14:00:00Z  
+**Last reviewed change:** 2026-04-05T14:00:00Z  
+**Last heartbeat result:** COMPLETED
 
-## Last actions
-- none yet
-```
+## Corrections Captured Today
+- Watchdog cron errors (PATH issue)
+- gog-bridge health (endpoint 404)
+- Memory file gap (no 2026-04-05.md)
 
-## Rules
+## Recent Promotions
+- usm1 removed from network (2026-04-04)
+- usm2 → `olla` (2026-04-04)
+- MEMORY.md size constraint (19KB max)
+- OpenClaw-OPS integration (6 scripts)
 
-- update `last_heartbeat_started_at` at the beginning of every heartbeat
-- update `last_reviewed_change_at` only after a clean review of changed files
-- keep `last_actions` short and factual
-- never turn this file into another memory log
+## Today's Focus
+- Daily self-improvement review
+- Audit cron jobs and services
+- Identify operational gaps
+- Update memory files
+
+## Next Review
+- 2026-04-06 at 14:00 UTC
+- Or when new corrections occur

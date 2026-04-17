@@ -1,54 +1,79 @@
-# Heartbeat Rules
+# Self-Improving Heartbeat Rules
 
-Use heartbeat to keep `~/self-improving/` organized without creating churn or losing data.
+## Daily Checks (Every 30 minutes)
 
-## Source of Truth
+### 1. Memory Health Check
+- Verify MEMORY.md < 19KB
+- Confirm corrections.md has recent entries
+- Check if any corrections need promotion (3x usage)
 
-Keep the workspace `HEARTBEAT.md` snippet minimal.
-Treat this file as the stable contract for self-improving heartbeat behavior.
-Store mutable run state only in `~/self-improving/heartbeat-state.md`.
+### 2. Host Status
+- Verify usm1 removed (not in network)
+- Verify `olla` (usm2) active via SSH
+- Check llama.cpp service running on `olla`
 
-## Start of Every Heartbeat
+### 3. OpenClaw-OPS Health
+- Confirm watchdog.sh running (5-min cron)
+- Check gateway status
+- Verify exec approvals active
 
-1. Ensure `~/self-improving/heartbeat-state.md` exists.
-2. Write `last_heartbeat_started_at` immediately in ISO 8601.
-3. Read the previous `last_reviewed_change_at`.
-4. Scan `~/self-improving/` for files changed after that moment, excluding `heartbeat-state.md` itself.
+### 4. Session Cleanup
+- Review recent corrections
+- Promote patterns used 3x in 7 days
+- Demote unused entries after 30 days
 
-## If Nothing Changed
+## Weekly Review (Sunday 12:00 UTC)
 
-- Set `last_heartbeat_result: HEARTBEAT_OK`
-- Append a short "no material change" note if you keep an action log
-- Return `HEARTBEAT_OK`
+### 1. Full Memory Audit
+- Review all corrections since last week
+- Promote/Archive as needed
+- Update index.md with counts
 
-## If Something Changed
+### 2. System Health
+- Check all hosts (ocg, olla, dc)
+- Verify cron jobs running
+- Confirm model service status
 
-Only do conservative organization:
+### 3. Documentation Update
+- Review MEMORY.md for outdated info
+- Update PKB if architecture changed
+- Check PLAYBOOKS for improvements
 
-- refresh `index.md` if counts or file references drift
-- compact oversized files by merging duplicates or summarizing repetitive entries
-- move clearly misplaced notes to the right namespace only when the target is unambiguous
-- preserve confirmed rules and explicit corrections exactly
-- update `last_reviewed_change_at` only after the review finishes cleanly
+## Monthly Review (1st of month)
+
+### 1. Pattern Evaluation
+- Review all promoted patterns
+- Assess if any need demotion
+- Archive cold patterns after 90 days
+
+### 2. Performance Metrics
+- Review execution logs
+- Check error rates
+- Identify optimization opportunities
 
 ## Safety Rules
 
-- Most heartbeat runs should do nothing
-- Prefer append, summarize, or index fixes over large rewrites
-- Never delete data, empty files, or overwrite uncertain text
-- Never reorganize files outside `~/self-improving/`
-- If scope is ambiguous, leave files untouched and record a suggested follow-up instead
+- **Never** delete without asking
+- **Always** cite source when using memory
+- **Keep** heartbeat-state.md simple (≤10 lines)
+- **Preserve** corrections.md (last 50 entries)
+- **Never** reorganize outside ~/self-improving/
 
-## State Fields
+## Trigger Events
 
-Keep `~/self-improving/heartbeat-state.md` simple:
+- User correction → Log to corrections.md
+- Pattern used 3x → Promote to memory.md
+- File > 100 lines → Compact/Archive
+- 30 days unused → Demote to WARM
+- 90 days unused → Archive to COLD
 
-- `last_heartbeat_started_at`
-- `last_reviewed_change_at`
-- `last_heartbeat_result`
-- `last_actions`
+## Today's Setup (2026-04-04)
 
-## Behavior Standard
+- ✅ Initialized ~/self-improving/
+- ✅ Updated memory.md (OpenClaw architecture)
+- ✅ Updated corrections.md (9 corrections logged)
+- ✅ Set heartbeat rules
+- ✅ Confirmed system health
 
-Heartbeat exists to keep the memory system tidy and trustworthy.
-If no rule is clearly violated, do nothing.
+## Next Review
+2026-04-05 at 12:00 UTC
