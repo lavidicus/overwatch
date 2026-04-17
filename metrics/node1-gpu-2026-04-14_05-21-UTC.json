@@ -1,0 +1,30 @@
+{
+  "timestamp": "2026-04-14_05-21-UTC",
+  "gpus": [
+    {
+      "index": 0,
+      "temperature": 54,
+      "memory.total": 24576,
+      "memory.used": 22195,
+      "memory.free": 2243,
+      "utilization.gpu": 0,
+      "utilization.memory": 0,
+      "power.draw": 66.04,
+      "power.limit": 250.00,
+      "process": "llama-server (22186 MiB)"
+    },
+    {
+      "index": 1,
+      "temperature": 49,
+      "memory.total": 24576,
+      "memory.used": 20135,
+      "memory.free": 4303,
+      "utilization.gpu": 0,
+      "utilization.memory": 0,
+      "power.draw": 66.81,
+      "power.limit": 250.00,
+      "process": "llama-server (20126 MiB)"
+    }
+  ],
+  "notes": "Both GPUs running llama-server. GPU 0 has 22186 MiB used, GPU 1 has 20126 MiB used. No active GPU compute (0% utilization), inference likely idle or waiting for prompts."
+}

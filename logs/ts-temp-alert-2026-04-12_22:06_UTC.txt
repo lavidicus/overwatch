@@ -1,0 +1,29 @@
+🚨 **TS Server Temperature ALERT - 2026-04-12 22:06 UTC**
+
+Temps at or above 60°C detected:
+
+```
+CPU1 Temp        | 52 degrees C      | ok
+CPU2 Temp        | 52 degrees C      | ok
+PCH Temp         | 49 degrees C      | ok
+System Temp      | 49 degrees C      | ok
+Peripheral Temp  | 57 degrees C      | ok
+Vcpu1VRM Temp    | 60 degrees C      | ok
+Vcpu2VRM Temp    | 58 degrees C      | ok
+VmemABVRM Temp   | 59 degrees C      | ok
+VmemCDVRM Temp   | 46 degrees C      | ok
+VmemEFVRM Temp   | 56 degrees C      | ok
+VmemGHVRM Temp   | 56 degrees C      | ok
+P1-DIMMA1 Temp   | 60 degrees C      | ok
+P1-DIMMA2 Temp   | 58 degrees C      | ok
+P1-DIMMB1 Temp   | 57 degrees C      | ok
+P1-DIMMB2 Temp   | 58 degrees C      | ok
+P2-DIMMG1 Temp   | 54 degrees C      | ok
+P2-DIMMG2 Temp   | 55 degrees C      | ok
+P2-DIMMH1 Temp   | 57 degrees C      | ok
+P2-DIMMH2 Temp   | 57 degrees C      | ok
+```
+
+⚠️ **IMMEDIATE ATTENTION REQUIRED!**
+
+*Threshold: 60°C | Source: ipmitool sdr on TS*

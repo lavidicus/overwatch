@@ -1,0 +1,189 @@
+=== 2026-04-12 22:02 UTC ===
+CPU1 Temp        | 49 degrees C      | ok
+CPU2 Temp        | 48 degrees C      | ok
+PCH Temp         | 51 degrees C      | ok
+System Temp      | 47 degrees C      | ok
+Peripheral Temp  | 51 degrees C      | ok
+Vcpu1VRM Temp    | 57 degrees C      | ok
+Vcpu2VRM Temp    | 56 degrees C      | ok
+VmemABVRM Temp   | 55 degrees C      | ok
+VmemCDVRM Temp   | 46 degrees C      | ok
+VmemEFVRM Temp   | 52 degrees C      | ok
+VmemGHVRM Temp   | 53 degrees C      | ok
+P1-DIMMA1 Temp   | 56 degrees C      | ok
+P1-DIMMA2 Temp   | 54 degrees C      | ok
+P1-DIMMB1 Temp   | 53 degrees C      | ok
+P1-DIMMB2 Temp   | 54 degrees C      | ok
+P2-DIMMG1 Temp   | 50 degrees C      | ok
+P2-DIMMG2 Temp   | 51 degrees C      | ok
+P2-DIMMH1 Temp   | 54 degrees C      | ok
+P2-DIMMH2 Temp   | 54 degrees C      | ok
+
+=== 2026-04-12 22:06 UTC ===
+CPU1 Temp        | 52 degrees C      | ok
+CPU2 Temp        | 52 degrees C      | ok
+PCH Temp         | 49 degrees C      | ok
+System Temp      | 48 degrees C      | ok
+Peripheral Temp  | 56 degrees C      | ok
+Vcpu1VRM Temp    | 60 degrees C      | ok
+Vcpu2VRM Temp    | 58 degrees C      | ok
+VmemABVRM Temp   | 58 degrees C      | ok
+VmemCDVRM Temp   | 47 degrees C      | ok
+VmemEFVRM Temp   | 55 degrees C      | ok
+VmemGHVRM Temp   | 56 degrees C      | ok
+P1-DIMMA1 Temp   | 59 degrees C      | ok
+P1-DIMMA2 Temp   | 58 degrees C      | ok
+P1-DIMMB1 Temp   | 57 degrees C      | ok
+P1-DIMMB2 Temp   | 57 degrees C      | ok
+P2-DIMMG1 Temp   | 53 degrees C      | ok
+P2-DIMMG2 Temp   | 54 degrees C      | ok
+P2-DIMMH1 Temp   | 57 degrees C      | ok
+P2-DIMMH2 Temp   | 56 degrees C      | ok
+
+=== 2026-04-12 22:06 UTC ===
+CPU1 Temp        | 52 degrees C      | ok
+CPU2 Temp        | 52 degrees C      | ok
+PCH Temp         | 49 degrees C      | ok
+System Temp      | 49 degrees C      | ok
+Peripheral Temp  | 57 degrees C      | ok
+Vcpu1VRM Temp    | 60 degrees C      | ok
+Vcpu2VRM Temp    | 58 degrees C      | ok
+VmemABVRM Temp   | 59 degrees C      | ok
+VmemCDVRM Temp   | 46 degrees C      | ok
+VmemEFVRM Temp   | 56 degrees C      | ok
+VmemGHVRM Temp   | 56 degrees C      | ok
+P1-DIMMA1 Temp   | 60 degrees C      | ok
+P1-DIMMA2 Temp   | 58 degrees C      | ok
+P1-DIMMB1 Temp   | 57 degrees C      | ok
+P1-DIMMB2 Temp   | 58 degrees C      | ok
+P2-DIMMG1 Temp   | 54 degrees C      | ok
+P2-DIMMG2 Temp   | 55 degrees C      | ok
+P2-DIMMH1 Temp   | 57 degrees C      | ok
+P2-DIMMH2 Temp   | 57 degrees C      | ok
+
+=== 2026-04-12 22:07 UTC ===
+CPU1 Temp        | 53 degrees C      | ok
+CPU2 Temp        | 53 degrees C      | ok
+PCH Temp         | 48 degrees C      | ok
+System Temp      | 50 degrees C      | ok
+Peripheral Temp  | 58 degrees C      | ok
+Vcpu1VRM Temp    | 61 degrees C      | ok
+Vcpu2VRM Temp    | 59 degrees C      | ok
+VmemABVRM Temp   | 59 degrees C      | ok
+VmemCDVRM Temp   | 47 degrees C      | ok
+VmemEFVRM Temp   | 57 degrees C      | ok
+VmemGHVRM Temp   | 57 degrees C      | ok
+P1-DIMMA1 Temp   | 61 degrees C      | ok
+P1-DIMMA2 Temp   | 59 degrees C      | ok
+P1-DIMMB1 Temp   | 58 degrees C      | ok
+P1-DIMMB2 Temp   | 59 degrees C      | ok
+P2-DIMMG1 Temp   | 55 degrees C      | ok
+P2-DIMMG2 Temp   | 55 degrees C      | ok
+P2-DIMMH1 Temp   | 58 degrees C      | ok
+P2-DIMMH2 Temp   | 58 degrees C      | ok
+
+=== 2026-04-12 22:09 UTC ===
+CPU1 Temp        | 54 degrees C      | ok
+CPU2 Temp        | 53 degrees C      | ok
+PCH Temp         | 48 degrees C      | ok
+System Temp      | 50 degrees C      | ok
+Peripheral Temp  | 58 degrees C      | ok
+Vcpu1VRM Temp    | 61 degrees C      | ok
+Vcpu2VRM Temp    | 60 degrees C      | ok
+VmemABVRM Temp   | 61 degrees C      | ok
+VmemCDVRM Temp   | 47 degrees C      | ok
+VmemEFVRM Temp   | 58 degrees C      | ok
+VmemGHVRM Temp   | 57 degrees C      | ok
+P1-DIMMA1 Temp   | 61 degrees C      | ok
+P1-DIMMA2 Temp   | 60 degrees C      | ok
+P1-DIMMB1 Temp   | 59 degrees C      | ok
+P1-DIMMB2 Temp   | 59 degrees C      | ok
+P2-DIMMG1 Temp   | 55 degrees C      | ok
+P2-DIMMG2 Temp   | 56 degrees C      | ok
+P2-DIMMH1 Temp   | 59 degrees C      | ok
+P2-DIMMH2 Temp   | 59 degrees C      | ok
+
+=== 2026-04-12 22:09 UTC ===
+CPU1 Temp        | 55 degrees C      | ok
+CPU2 Temp        | 53 degrees C      | ok
+PCH Temp         | 48 degrees C      | ok
+System Temp      | 50 degrees C      | ok
+Peripheral Temp  | 58 degrees C      | ok
+Vcpu1VRM Temp    | 61 degrees C      | ok
+Vcpu2VRM Temp    | 60 degrees C      | ok
+VmemABVRM Temp   | 61 degrees C      | ok
+VmemCDVRM Temp   | 47 degrees C      | ok
+VmemEFVRM Temp   | 58 degrees C      | ok
+VmemGHVRM Temp   | 58 degrees C      | ok
+P1-DIMMA1 Temp   | 62 degrees C      | ok
+P1-DIMMA2 Temp   | 60 degrees C      | ok
+P1-DIMMB1 Temp   | 59 degrees C      | ok
+P1-DIMMB2 Temp   | 59 degrees C      | ok
+P2-DIMMG1 Temp   | 56 degrees C      | ok
+P2-DIMMG2 Temp   | 56 degrees C      | ok
+P2-DIMMH1 Temp   | 59 degrees C      | ok
+P2-DIMMH2 Temp   | 59 degrees C      | ok
+
+=== 2026-04-12 23:05 UTC ===
+CPU1 Temp        | 49 degrees C      | ok
+CPU2 Temp        | 44 degrees C      | ok
+PCH Temp         | 48 degrees C      | ok
+System Temp      | 42 degrees C      | ok
+Peripheral Temp  | 41 degrees C      | ok
+Vcpu1VRM Temp    | 53 degrees C      | ok
+Vcpu2VRM Temp    | 47 degrees C      | ok
+VmemABVRM Temp   | 50 degrees C      | ok
+VmemCDVRM Temp   | 42 degrees C      | ok
+VmemEFVRM Temp   | 40 degrees C      | ok
+VmemGHVRM Temp   | 51 degrees C      | ok
+P1-DIMMA1 Temp   | 55 degrees C      | ok
+P1-DIMMA2 Temp   | 57 degrees C      | ok
+P1-DIMMB1 Temp   | 54 degrees C      | ok
+P1-DIMMB2 Temp   | 52 degrees C      | ok
+P2-DIMMG1 Temp   | 51 degrees C      | ok
+P2-DIMMG2 Temp   | 52 degrees C      | ok
+P2-DIMMH1 Temp   | 53 degrees C      | ok
+P2-DIMMH2 Temp   | 50 degrees C      | ok
+
+=== 2026-04-12 23:14 UTC ===
+CPU1 Temp        | 49 degrees C      | ok
+CPU2 Temp        | 44 degrees C      | ok
+PCH Temp         | 48 degrees C      | ok
+System Temp      | 41 degrees C      | ok
+Peripheral Temp  | 41 degrees C      | ok
+Vcpu1VRM Temp    | 51 degrees C      | ok
+Vcpu2VRM Temp    | 46 degrees C      | ok
+VmemABVRM Temp   | 48 degrees C      | ok
+VmemCDVRM Temp   | 42 degrees C      | ok
+VmemEFVRM Temp   | 40 degrees C      | ok
+VmemGHVRM Temp   | 48 degrees C      | ok
+P1-DIMMA1 Temp   | 52 degrees C      | ok
+P1-DIMMA2 Temp   | 54 degrees C      | ok
+P1-DIMMB1 Temp   | 53 degrees C      | ok
+P1-DIMMB2 Temp   | 51 degrees C      | ok
+P2-DIMMG1 Temp   | 51 degrees C      | ok
+P2-DIMMG2 Temp   | 53 degrees C      | ok
+P2-DIMMH1 Temp   | 52 degrees C      | ok
+P2-DIMMH2 Temp   | 49 degrees C      | ok
+
+=== 2026-04-12 23:17 UTC ===
+CPU1 Temp        | 50 degrees C      | ok
+CPU2 Temp        | 45 degrees C      | ok
+PCH Temp         | 51 degrees C      | ok
+System Temp      | 45 degrees C      | ok
+Peripheral Temp  | 43 degrees C      | ok
+Vcpu1VRM Temp    | 55 degrees C      | ok
+Vcpu2VRM Temp    | 50 degrees C      | ok
+VmemABVRM Temp   | 49 degrees C      | ok
+VmemCDVRM Temp   | 45 degrees C      | ok
+VmemEFVRM Temp   | 43 degrees C      | ok
+VmemGHVRM Temp   | 51 degrees C      | ok
+P1-DIMMA1 Temp   | 52 degrees C      | ok
+P1-DIMMA2 Temp   | 55 degrees C      | ok
+P1-DIMMB1 Temp   | 54 degrees C      | ok
+P1-DIMMB2 Temp   | 52 degrees C      | ok
+P2-DIMMG1 Temp   | 55 degrees C      | ok
+P2-DIMMG2 Temp   | 59 degrees C      | ok
+P2-DIMMH1 Temp   | 59 degrees C      | ok
+P2-DIMMH2 Temp   | 54 degrees C      | ok
+
