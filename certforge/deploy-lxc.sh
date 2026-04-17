@@ -67,7 +67,7 @@ pct exec $CONTAINER_ID -- bash -c '
 # Copy CertForge files to container
 echo "📁 Deploying CertForge application..."
 pct mount $CONTAINER_ID /SAS/Library
-scp -i ~/.ssh/id_rsa -r /home/localadmin/.openclaw/workspace/certforge root@usm1:/tmp/certforge
+scp -i ~/.ssh/id_rsa -r /home/localadmin/.openclaw/workspace/certforge root@ts.9xc.local:/tmp/certforge
 pct exec $CONTAINER_ID -- bash -c '
     mkdir -p /opt/certforge
     mv /tmp/certforge/* /opt/certforge/

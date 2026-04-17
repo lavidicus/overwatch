@@ -2,15 +2,31 @@
   "agents": {
     "defaults": {
       "model": {
-        "primary": "olla/gpt-oss:latest",
+        "primary": "olla/llamacpp",
         "fallbacks": [
           "olla/qwen3.5:35b",
           "openai/openai-codex"
         ]
       },
       "models": {
-        "olla/gpt-oss:latest": {
-          "alias": "gpt-oss:latest"
+        "olla/llamacpp": {
+          "alias": "llamacpp",
+          "costPerMTok": {
+            "input": 0.53,
+            "output": 0.53,
+            "currency": "USD",
+            "basis": "Local GPU inference (RTX 4090 equivalent)",
+            "breakdown": {
+              "electricity": 0.31,
+              "hardware": 0.22,
+              "total": 0.53
+            },
+            "comparison": {
+              "vsClaudeOpus46": "90-98% savings",
+              "vsGPT5Codex": "58-95% savings",
+              "vsGemini31Pro": "74-93% savings"
+            }
+          }
         },
         "olla/qwen3.5:35b": {
           "alias": "qwen3.5"
@@ -19,6 +35,13 @@
           "alias": "codex"
         }
       }
+    }
+  },
+  "channels": {
+    "email": {
+      "type": "gmail",
+      "targets": ["Jeremy.ingalls@gmail.com"],
+      "enabled": true
     }
   }
 }
