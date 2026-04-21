@@ -1,47 +1,314 @@
 {
+  "meta": {
+    "lastTouchedVersion": "2026.4.14",
+    "lastTouchedAt": "2026-04-17T23:28:02.575Z"
+  },
+  "env": {
+    "vars": {
+      "GOG_KEYRING_PASSWORD": "openclaw"
+    }
+  },
+  "auth": {
+    "profiles": {
+      "openai-codex:jeremy.ingalls@gmail.com": {
+        "provider": "openai-codex",
+        "mode": "oauth",
+        "email": "jeremy.ingalls@gmail.com"
+      },
+      "github-copilot:github": {
+        "provider": "github-copilot",
+        "mode": "token"
+      }
+    }
+  },
+  "models": {
+    "mode": "merge",
+    "providers": {
+      "olla": {
+        "baseUrl": "http://node2:11434/v1",
+        "apiKey": "local",
+        "api": "openai-completions",
+        "models": [
+          {
+            "id": "llamacpp",
+            "name": "llamacpp (local)",
+            "reasoning": false,
+            "input": [
+              "text",
+              "image"
+            ],
+            "cost": {
+              "input": 0,
+              "output": 0,
+              "cacheRead": 0,
+              "cacheWrite": 0
+            },
+            "contextWindow": 262144,
+            "maxTokens": 8192,
+            "api": "openai-completions",
+            "compat": {
+              "supportsUsageInStreaming": true
+            }
+          }
+        ]
+      },
+      "node1": {
+        "baseUrl": "http://node1:11434/v1",
+        "apiKey": "local",
+        "api": "openai-completions",
+        "models": [
+          {
+            "id": "llamacpp",
+            "name": "llamacpp (node1, 2x P6000)",
+            "reasoning": false,
+            "input": [
+              "text"
+            ],
+            "cost": {
+              "input": 0,
+              "output": 0,
+              "cacheRead": 0,
+              "cacheWrite": 0
+            },
+            "contextWindow": 262144,
+            "maxTokens": 8192,
+            "api": "openai-completions",
+            "compat": {
+              "supportsUsageInStreaming": true
+            }
+          }
+        ]
+      },
+      "node2": {
+        "baseUrl": "http://node2:11434/v1",
+        "apiKey": "local",
+        "api": "openai-completions",
+        "models": [
+          {
+            "id": "llamacpp",
+            "name": "llamacpp (node2, 2x P6000)",
+            "reasoning": false,
+            "input": [
+              "text"
+            ],
+            "cost": {
+              "input": 0,
+              "output": 0,
+              "cacheRead": 0,
+              "cacheWrite": 0
+            },
+            "contextWindow": 262144,
+            "maxTokens": 8192,
+            "api": "openai-completions",
+            "compat": {
+              "supportsUsageInStreaming": true
+            }
+          }
+        ]
+      }
+    }
+  },
   "agents": {
     "defaults": {
       "model": {
-        "primary": "olla/llamacpp",
-        "fallbacks": [
-          "olla/qwen3.5:35b",
-          "openai/openai-codex"
-        ]
+        "primary": "node2/llamacpp",
+        "fallbacks": []
       },
       "models": {
-        "olla/llamacpp": {
-          "alias": "llamacpp",
-          "costPerMTok": {
-            "input": 0.53,
-            "output": 0.53,
-            "currency": "USD",
-            "basis": "Local GPU inference (RTX 4090 equivalent)",
-            "breakdown": {
-              "electricity": 0.31,
-              "hardware": 0.22,
-              "total": 0.53
-            },
-            "comparison": {
-              "vsClaudeOpus46": "90-98% savings",
-              "vsGPT5Codex": "58-95% savings",
-              "vsGemini31Pro": "74-93% savings"
+        "openai-codex/gpt-5.4": {"5.4"},
+        "openai-codex/gpt-5.1": {"5.1"},
+        "openai-codex/gpt-5.2": {"5.2"},
+        "github-copilot/gpt-4o": {"4o"},
+        "github-copilot/claude-opus-4.6": {"opus"},
+        "github-copilot/gpt-5-mini": {"mini"},
+        "node2/llamacpp": {
+          "alias": "llamacpp"
+        }
+      },
+      "compaction": {
+        "mode": "safeguard",
+        "reserveTokens": 10000,
+        "keepRecentTokens": 10000,
+        "maxHistoryShare": 0.6,
+        "recentTurnsPreserve": 5,
+        "memoryFlush": {
+          "enabled": true
+        },
+        "notifyUser": true
+      },
+      "maxConcurrent": 4,
+      "subagents": {
+        "maxConcurrent": 8
+      }
+    },
+    "list": [
+      {
+        "id": "main",
+        "default": true,
+        "tools": {
+          "elevated": {
+            "enabled": true,
+            "allowFrom": {
+              "matrix": [
+                "@lavid:comms.9xc.io"
+              ]
             }
           }
+        }
+      }
+    ]
+  },
+  "tools": {
+    "web": {
+      "search": {
+        "enabled": true,
+        "provider": "brave"
+      },
+      "fetch": {
+        "enabled": true
+      }
+    },
+    "elevated": {
+      "enabled": true,
+      "allowFrom": {
+        "matrix": [
+          "@lavid:comms.9xc.io"
+        ]
+      }
+    },
+    "exec": {
+      "host": "gateway",
+      "security": "full",
+      "ask": "off",
+      "strictInlineEval": false
+    }
+  },
+  "commands": {
+    "native": "auto",
+    "nativeSkills": "auto",
+    "restart": true,
+    "ownerDisplay": "raw"
+  },
+  "approvals": {
+    "exec": {
+      "enabled": true
+    }
+  },
+  "session": {
+    "dmScope": "per-channel-peer"
+  },
+  "cron": {
+    "sessionRetention": "24h"
+  },
+  "hooks": {
+    "internal": {
+      "enabled": true,
+      "entries": {
+        "boot-md": {
+          "enabled": true
         },
-        "olla/qwen3.5:35b": {
-          "alias": "qwen3.5"
+        "bootstrap-extra-files": {
+          "enabled": true
         },
-        "openai/openai-codex": {
-          "alias": "codex"
+        "command-logger": {
+          "enabled": true
+        },
+        "session-memory": {
+          "enabled": true
         }
       }
     }
   },
   "channels": {
-    "email": {
-      "type": "gmail",
-      "targets": ["Jeremy.ingalls@gmail.com"],
-      "enabled": true
+    "matrix": {
+      "enabled": true,
+      "homeserver": "https://comms.9xc.io",
+      "userId": "@sam:comms.9xc.io",
+      "password": "TheRightSam2026!",
+      "encryption": true,
+      "dm": {
+        "policy": "allowlist",
+        "allowFrom": [
+          "@eve:comms.9xc.io",
+          "@maria:comms.9xc.io",
+          "@lavid:comms.9xc.io"
+        ]
+      },
+      "groupPolicy": "open",
+      "autoJoin": "always",
+      "groups": {
+        "!EUdiHxsqrqcwblPVBq:comms.9xc.io": {
+          "requireMention": false
+        }
+      },
+      "network": {
+        "dangerouslyAllowPrivateNetwork": true
+      }
     }
+  },
+  "gateway": {
+    "port": 18789,
+    "mode": "local",
+    "bind": "loopback",
+    "auth": {
+      "mode": "token",
+      "token": "e05449dbd9903351e07e10cead3fa0a31d25845295092c37"
+    },
+    "tailscale": {
+      "mode": "off",
+      "resetOnExit": false
+    }
+  },
+  "memory": {
+    "backend": "builtin"
+  },
+  "skills": {
+    "install": {
+      "nodeManager": "npm"
+    },
+    "entries": {
+      "gh-issues": {
+        "apiKey": "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"
+      },
+      "hugpull": {
+        "enabled": true
+      },
+      "llm-selector": {
+        "enabled": true
+      }
+    }
+  },
+  "plugins": {
+    "entries": {
+      "brave": {
+        "enabled": true,
+        "config": {
+          "webSearch": {
+            "apiKey": "BSABcetQUGiAzp7MypbtZ-a09JuB_ZP"
+          }
+        }
+      },
+      "vllm": {
+        "enabled": true
+      },
+      "github-copilot": {
+        "enabled": true
+      },
+      "openai": {
+        "enabled": true
+      },
+      "matrix": {
+        "enabled": true
+      }
+    }
+  },
+  "messages": {
+    "ackReactionScope": "group-mentions"
+  },
+  "wizard": {
+    "lastRunAt": "2026-04-11T06:01:04.102Z",
+    "lastRunVersion": "2026.4.9",
+    "lastRunCommand": "configure",
+    "lastRunMode": "local"
   }
 }
