@@ -1,0 +1,26 @@
+=== Node2 GPU Metrics ===
+Timestamp: 2026-04-20 05:25:18 UTC
+
+GPU 0 - Quadro P6000
+  Temp: 41°C
+  Power: 65.88W / 250.00W limit
+  GPU Util: 0%
+  Mem Util: 0%
+  VRAM: 21513 / 24576 MB used (87.5%)
+  Free VRAM: 2925 MB
+  Clocks: 1657 MHz (GPU) / 4513 MHz (Mem)
+
+GPU 1 - Quadro P6000
+  Temp: 35°C
+  Power: 64.18W / 250.00W limit
+  GPU Util: 0%
+  Mem Util: 0%
+  VRAM: 24201 / 24576 MB used (98.5%)
+  Free VRAM: 237 MB
+  Clocks: 1657 MHz (GPU) / 4513 MHz (Mem)
+
+Notes:
+- Both GPUs idle (0% utilization, low power draw ~65W)
+- GPU 0 VRAM: mostly free (2.9 GB free)
+- GPU 1 VRAM: nearly full (237 MB free) — likely holding a model
+- Temps healthy (35-41°C)

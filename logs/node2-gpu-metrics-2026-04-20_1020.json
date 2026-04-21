@@ -1,0 +1,1 @@
+{"timestamp":"2026-04-20T10:20:36Z","source":"node2","gpu0":{"index":0,"name":"Quadro P6000","temp_c":40,"utilization_pct":0,"mem_used_mb":21513,"mem_total_mb":24576,"power_w":65.45,"power_limit_w":250},"gpu1":{"index":1,"name":"Quadro P6000","temp_c":34,"utilization_pct":0,"mem_used_mb":24201,"mem_total_mb":24576,"power_w":63.98,"power_limit_w":250}}

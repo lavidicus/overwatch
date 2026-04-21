@@ -1,0 +1,43 @@
+{
+  "timestamp": "2026-04-20T16:54:00Z",
+  "source": "node2 (172.16.254.x via SSH)",
+  "driver": "580.126.20",
+  "cuda_version": "13.0",
+  "script": "node1-metrics-scraper.sh not found on node2 — using nvidia-smi fallback",
+  "gpu_0": {
+    "name": "Quadro P6000",
+    "bus_id": "00000000:01:00.0",
+    "temperature_c": 58,
+    "power_draw_w": 70,
+    "power_limit_w": 250,
+    "memory_used_mb": 24267,
+    "memory_total_mb": 24576,
+    "gpu_utilization_pct": 0,
+    "compute_mode": "Default",
+    "fan_pct": 60,
+    "pstate": "P0",
+    "process": "llama-server (PID 927946)"
+  },
+  "gpu_1": {
+    "name": "Quadro P6000",
+    "bus_id": "00000000:02:00.0",
+    "temperature_c": 49,
+    "power_draw_w": 66,
+    "power_limit_w": 250,
+    "memory_used_mb": 23313,
+    "memory_total_mb": 24576,
+    "gpu_utilization_pct": 0,
+    "compute_mode": "Default",
+    "fan_pct": 60,
+    "pstate": "P0",
+    "process": "llama-server (PID 927946)"
+  },
+  "summary": {
+    "total_gpu_memory_used_gb": 45.8,
+    "total_gpu_memory_total_gb": 48.0,
+    "avg_temp_c": 53.5,
+    "total_power_draw_w": 136,
+    "llama_server_running": true,
+    "utilization": "both GPUs idle (0% compute) but loaded with ~45.8GB total VRAM"
+  }
+}

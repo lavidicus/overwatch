@@ -1,0 +1,22 @@
+{
+  "source": "node2",
+  "timestamp": "2026-04-17T15:24:55Z",
+  "gpus": [
+    {
+      "index": 0,
+      "temperature": "50°C",
+      "memory_used": "24335/24576 MiB (99%)",
+      "utilization": "0%",
+      "power_draw": "67.25W / 250.00W"
+    },
+    {
+      "index": 1,
+      "temperature": "42°C",
+      "memory_used": "21295/24576 MiB (87%)",
+      "utilization": "0%",
+      "power_draw": "64.02W / 250.00W"
+    }
+  ],
+  "system_load": "0.19, 0.12",
+  "llm_processes": "none"
+}

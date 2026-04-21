@@ -80,3 +80,41 @@
 **Lesson:** When scripts call external CLIs, wrap them with a small compatibility layer that checks `--help`/version and adapts flags.
 
 **Status:** ⏳ candidate
+
+### 2026-04-18 — Daily Self-Improvement Review
+
+**What I did:** Audited daily memory files, cron health, self-improving artifacts
+- Found massive duplication in daily memory files (Apr 17: 260→42 lines, Apr 18: 1043→180 lines)
+- All 11 cron jobs healthy (metrics-aggregate-daily fixed since last review)
+- Eve E2EE issue from Apr 17 still unresolved
+- llama-server tuning approved and appears applied
+
+**Outcome:** Memory hygiene was the top finding
+- ✅ All 11 cron jobs running (0 in error state — improvement from last review)
+- ✅ llama-server tuning applied (reduced ctx, removed flash-attn, tensor split)
+- ✅ GitHub auth configured (PAT + SSH key)
+- ⚠️ Memory file duplication bug — sessions append without checking existing content
+- ⚠️ Eve's E2EE still broken (fresh device can't decrypt)
+- ⚠️ node1 VM still stopped (100.conf missing on Proxmox)
+
+**Reflection:** The duplication bug is a systemic issue — every session that appends to daily memory risks duplicating content. Need a guard (check before append) or dedup script.
+
+**Lesson:** Memory writes need idempotency. Check if section already exists before appending.
+
+**Status:** ⏳ candidate
+
+### 2026-04-19 — Daily Self-Improvement Review
+
+**What I did:** Audited cron jobs (12 total), GPU status, memory hygiene, open issues
+
+**Outcome:** System operationally healthy, 2 maintenance items
+- ✅ 11/12 cron jobs healthy (metrics-aggregate-daily fixed!)
+- ✅ llama-server active, GPU 0 under load (31% util)
+- ⚠️ Library Sync Check cron in error state
+- ⚠️ Memory duplication bug persists (3rd occurrence, still no fix written)
+
+**Reflection:** Known bugs requiring code fixes don't self-resolve through documentation alone. Write the fix, not another note.
+
+**Lesson:** Prioritize writing automated fixes over documenting known issues repeatedly.
+
+**Status:** ⏳ candidate

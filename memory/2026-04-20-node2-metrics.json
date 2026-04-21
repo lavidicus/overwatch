@@ -1,0 +1,29 @@
+{
+  "timestamp": "2026-04-20T21:04:48Z",
+  "source": "node2 via node1-metrics-scraper.sh",
+  "gpu": [
+    {
+      "index": 0,
+      "name": "Quadro P6000",
+      "temperature_c": 39,
+      "utilization_gpu_pct": 65.4,
+      "power_draw_w": 250.0,
+      "power_limit_w": 23189,
+      "used_memory_mb": 24576
+    },
+    {
+      "index": 1,
+      "name": "Quadro P6000",
+      "temperature_c": 34,
+      "utilization_gpu_pct": 64.13,
+      "power_draw_w": 250.0,
+      "power_limit_w": 22767,
+      "used_memory_mb": 24576
+    }
+  ],
+  "notes": [
+    "Scraper script exists on node2 — running live.",
+    "Both GPUs running at ~65% utilization, ~250W draw.",
+    "VRAM usage at 24GB/48GB per GPU (50%)."
+  ]
+}

@@ -1,0 +1,29 @@
+{
+  "date": "20260418",
+  "total_samples": 12148,
+  "time_range": {
+    "first": "2026/04/18 01:01:51.453",
+    "last": "2026/04/18 02:43:41.731"
+  },
+  "gpus": [
+    {
+      "id": 0,
+      "samples": 6052,
+      "avg_power_w": 84.24,
+      "avg_util_pct": 29.37,
+      "avg_temp_c": 71.5,
+      "avg_vram_mib": 21689
+    },
+    {
+      "id": 1,
+      "samples": 6096,
+      "avg_power_w": 81.69,
+      "avg_util_pct": 28.42,
+      "avg_temp_c": 62.6,
+      "avg_vram_mib": 18993
+    }
+  ],
+  "avg_total_power_w": 165.93,
+  "kwh_per_day": 3.982,
+  "cost_per_day_usd": 0.6372
+}

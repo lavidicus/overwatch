@@ -1,0 +1,18 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Certificate Issued - CertForge</title>
+</head>
+<body>
+    <h1>✅ Certificate Issued</h1>
+    <p>Your certificate has been generated successfully.</p>
+    <ul>
+        <li>Serial: {{ cert.serial_number }}</li>
+        <li>Common Name: {{ cert.common_name }}</li>
+        <li>Organization: {{ cert.organization }}</li>
+        <li>Valid From: {{ cert.start_date }}</li>
+        <li>Valid To: {{ cert.end_date }}</li>
+    </ul>
+    <a href="/download/{{ cert.serial_number }}">Download Certificate</a>
+</body>
+</html>

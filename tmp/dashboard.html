@@ -1,0 +1,127 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>System Status Dashboard — 2026-04-18 03:39 UTC</title>
+<style>
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+  body { font-family: -apple-system, 'Segoe UI', Roboto, sans-serif; background: #0d1117; color: #c9d1d9; padding: 24px; line-height: 1.5; }
+  h1 { font-size: 22px; color: #58a6ff; margin-bottom: 4px; }
+  .subtitle { font-size: 13px; color: #8b949e; margin-bottom: 24px; }
+  .grid { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; margin-bottom: 16px; }
+  .card { background: #161b22; border: 1px solid #30363d; border-radius: 8px; padding: 16px; }
+  .card h2 { font-size: 15px; color: #58a6ff; margin-bottom: 12px; border-bottom: 1px solid #21262d; padding-bottom: 6px; }
+  .card.full { grid-column: 1 / -1; }
+  .row { display: flex; justify-content: space-between; padding: 3px 0; font-size: 13px; }
+  .label { color: #8b949e; }
+  .value { color: #c9d1d9; font-weight: 500; }
+  .ok { color: #3fb950; }
+  .warn { color: #d29922; }
+  .bad { color: #f85149; }
+  .badge { display: inline-block; padding: 1px 8px; border-radius: 12px; font-size: 11px; font-weight: 600; }
+  .badge-green { background: #238636; color: #fff; }
+  .badge-yellow { background: #9e6a03; color: #fff; }
+  .badge-red { background: #da3633; color: #fff; }
+  .badge-gray { background: #30363d; color: #c9d1d9; }
+  table { width: 100%; border-collapse: collapse; font-size: 12px; }
+  th { text-align: left; color: #8b949e; padding: 4px 8px; border-bottom: 1px solid #21262d; }
+  td { padding: 4px 8px; border-bottom: 1px solid #21262d22; }
+  .progress-bar { background: #21262d; border-radius: 4px; height: 8px; width: 100%; margin: 4px 0; }
+  .progress-fill { height: 100%; border-radius: 4px; }
+  .footer { text-align: center; color: #484f58; font-size: 11px; margin-top: 24px; }
+</style>
+</head>
+<body>
+
+<h1>🖥️ System Status Dashboard</h1>
+<div class="subtitle">Generated: 2026-04-18 03:39 UTC | Host: claw.9xc.io</div>
+
+<div class="grid">
+
+  <!-- HOST: CLAW -->
+  <div class="card">
+    <h2>🖥️ claw.9xc.io (Main Host)</h2>
+    <div class="row"><span class="label">OS</span><span class="value">Linux 6.8.0-107-generic</span></div>
+    <div class="row"><span class="label">Uptime</span><span class="value ok">6d 23h 16m</span></div>
+    <div class="row"><span class="label">Load Avg</span><span class="value ok">0.41 / 0.54 / 0.44</span></div>
+    <div class="row"><span class="label">CPU</span><span class="value">Intel Xeon E5-2680 v4 (8C/8T @ 2.4GHz)</span></div>
+    <div class="row"><span class="label">Memory</span><span class="value">1.6G / 7.8G used (21%)</span></div>
+    <div class="progress-bar"><div class="progress-fill" style="width:21%;background:#3fb950"></div></div>
+    <div class="row"><span class="label">Swap</span><span class="value ok">2.2M / 4.0G (negligible)</span></div>
+    <div class="row"><span class="label">Disk (/)</span><span class="value ok">20G / 124G (17%)</span></div>
+    <div class="progress-bar"><div class="progress-fill" style="width:17%;background:#3fb950"></div></div>
+    <div class="row"><span class="label">Disk (projects)</span><span class="value ok">528M / 2.0T (1%)</span></div>
+    <div class="row"><span class="label">Network</span><span class="value ok">16 estab / 33 total</span></div>
+    <div class="row"><span class="label">Top Process</span><span class="value">openclaw-gateway (53.9% CPU, 12.4% mem)</span></div>
+  </div>
+
+  <!-- HOST: NODE2 -->
+  <div class="card">
+    <h2>🔧 node2 (GPU / llama.cpp)</h2>
+    <div class="row"><span class="label">Proxmox VM</span><span class="value">VM 101 — running</span></div>
+    <div class="row"><span class="label">Uptime</span><span class="value ok">20 minutes</span></div>
+    <div class="row"><span class="label">Load Avg</span><span class="value ok">0.52 / 0.49 / 0.47</span></div>
+    <div class="row"><span class="label">CPU</span><span class="value">2× Xeon E5-2680 v4 (56C/112T)</span></div>
+    <div class="row"><span class="label">Memory</span><span class="value ok">5.5G / 62G used (9%)</span></div>
+    <div class="progress-bar"><div class="progress-fill" style="width:9%;background:#3fb950"></div></div>
+    <div class="row"><span class="label">Swap</span><span class="value ok">0B / 8.0G</span></div>
+    <div class="row"><span class="label">Disk (/)</span><span class="value warn">168G / 249G (71%)</span></div>
+    <div class="progress-bar"><div class="progress-fill" style="width:71%;background:#d29922"></div></div>
+    <div class="row"><span class="label">GPU 1</span><span class="value ok">Quadro P6000 24GB (2.4G/24.6G free, 74°C)</span></div>
+    <div class="row"><span class="label">GPU 2</span><span class="value ok">Quadro P6000 24GB (5.0G/24.6G free, 68°C)</span></div>
+    <div class="row"><span class="label">llama-server</span><span class="badge badge-green">running (CUDA, port 11434)</span></div>
+  </div>
+
+  <!-- HOST: NODE1 / PROXMOX -->
+  <div class="card">
+    <h2>⚠️ node1 (Proxmox VM 100)</h2>
+    <div class="row"><span class="label">Status</span><span class="badge badge-red">STOPPED</span></div>
+    <div class="row"><span class="label">SSH</span><span class="badge badge-red">Connection timed out</span></div>
+    <div class="row"><span class="label">Proxmox</span><span class="value ok">pve-manager/9.1.7 (kernel 6.17.2)</span></div>
+    <div class="row"><span class="label">Config</span><span class="badge badge-yellow">100.conf missing</span></div>
+    <div style="margin-top:12px;padding:8px;background:#21262d;border-radius:4px;font-size:12px;color:#d29922;">
+      ⚠️ VM 100 (node1) is stopped. SSH unreachable. Config file may need recreation.
+    </div>
+  </div>
+
+  <!-- SERVICES -->
+  <div class="card">
+    <h2>🔌 Services</h2>
+    <table>
+      <tr><th>Service</th><th>Host</th><th>Status</th></tr>
+      <tr><td>openclaw-gateway</td><td>claw</td><td><span class="badge badge-green">running</span></td></tr>
+      <tr><td>ssh</td><td>claw</td><td><span class="badge badge-green">running</span></td></tr>
+      <tr><td>tailscaled</td><td>claw</td><td><span class="badge badge-green">running</span></td></tr>
+      <tr><td>gpu-util-sampler</td><td>claw</td><td><span class="badge badge-green">running</span></td></tr>
+      <tr><td>realtime-dashboard</td><td>claw</td><td><span class="badge badge-green">active</span></td></tr>
+      <tr><td>llama-server</td><td>node2</td><td><span class="badge badge-green">running</span></td></tr>
+      <tr><td>gog-bridge</td><td>claw</td><td><span class="badge badge-gray">— (port 18790)</span></td></tr>
+      <tr><td>n8n</td><td>claw</td><td><span class="badge badge-gray">— not found</span></td></tr>
+      <tr><td>ollama</td><td>claw</td><td><span class="badge badge-gray">not running</span></td></tr>
+      <tr><td>node1 VM</td><td>proxmox</td><td><span class="badge badge-red">stopped</span></td></tr>
+    </table>
+  </div>
+
+  <!-- FULL WIDTH: NOTES -->
+  <div class="card full">
+    <h2>📋 Notes &amp; Recommendations</h2>
+    <table>
+      <tr><th>Item</th><th>Detail</th></tr>
+      <tr><td>node1 VM</td><td><span class="warn">⚠ Stopped</span> — SSH timed out. Config file 100.conf missing on Proxmox. Needs attention if node1 is required.</td></tr>
+      <tr><td>n8n / ollama</td><td><span class="warn">⚠ Not installed/running</span> on claw host. May need setup or reconfiguration.</td></tr>
+      <tr><td>node2 disk</td><td><span class="warn">⚠ 71% disk usage</span> (168G/249G). Monitor — consider cleanup before it hits 85%+.</td></tr>
+      <tr><td>node2 GPU</td><td><span class="ok">✓</span> Both Quadro P6000 healthy. GPU 1 at 74°C, GPU 2 at 68°C. llama-server using CUDA on GPU 1.</td></tr>
+      <tr><td>claw memory</td><td><span class="ok">✓</span> Healthy — 6.1G available of 7.8G total. Swap virtually unused.</td></tr>
+      <tr><td>uptime</td><td><span class="ok">✓</span> Claw host up 6d23h. node2 rebooted ~20 min ago (likely maintenance).</td></tr>
+    </table>
+  </div>
+
+</div>
+
+<div class="footer">
+  Generated by Sam 🧑‍💼 | OpenClaw Dashboard | 2026-04-18 03:39 UTC
+</div>
+
+</body>
+</html>

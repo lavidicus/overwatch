@@ -1,0 +1,5 @@
+Invoice #12345
+Date: 2026-04-09
+Item: Service
+Amount: $1000
+Thank you!

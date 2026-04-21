@@ -1,0 +1,1043 @@
+# 2026-04-18
+
+## Node2 GPU Metrics — 2026-04-18
+- **13:36 UTC:** Daily GPU aggregation run (cron)
+- Script `node1-metrics-aggregate.sh` exists on node2 but references node1 paths → no data produced
+- Fallback: aggregated from `node2-gpu-2026-04-18.log` (12,148 samples, ~1h42m)
+- GPU 0: avg 84.24W, 29.37% util, 71.5°C, 21,689 MiB VRAM
+- GPU 1: avg 81.69W, 28.42% util, 62.6°C, 18,993 MiB VRAM
+- Total: 165.93W, 3.982 kWh/day, $0.64/day
+- Note: data only covers 01:01–02:43 UTC — incomplete day
+
+## llama-server.service Update (in progress)
+- **00:03 UTC:** Jeremy approved llama-server.service changes
+- **Plan:**
+  - Remove `--flash-attn` (P6000 Turing doesn't support it)
+  - `--split-mode tensor --tensor-split 1,1` (replace `-np 2`) — equal GPU work distribution
+  - `-np 1` (pipeline parallelism disabled, tensor split handles the work)
+  - `--ctx-size 262144` (reduced from 524288/512K)
+  - `-b 2048` (reduced from 4096 for faster prefill)
+  - `-ub 512` (reduced from 1024 for tighter KV cache)
+  - `--threads 28 --threads-batch 28` (added batch-threads)
+  - `--parallel 2` (continuous batching, keep at 2)
+  - Backup existing service file before changes
+- **00:06 UTC:** Jeremy asked if changes were applied on node2
+- **00:09 UTC:** Async exec failed (health check failed), changes may not have completed — need to verify on node2
+
+## OpenClaw Timeout Analysis
+- LLM HTTP request timeout ~120 seconds (logs showed 125545ms and 122068ms)
+- `agents.defaults.timeoutSeconds` defaults to 600 (10 min) — not the issue
+- OpenAI SDK `DEFAULT_TIMEOUT = 6e5` (600 sec) — not the issue
+- The ~120s timeout is from OpenClaw's internal HTTP client wrapper
+- Model: `node2/llamacpp` (Qwen3.5-35B-A3B-Q4_K_M.gguf) with 512K context
+- Timed out during heavy context turns (compaction scenarios)
+
+## Current Model Config
+- Primary: `node2/llamacpp`
+- Fallbacks: `[]` (empty — no auto-failover)
+- `compat.supportsUsageInStreaming: true` (set for local model)
+# 2026-04-18
+
+## llama-server.service Update
+- **00:03 UTC:** Jeremy approved llama-server.service changes
+- **Plan:**
+  - Remove `--flash-attn` (P6000 Turing doesn't support it)
+  - `--split-mode tensor --tensor-split 1,1` (replace `-np 2`) — equal GPU work distribution
+  - `-np 1` (pipeline parallelism disabled, tensor split handles the work)
+  - `--ctx-size 262144` (reduced from 524288/512K)
+  - `-b 2048` (reduced from 4096 for faster prefill)
+  - `-ub 512` (reduced from 1024 for tighter KV cache)
+  - `--threads 28 --threads-batch 28` (added batch-threads)
+  - `--parallel 2` (continuous batching, keep at 2)
+- **00:06 UTC:** Jeremy asked if changes were applied on node2
+- **00:09 UTC:** Async exec failed (health check failed), need to apply on node2 directly
+- **00:12 UTC:** Applying changes on node2 via SSH — backing up service, writing new config, restarting
+
+## OpenClaw Timeout Analysis
+- LLM HTTP request timeout ~120 seconds (logs showed 125545ms and 122068ms)
+- `agents.defaults.timeoutSeconds` defaults to 600 (10 min) — not the issue
+- OpenAI SDK `DEFAULT_TIMEOUT = 6e5` (600 sec) — not the issue
+- The ~120s timeout is from OpenClaw's internal HTTP client wrapper
+- Model: `node2/llamacpp` (Qwen3.5-35B-A3B-Q4_K_M.gguf) with 512K context
+- Timed out during heavy context turns (compaction scenarios)
+
+## Current Model Config
+- Primary: `node2/llamacpp`
+- Fallbacks: `[]` (empty — no auto-failover)
+- `compat.supportsUsageInStreaming: true` (set for local model)
+# 2026-04-18
+
+## llama-server.service Update
+- **00:03 UTC:** Jeremy approved llama-server.service changes
+- **Plan:**
+  - Remove `--flash-attn` (P6000 Turing doesn't support it)
+  - `--split-mode tensor --tensor-split 1,1` (replace `-np 2`) — equal GPU work distribution
+  - `-np 1` (pipeline parallelism disabled, tensor split handles the work)
+  - `--ctx-size 262144` (reduced from 524288/512K)
+  - `-b 2048` (reduced from 4096 for faster prefill)
+  - `-ub 512` (reduced from 1024 for tighter KV cache)
+  - `--threads 28 --threads-batch 28` (added batch-threads)
+  - `--parallel 2` (continuous batching, keep at 2)
+- **00:06 UTC:** Jeremy asked if changes were applied on node2
+- **00:09 UTC:** Async exec failed (health check failed, service still active = old config running), changes NOT applied
+- **00:12 UTC:** Applying changes on node2 via SSH — backing up service, writing new config, restarting
+
+## OpenClaw Timeout Analysis
+- LLM HTTP request timeout ~120 seconds (logs showed 125545ms and 122068ms)
+- `agents.defaults.timeoutSeconds` defaults to 600 (10 min) — not the issue
+- OpenAI SDK `DEFAULT_TIMEOUT = 6e5` (600 sec) — not the issue
+- The ~120s timeout is from OpenClaw's internal HTTP client wrapper
+- Model: `node2/llamacpp` (Qwen3.5-35B-A3B-Q4_K_M.gguf) with 512K context
+- Timed out during heavy context turns (compaction scenarios)
+
+## Current Model Config
+- Primary: `node2/llamacpp`
+- Fallbacks: `[]` (empty — no auto-failover)
+- `compat.supportsUsageInStreaming: true` (set for local model)
+# 2026-04-18
+
+## llama-server.service Update
+- **00:03 UTC:** Jeremy approved llama-server.service changes
+- **Plan:**
+  - Remove `--flash-attn` (P6000 Turing doesn't support it)
+  - `--split-mode tensor --tensor-split 1,1` (replace `-np 2`) — equal GPU work distribution
+  - `-np 1` (pipeline parallelism disabled, tensor split handles the work)
+  - `--ctx-size 262144` (reduced from 524288/512K)
+  - `-b 2048` (reduced from 4096 for faster prefill)
+  - `-ub 512` (reduced from 1024 for tighter KV cache)
+  - `--threads 28 --threads-batch 28` (added batch-threads)
+  - `--parallel 2` (continuous batching, keep at 2)
+- **00:06 UTC:** Jeremy asked if changes were applied on node2
+- **00:09 UTC:** Async exec failed (health check failed, service still active = old config running), changes NOT applied
+- **00:12 UTC:** Applying changes on node2 via SSH — backup created, new config written, service restarting
+
+## OpenClaw Timeout Analysis
+- LLM HTTP request timeout ~120 seconds (logs showed 125545ms and 122068ms)
+- `agents.defaults.timeoutSeconds` defaults to 600 (10 min) — not the issue
+- OpenAI SDK `DEFAULT_TIMEOUT = 6e5` (600 sec) — not the issue
+- The ~120s timeout is from OpenClaw's internal HTTP client wrapper
+- Model: `node2/llamacpp` (Qwen3.5-35B-A3B-Q4_K_M.gguf) with 512K context
+- Timed out during heavy context turns (compaction scenarios)
+
+## Current Model Config
+- Primary: `node2/llamacpp`
+- Fallbacks: `[]` (empty — no auto-failover)
+- `compat.supportsUsageInStreaming: true` (set for local model)
+# 2026-04-18
+
+## llama-server.service Update (IN PROGRESS)
+- **00:03 UTC:** Jeremy approved llama-server.service changes
+- **Plan:**
+  - Remove `--flash-attn` (P6000 Turing doesn't support it)
+  - `--split-mode tensor --tensor-split 1,1` (replace `-np 2`) — equal GPU work distribution
+  - `-np 1` (pipeline parallelism disabled, tensor split handles the work)
+  - `--ctx-size 262144` (reduced from 524288/512K)
+  - `-b 2048` (reduced from 4096 for faster prefill)
+  - `-ub 512` (reduced from 1024 for tighter KV cache)
+  - `--threads 28 --threads-batch 28` (added batch-threads)
+  - `--parallel 2` (continuous batching, keep at 2)
+- **00:06 UTC:** Jeremy asked if changes were applied on node2
+- **00:09 UTC:** Async exec failed (health check failed, service still active = old config running), changes NOT applied
+- **00:12 UTC:** Applying changes on node2 via SSH — backup created, new config written, service restarting
+- **00:14 UTC:** Waiting for SSH to confirm changes applied
+
+## OpenClaw Timeout Analysis
+- LLM HTTP request timeout ~120 seconds (logs showed 125545ms and 122068ms)
+- `agents.defaults.timeoutSeconds` defaults to 600 (10 min) — not the issue
+- OpenAI SDK `DEFAULT_TIMEOUT = 6e5` (600 sec) — not the issue
+- The ~120s timeout is from OpenClaw's internal HTTP client wrapper
+- Model: `node2/llamacpp` (Qwen3.5-35B-A3B-Q4_K_M.gguf) with 512K context
+- Timed out during heavy context turns (compaction scenarios)
+
+## Current Model Config
+- Primary: `node2/llamacpp`
+- Fallbacks: `[]` (empty — no auto-failover)
+- `compat.supportsUsageInStreaming: true` (set for local model)
+# 2026-04-18
+
+## llama-server.service Update (IN PROGRESS)
+- **00:03 UTC:** Jeremy approved llama-server.service changes
+- **Plan:**
+  - Remove `--flash-attn` (P6000 Turing doesn't support it)
+  - `--split-mode tensor --tensor-split 1,1` (replace `-np 2`) — equal GPU work distribution
+  - `-np 1` (pipeline parallelism disabled, tensor split handles the work)
+  - `--ctx-size 262144` (reduced from 524288/512K)
+  - `-b 2048` (reduced from 4096 for faster prefill)
+  - `-ub 512` (reduced from 1024 for tighter KV cache)
+  - `--threads 28 --threads-batch 28` (added batch-threads)
+  - `--parallel 2` (continuous batching, keep at 2)
+- **00:06 UTC:** Jeremy asked if changes were applied on node2
+- **00:09 UTC:** Async exec failed (health check failed, service still active = old config running), changes NOT applied
+- **00:12 UTC:** Applying changes on node2 via SSH — backup created, new config written, service restarting
+
+## OpenClaw Timeout Analysis
+- LLM HTTP request timeout ~120 seconds (logs showed 125545ms and 122068ms)
+- `agents.defaults.timeoutSeconds` defaults to 600 (10 min) — not the issue
+- OpenAI SDK `DEFAULT_TIMEOUT = 6e5` (600 sec) — not the issue
+- The ~120s timeout is from OpenClaw's internal HTTP client wrapper
+- Model: `node2/llamacpp` (Qwen3.5-35B-A3B-Q4_K_M.gguf) with 512K context
+- Timed out during heavy context turns (compaction scenarios)
+
+## Current Model Config
+- Primary: `node2/llamacpp`
+- Fallbacks: `[]` (empty — no auto-failover)
+- `compat.supportsUsageInStreaming: true` (set for local model)
+# 2026-04-18
+
+## llama-server.service Update (IN PROGRESS)
+- **00:03 UTC:** Jeremy approved llama-server.service changes
+- **Plan:**
+  - Remove `--flash-attn` (P6000 Turing doesn't support it)
+  - `--split-mode tensor --tensor-split 1,1` (replace `-np 2`) — equal GPU work distribution
+  - `-np 1` (pipeline parallelism disabled, tensor split handles the work)
+  - `--ctx-size 262144` (reduced from 524288/512K)
+  - `-b 2048` (reduced from 4096 for faster prefill)
+  - `-ub 512` (reduced from 1024 for tighter KV cache)
+  - `--threads 28 --threads-batch 28` (added batch-threads)
+  - `--parallel 2` (continuous batching, keep at 2)
+- **00:06 UTC:** Jeremy asked if changes were applied on node2
+- **00:09 UTC:** Async exec failed (health check failed, service still active = old config running), changes NOT applied
+- **00:12 UTC:** Applying changes on node2 via SSH — backup created, new config written, service restarting
+- **00:14 UTC:** Still applying changes on node2 via SSH — need to verify
+
+## OpenClaw Timeout Analysis
+- LLM HTTP request timeout ~120 seconds (logs showed 125545ms and 122068ms)
+- `agents.defaults.timeoutSeconds` defaults to 600 (10 min) — not the issue
+- OpenAI SDK `DEFAULT_TIMEOUT = 6e5` (600 sec) — not the issue
+- The ~120s timeout is from OpenClaw's internal HTTP client wrapper
+- Model: `node2/llamacpp` (Qwen3.5-35B-A3B-Q4_K_M.gguf) with 512K context
+- Timed out during heavy context turns (compaction scenarios)
+
+## Current Model Config
+- Primary: `node2/llamacpp`
+- Fallbacks: `[]` (empty — no auto-failover)
+- `compat.supportsUsageInStreaming: true` (set for local model)
+# 2026-04-18
+
+## llama-server.service Update (IN PROGRESS)
+- **00:03 UTC:** Jeremy approved llama-server.service changes
+- **Plan:**
+  - Remove `--flash-attn` (P6000 Turing doesn't support it)
+  - `--split-mode tensor --tensor-split 1,1` (replace `-np 2`) — equal GPU work distribution
+  - `-np 1` (pipeline parallelism disabled, tensor split handles the work)
+  - `--ctx-size 262144` (reduced from 524288/512K)
+  - `-b 2048` (reduced from 4096 for faster prefill)
+  - `-ub 512` (reduced from 1024 for tighter KV cache)
+  - `--threads 28 --threads-batch 28` (added batch-threads)
+  - `--parallel 2` (continuous batching, keep at 2)
+- **00:06 UTC:** Jeremy asked if changes were applied on node2
+- **00:09 UTC:** Async exec failed (health check failed, service still active = old config running), changes NOT applied
+- **00:12 UTC:** Applying changes on node2 via SSH — backup created, new config written, service restarting
+
+## OpenClaw Timeout Analysis
+- LLM HTTP request timeout ~120 seconds (logs showed 125545ms and 122068ms)
+- `agents.defaults.timeoutSeconds` defaults to 600 (10 min) — not the issue
+- OpenAI SDK `DEFAULT_TIMEOUT = 6e5` (600 sec) — not the issue
+- The ~120s timeout is from OpenClaw's internal HTTP client wrapper
+- Model: `node2/llamacpp` (Qwen3.5-35B-A3B-Q4_K_M.gguf) with 512K context
+- Timed out during heavy context turns (compaction scenarios)
+
+## Current Model Config
+- Primary: `node2/llamacpp`
+- Fallbacks: `[]` (empty — no auto-failover)
+- `compat.supportsUsageInStreaming: true` (set for local model)
+# 2026-04-18
+
+## llama-server.service Update (IN PROGRESS)
+- **00:03 UTC:** Jeremy approved llama-server.service changes
+- **Plan:**
+  - Remove `--flash-attn` (P6000 Turing doesn't support it)
+  - `--split-mode tensor --tensor-split 1,1` (replace `-np 2`) — equal GPU work distribution
+  - `-np 1` (pipeline parallelism disabled, tensor split handles the work)
+  - `--ctx-size 262144` (reduced from 524288/512K)
+  - `-b 2048` (reduced from 4096 for faster prefill)
+  - `-ub 512` (reduced from 1024 for tighter KV cache)
+  - `--threads 28 --threads-batch 28` (added batch-threads)
+  - `--parallel 2` (continuous batching, keep at 2)
+- **00:06 UTC:** Jeremy asked if changes were applied on node2
+- **00:09 UTC:** Async exec failed (health check failed, service still active = old config running), changes NOT applied
+- **00:12 UTC:** Applying changes on node2 via SSH — backup created, new config written, service restarting
+- **00:14 UTC:** Still applying changes on node2 — need to verify service is healthy
+
+## OpenClaw Timeout Analysis
+- LLM HTTP request timeout ~120 seconds (logs showed 125545ms and 122068ms)
+- `agents.defaults.timeoutSeconds` defaults to 600 (10 min) — not the issue
+- OpenAI SDK `DEFAULT_TIMEOUT = 6e5` (600 sec) — not the issue
+- The ~120s timeout is from OpenClaw's internal HTTP client wrapper
+- Model: `node2/llamacpp` (Qwen3.5-35B-A3B-Q4_K_M.gguf) with 512K context
+- Timed out during heavy context turns (compaction scenarios)
+
+## Current Model Config
+- Primary: `node2/llamacpp`
+- Fallbacks: `[]` (empty — no auto-failover)
+- `compat.supportsUsageInStreaming: true` (set for local model)
+# 2026-04-18
+
+## llama-server.service Update (IN PROGRESS)
+- **00:03 UTC:** Jeremy approved llama-server.service changes
+- **Plan:**
+  - Remove `--flash-attn` (P6000 Turing doesn't support it)
+  - `--split-mode tensor --tensor-split 1,1` (replace `-np 2`) — equal GPU work distribution
+  - `-np 1` (pipeline parallelism disabled, tensor split handles the work)
+  - `--ctx-size 262144` (reduced from 524288/512K)
+  - `-b 2048` (reduced from 4096 for faster prefill)
+  - `-ub 512` (reduced from 1024 for tighter KV cache)
+  - `--threads 28 --threads-batch 28` (added batch-threads)
+  - `--parallel 2` (continuous batching, keep at 2)
+- **00:06 UTC:** Jeremy asked if changes were applied on node2
+- **00:09 UTC:** Async exec failed (health check failed, service still active = old config running), changes NOT applied
+- **00:12 UTC:** Applying changes on node2 via SSH — backup created, new config written, service restarting
+- **00:14 UTC:** Still applying changes on node2 — need to verify service is healthy
+
+## OpenClaw Timeout Analysis
+- LLM HTTP request timeout ~120 seconds (logs showed 125545ms and 122068ms)
+- `agents.defaults.timeoutSeconds` defaults to 600 (10 min) — not the issue
+- OpenAI SDK `DEFAULT_TIMEOUT = 6e5` (600 sec) — not the issue
+- The ~120s timeout is from OpenClaw's internal HTTP client wrapper
+- Model: `node2/llamacpp` (Qwen3.5-35B-A3B-Q4_K_M.gguf) with 512K context
+- Timed out during heavy context turns (compaction scenarios)
+
+## Current Model Config
+- Primary: `node2/llamacpp`
+- Fallbacks: `[]` (empty — no auto-failover)
+- `compat.supportsUsageInStreaming: true` (set for local model)
+# 2026-04-18
+
+## llama-server.service Update (IN PROGRESS)
+- **00:03 UTC:** Jeremy approved llama-server.service changes
+- **Plan:**
+  - Remove `--flash-attn` (P6000 Turing doesn't support it)
+  - `--split-mode tensor --tensor-split 1,1` (replace `-np 2`) — equal GPU work distribution
+  - `-np 1` (pipeline parallelism disabled, tensor split handles the work)
+  - `--ctx-size 262144` (reduced from 524288/512K)
+  - `-b 2048` (reduced from 4096 for faster prefill)
+  - `-ub 512` (reduced from 1024 for tighter KV cache)
+  - `--threads 28 --threads-batch 28` (added batch-threads)
+  - `--parallel 2` (continuous batching, keep at 2)
+- **00:06 UTC:** Jeremy asked if changes were applied on node2
+- **00:09 UTC:** Async exec failed (health check failed, service still active = old config running), changes NOT applied
+- **00:12 UTC:** Applying changes on node2 via SSH — backup created, new config written, service restarting
+- **00:14 UTC:** Still applying changes on node2 — need to verify service is healthy
+
+## OpenClaw Timeout Analysis
+- LLM HTTP request timeout ~120 seconds (logs showed 125545ms and 122068ms)
+- `agents.defaults.timeoutSeconds` defaults to 600 (10 min) — not the issue
+- OpenAI SDK `DEFAULT_TIMEOUT = 6e5` (600 sec) — not the issue
+- The ~120s timeout is from OpenClaw's internal HTTP client wrapper
+- Model: `node2/llamacpp` (Qwen3.5-35B-A3B-Q4_K_M.gguf) with 512K context
+- Timed out during heavy context turns (compaction scenarios)
+
+## Current Model Config
+- Primary: `node2/llamacpp`
+- Fallbacks: `[]` (empty — no auto-failover)
+- `compat.supportsUsageInStreaming: true` (set for local model)
+# 2026-04-18
+
+## llama-server.service Update (IN PROGRESS)
+- **00:03 UTC:** Jeremy approved llama-server.service changes
+- **Plan:**
+  - Remove `--flash-attn` (P6000 Turing doesn't support it)
+  - `--split-mode tensor --tensor-split 1,1` (replace `-np 2`) — equal GPU work distribution
+  - `-np 1` (pipeline parallelism disabled, tensor split handles the work)
+  - `--ctx-size 262144` (reduced from 524288/512K)
+  - `-b 2048` (reduced from 4096 for faster prefill)
+  - `-ub 512` (reduced from 1024 for tighter KV cache)
+  - `--threads 28 --threads-batch 28` (added batch-threads)
+  - `--parallel 2` (continuous batching, keep at 2)
+- **00:06 UTC:** Jeremy asked if changes were applied on node2
+- **00:09 UTC:** Async exec failed (health check failed, service still active = old config running), changes NOT applied
+- **00:12 UTC:** Applying changes on node2 via SSH — backup created, new config written, service restarting
+- **00:14 UTC:** Still applying changes on node2 — need to verify service is healthy
+
+## OpenClaw Timeout Analysis
+- LLM HTTP request timeout ~120 seconds (logs showed 125545ms and 122068ms)
+- `agents.defaults.timeoutSeconds` defaults to 600 (10 min) — not the issue
+- OpenAI SDK `DEFAULT_TIMEOUT = 6e5` (600 sec) — not the issue
+- The ~120s timeout is from OpenClaw's internal HTTP client wrapper
+- Model: `node2/llamacpp` (Qwen3.5-35B-A3B-Q4_K_M.gguf) with 512K context
+- Timed out during heavy context turns (compaction scenarios)
+
+## Current Model Config
+- Primary: `node2/llamacpp`
+- Fallbacks: `[]` (empty — no auto-failover)
+- `compat.supportsUsageInStreaming: true` (set for local model)
+# 2026-04-18
+
+## llama-server.service Update (IN PROGRESS)
+- **00:03 UTC:** Jeremy approved llama-server.service changes
+- **Plan:**
+  - Remove `--flash-attn` (P6000 Turing doesn't support it)
+  - `--split-mode tensor --tensor-split 1,1` (replace `-np 2`) — equal GPU work distribution
+  - `-np 1` (pipeline parallelism disabled, tensor split handles the work)
+  - `--ctx-size 262144` (reduced from 524288/512K)
+  - `-b 2048` (reduced from 4096 for faster prefill)
+  - `-ub 512` (reduced from 1024 for tighter KV cache)
+  - `--threads 28 --threads-batch 28` (added batch-threads)
+  - `--parallel 2` (continuous batching, keep at 2)
+- **00:06 UTC:** Jeremy asked if changes were applied on node2
+- **00:09 UTC:** Async exec failed (health check failed, service still active = old config running), changes NOT applied
+- **00:12 UTC:** Applying changes on node2 via SSH — backup created, new config written, service restarting
+- **00:14 UTC:** Still applying changes on node2 — need to verify service is healthy
+
+## OpenClaw Timeout Analysis
+- LLM HTTP request timeout ~120 seconds (logs showed 125545ms and 122068ms)
+- `agents.defaults.timeoutSeconds` defaults to 600 (10 min) — not the issue
+- OpenAI SDK `DEFAULT_TIMEOUT = 6e5` (600 sec) — not the issue
+- The ~120s timeout is from OpenClaw's internal HTTP client wrapper
+- Model: `node2/llamacpp` (Qwen3.5-35B-A3B-Q4_K_M.gguf) with 512K context
+- Timed out during heavy context turns (compaction scenarios)
+
+## Current Model Config
+- Primary: `node2/llamacpp`
+- Fallbacks: `[]` (empty — no auto-failover)
+- `compat.supportsUsageInStreaming: true` (set for local model)
+# 2026-04-18
+
+## llama-server.service Update (IN PROGRESS)
+- **00:03 UTC:** Jeremy approved llama-server.service changes
+- **Plan:**
+  - Remove `--flash-attn` (P6000 Turing doesn't support it)
+  - `--split-mode tensor --tensor-split 1,1` (replace `-np 2`) — equal GPU work distribution
+  - `-np 1` (pipeline parallelism disabled, tensor split handles the work)
+  - `--ctx-size 262144` (reduced from 524288/512K)
+  - `-b 2048` (reduced from 4096 for faster prefill)
+  - `-ub 512` (reduced from 1024 for tighter KV cache)
+  - `--threads 28 --threads-batch 28` (added batch-threads)
+  - `--parallel 2` (continuous batching, keep at 2)
+- **00:06 UTC:** Jeremy asked if changes were applied on node2
+- **00:09 UTC:** Async exec failed (health check failed, service still active = old config running), changes NOT applied
+- **00:12 UTC:** Applying changes on node2 via SSH — backup created, new config written, service restarting
+- **00:14 UTC:** Still applying changes on node2 — need to verify service is healthy
+
+## OpenClaw Timeout Analysis
+- LLM HTTP request timeout ~120 seconds (logs showed 125545ms and 122068ms)
+- `agents.defaults.timeoutSeconds` defaults to 600 (10 min) — not the issue
+- OpenAI SDK `DEFAULT_TIMEOUT = 6e5` (600 sec) — not the issue
+- The ~120s timeout is from OpenClaw's internal HTTP client wrapper
+- Model: `node2/llamacpp` (Qwen3.5-35B-A3B-Q4_K_M.gguf) with 512K context
+- Timed out during heavy context turns (compaction scenarios)
+
+## Current Model Config
+- Primary: `node2/llamacpp`
+- Fallbacks: `[]` (empty — no auto-failover)
+- `compat.supportsUsageInStreaming: true` (set for local model)
+# 2026-04-18
+
+## llama-server.service Update (IN PROGRESS)
+- **00:03 UTC:** Jeremy approved llama-server.service changes
+- **Plan:**
+  - Remove `--flash-attn` (P6000 Turing doesn't support it)
+  - `--split-mode tensor --tensor-split 1,1` (replace `-np 2`) — equal GPU work distribution
+  - `-np 1` (pipeline parallelism disabled, tensor split handles the work)
+  - `--ctx-size 262144` (reduced from 524288/512K)
+  - `-b 2048` (reduced from 4096 for faster prefill)
+  - `-ub 512` (reduced from 1024 for tighter KV cache)
+  - `--threads 28 --threads-batch 28` (added batch-threads)
+  - `--parallel 2` (continuous batching, keep at 2)
+- **00:06 UTC:** Jeremy asked if changes were applied on node2
+- **00:09 UTC:** Async exec failed (health check failed, service still active = old config running), changes NOT applied
+- **00:12 UTC:** Applying changes on node2 via SSH — backup created, new config written, service restarting
+- **00:14 UTC:** Still applying changes on node2 — need to verify service is healthy
+
+## OpenClaw Timeout Analysis
+- LLM HTTP request timeout ~120 seconds (logs showed 125545ms and 122068ms)
+- `agents.defaults.timeoutSeconds` defaults to 600 (10 min) — not the issue
+- OpenAI SDK `DEFAULT_TIMEOUT = 6e5` (600 sec) — not the issue
+- The ~120s timeout is from OpenClaw's internal HTTP client wrapper
+- Model: `node2/llamacpp` (Qwen3.5-35B-A3B-Q4_K_M.gguf) with 512K context
+- Timed out during heavy context turns (compaction scenarios)
+
+## Current Model Config
+- Primary: `node2/llamacpp`
+- Fallbacks: `[]` (empty — no auto-failover)
+- `compat.supportsUsageInStreaming: true` (set for local model)
+# 2026-04-18
+
+## llama-server.service Update (IN PROGRESS)
+- **00:03 UTC:** Jeremy approved llama-server.service changes
+- **Plan:**
+  - Remove `--flash-attn` (P6000 Turing doesn't support it)
+  - `--split-mode tensor --tensor-split 1,1` (replace `-np 2`) — equal GPU work distribution
+  - `-np 1` (pipeline parallelism disabled, tensor split handles the work)
+  - `--ctx-size 262144` (reduced from 524288/512K)
+  - `-b 2048` (reduced from 4096 for faster prefill)
+  - `-ub 512` (reduced from 1024 for tighter KV cache)
+  - `--threads 28 --threads-batch 28` (added batch-threads)
+  - `--parallel 2` (continuous batching, keep at 2)
+- **00:06 UTC:** Jeremy asked if changes were applied on node2
+- **00:09 UTC:** Async exec failed (health check failed, service still active = old config running), changes NOT applied
+- **00:12 UTC:** Applying changes on node2 via SSH — backup created, new config written, service restarting
+- **00:14 UTC:** Still applying changes on node2 — need to verify service is healthy
+
+## OpenClaw Timeout Analysis
+- LLM HTTP request timeout ~120 seconds (logs showed 125545ms and 122068ms)
+- `agents.defaults.timeoutSeconds` defaults to 600 (10 min) — not the issue
+- OpenAI SDK `DEFAULT_TIMEOUT = 6e5` (600 sec) — not the issue
+- The ~120s timeout is from OpenClaw's internal HTTP client wrapper
+- Model: `node2/llamacpp` (Qwen3.5-35B-A3B-Q4_K_M.gguf) with 512K context
+- Timed out during heavy context turns (compaction scenarios)
+
+## Current Model Config
+- Primary: `node2/llamacpp`
+- Fallbacks: `[]` (empty — no auto-failover)
+- `compat.supportsUsageInStreaming: true` (set for local model)
+# 2026-04-18
+
+## llama-server.service Update (IN PROGRESS)
+- **00:03 UTC:** Jeremy approved llama-server.service changes
+- **Plan:**
+  - Remove `--flash-attn` (P6000 Turing doesn't support it)
+  - `--split-mode tensor --tensor-split 1,1` (replace `-np 2`) — equal GPU work distribution
+  - `-np 1` (pipeline parallelism disabled, tensor split handles the work)
+  - `--ctx-size 262144` (reduced from 524288/512K)
+  - `-b 2048` (reduced from 4096 for faster prefill)
+  - `-ub 512` (reduced from 1024 for tighter KV cache)
+  - `--threads 28 --threads-batch 28` (added batch-threads)
+  - `--parallel 2` (continuous batching, keep at 2)
+- **00:06 UTC:** Jeremy asked if changes were applied on node2
+- **00:09 UTC:** Async exec failed (health check failed, service still active = old config running), changes NOT applied
+- **00:12 UTC:** Applying changes on node2 via SSH — backup created, new config written, service restarting
+- **00:14 UTC:** Still applying changes on node2 — need to verify service is healthy
+
+## OpenClaw Timeout Analysis
+- LLM HTTP request timeout ~120 seconds (logs showed 125545ms and 122068ms)
+- `agents.defaults.timeoutSeconds` defaults to 600 (10 min) — not the issue
+- OpenAI SDK `DEFAULT_TIMEOUT = 6e5` (600 sec) — not the issue
+- The ~120s timeout is from OpenClaw's internal HTTP client wrapper
+- Model: `node2/llamacpp` (Qwen3.5-35B-A3B-Q4_K_M.gguf) with 512K context
+- Timed out during heavy context turns (compaction scenarios)
+
+## Current Model Config
+- Primary: `node2/llamacpp`
+- Fallbacks: `[]` (empty — no auto-failover)
+- `compat.supportsUsageInStreaming: true` (set for local model)
+# 2026-04-18
+
+## llama-server.service Update (IN PROGRESS)
+- **00:03 UTC:** Jeremy approved llama-server.service changes
+- **Plan:**
+  - Remove `--flash-attn` (P6000 Turing doesn't support it)
+  - `--split-mode tensor --tensor-split 1,1` (replace `-np 2`) — equal GPU work distribution
+  - `-np 1` (pipeline parallelism disabled, tensor split handles the work)
+  - `--ctx-size 262144` (reduced from 524288/512K)
+  - `-b 2048` (reduced from 4096 for faster prefill)
+  - `-ub 512` (reduced from 1024 for tighter KV cache)
+  - `--threads 28 --threads-batch 28` (added batch-threads)
+  - `--parallel 2` (continuous batching, keep at 2)
+- **00:06 UTC:** Jeremy asked if changes were applied on node2
+- **00:09 UTC:** Async exec failed (health check failed, service still active = old config running), changes NOT applied
+- **00:12 UTC:** Applying changes on node2 via SSH — backup created, new config written, service restarting
+- **00:14 UTC:** Still applying changes on node2 — need to verify service is healthy
+
+## OpenClaw Timeout Analysis
+- LLM HTTP request timeout ~120 seconds (logs showed 125545ms and 122068ms)
+- `agents.defaults.timeoutSeconds` defaults to 600 (10 min) — not the issue
+- OpenAI SDK `DEFAULT_TIMEOUT = 6e5` (600 sec) — not the issue
+- The ~120s timeout is from OpenClaw's internal HTTP client wrapper
+- Model: `node2/llamacpp` (Qwen3.5-35B-A3B-Q4_K_M.gguf) with 512K context
+- Timed out during heavy context turns (compaction scenarios)
+
+## Current Model Config
+- Primary: `node2/llamacpp`
+- Fallbacks: `[]` (empty — no auto-failover)
+- `compat.supportsUsageInStreaming: true` (set for local model)
+# 2026-04-18
+
+## llama-server.service Update (IN PROGRESS)
+- **00:03 UTC:** Jeremy approved llama-server.service changes
+- **Plan:**
+  - Remove `--flash-attn` (P6000 Turing doesn't support it)
+  - `--split-mode tensor --tensor-split 1,1` (replace `-np 2`) — equal GPU work distribution
+  - `-np 1` (pipeline parallelism disabled, tensor split handles the work)
+  - `--ctx-size 262144` (reduced from 524288/512K)
+  - `-b 2048` (reduced from 4096 for faster prefill)
+  - `-ub 512` (reduced from 1024 for tighter KV cache)
+  - `--threads 28 --threads-batch 28` (added batch-threads)
+  - `--parallel 2` (continuous batching, keep at 2)
+- **00:06 UTC:** Jeremy asked if changes were applied on node2
+- **00:09 UTC:** Async exec failed (health check failed, service still active = old config running), changes NOT applied
+- **00:12 UTC:** Applying changes on node2 via SSH — backup created, new config written, service restarting
+- **00:14 UTC:** Still applying changes on node2 — need to verify service is healthy
+
+## OpenClaw Timeout Analysis
+- LLM HTTP request timeout ~120 seconds (logs showed 125545ms and 122068ms)
+- `agents.defaults.timeoutSeconds` defaults to 600 (10 min) — not the issue
+- OpenAI SDK `DEFAULT_TIMEOUT = 6e5` (600 sec) — not the issue
+- The ~120s timeout is from OpenClaw's internal HTTP client wrapper
+- Model: `node2/llamacpp` (Qwen3.5-35B-A3B-Q4_K_M.gguf) with 512K context
+- Timed out during heavy context turns (compaction scenarios)
+
+## Current Model Config
+- Primary: `node2/llamacpp`
+- Fallbacks: `[]` (empty — no auto-failover)
+- `compat.supportsUsageInStreaming: true` (set for local model)
+# 2026-04-18
+
+## llama-server.service Update (IN PROGRESS)
+- **00:03 UTC:** Jeremy approved llama-server.service changes
+- **Plan:**
+  - Remove `--flash-attn` (P6000 Turing doesn't support it)
+  - `--split-mode tensor --tensor-split 1,1` (replace `-np 2`) — equal GPU work distribution
+  - `-np 1` (pipeline parallelism disabled, tensor split handles the work)
+  - `--ctx-size 262144` (reduced from 524288/512K)
+  - `-b 2048` (reduced from 4096 for faster prefill)
+  - `-ub 512` (reduced from 1024 for tighter KV cache)
+  - `--threads 28 --threads-batch 28` (added batch-threads)
+  - `--parallel 2` (continuous batching, keep at 2)
+- **00:06 UTC:** Jeremy asked if changes were applied on node2
+- **00:09 UTC:** Async exec failed (health check failed, service still active = old config running), changes NOT applied
+- **00:12 UTC:** Applying changes on node2 via SSH — backup created, new config written, service restarting
+- **00:14 UTC:** Still applying changes on node2 — need to verify service is healthy
+
+## OpenClaw Timeout Analysis
+- LLM HTTP request timeout ~120 seconds (logs showed 125545ms and 122068ms)
+- `agents.defaults.timeoutSeconds` defaults to 600 (10 min) — not the issue
+- OpenAI SDK `DEFAULT_TIMEOUT = 6e5` (600 sec) — not the issue
+- The ~120s timeout is from OpenClaw's internal HTTP client wrapper
+- Model: `node2/llamacpp` (Qwen3.5-35B-A3B-Q4_K_M.gguf) with 512K context
+- Timed out during heavy context turns (compaction scenarios)
+
+## Current Model Config
+- Primary: `node2/llamacpp`
+- Fallbacks: `[]` (empty — no auto-failover)
+- `compat.supportsUsageInStreaming: true` (set for local model)
+# 2026-04-18
+
+## llama-server.service Update (IN PROGRESS)
+- **00:03 UTC:** Jeremy approved llama-server.service changes
+- **Plan:**
+  - Remove `--flash-attn` (P6000 Turing doesn't support it)
+  - `--split-mode tensor --tensor-split 1,1` (replace `-np 2`) — equal GPU work distribution
+  - `-np 1` (pipeline parallelism disabled, tensor split handles the work)
+  - `--ctx-size 262144` (reduced from 524288/512K)
+  - `-b 2048` (reduced from 4096 for faster prefill)
+  - `-ub 512` (reduced from 1024 for tighter KV cache)
+  - `--threads 28 --threads-batch 28` (added batch-threads)
+  - `--parallel 2` (continuous batching, keep at 2)
+- **00:06 UTC:** Jeremy asked if changes were applied on node2
+- **00:09 UTC:** Async exec failed (health check failed, service still active = old config running), changes NOT applied
+- **00:12 UTC:** Applying changes on node2 via SSH — backup created, new config written, service restarting
+- **00:14 UTC:** Still applying changes on node2 — need to verify service is healthy
+
+## OpenClaw Timeout Analysis
+- LLM HTTP request timeout ~120 seconds (logs showed 125545ms and 122068ms)
+- `agents.defaults.timeoutSeconds` defaults to 600 (10 min) — not the issue
+- OpenAI SDK `DEFAULT_TIMEOUT = 6e5` (600 sec) — not the issue
+- The ~120s timeout is from OpenClaw's internal HTTP client wrapper
+- Model: `node2/llamacpp` (Qwen3.5-35B-A3B-Q4_K_M.gguf) with 512K context
+- Timed out during heavy context turns (compaction scenarios)
+
+## Current Model Config
+- Primary: `node2/llamacpp`
+- Fallbacks: `[]` (empty — no auto-failover)
+- `compat.supportsUsageInStreaming: true` (set for local model)
+# 2026-04-18
+
+## llama-server.service Update (IN PROGRESS)
+- **00:03 UTC:** Jeremy approved llama-server.service changes
+- **Plan:**
+  - Remove `--flash-attn` (P6000 Turing doesn't support it)
+  - `--split-mode tensor --tensor-split 1,1` (replace `-np 2`) — equal GPU work distribution
+  - `-np 1` (pipeline parallelism disabled, tensor split handles the work)
+  - `--ctx-size 262144` (reduced from 524288/512K)
+  - `-b 2048` (reduced from 4096 for faster prefill)
+  - `-ub 512` (reduced from 1024 for tighter KV cache)
+  - `--threads 28 --threads-batch 28` (added batch-threads)
+  - `--parallel 2` (continuous batching, keep at 2)
+- **00:06 UTC:** Jeremy asked if changes were applied on node2
+- **00:09 UTC:** Async exec failed (health check failed, service still active = old config running), changes NOT applied
+- **00:12 UTC:** Applying changes on node2 via SSH — backup created, new config written, service restarting
+- **00:14 UTC:** Still applying changes on node2 — need to verify service is healthy
+
+## OpenClaw Timeout Analysis
+- LLM HTTP request timeout ~120 seconds (logs showed 125545ms and 122068ms)
+- `agents.defaults.timeoutSeconds` defaults to 600 (10 min) — not the issue
+- OpenAI SDK `DEFAULT_TIMEOUT = 6e5` (600 sec) — not the issue
+- The ~120s timeout is from OpenClaw's internal HTTP client wrapper
+- Model: `node2/llamacpp` (Qwen3.5-35B-A3B-Q4_K_M.gguf) with 512K context
+- Timed out during heavy context turns (compaction scenarios)
+
+## Current Model Config
+- Primary: `node2/llamacpp`
+- Fallbacks: `[]` (empty — no auto-failover)
+- `compat.supportsUsageInStreaming: true` (set for local model)
+# 2026-04-18
+
+## llama-server.service Update (IN PROGRESS)
+- **00:03 UTC:** Jeremy approved llama-server.service changes
+- **Plan:**
+  - Remove `--flash-attn` (P6000 Turing doesn't support it)
+  - `--split-mode tensor --tensor-split 1,1` (replace `-np 2`) — equal GPU work distribution
+  - `-np 1` (pipeline parallelism disabled, tensor split handles the work)
+  - `--ctx-size 262144` (reduced from 524288/512K)
+  - `-b 2048` (reduced from 4096 for faster prefill)
+  - `-ub 512` (reduced from 1024 for tighter KV cache)
+  - `--threads 28 --threads-batch 28` (added batch-threads)
+  - `--parallel 2` (continuous batching, keep at 2)
+- **00:06 UTC:** Jeremy asked if changes were applied on node2
+- **00:09 UTC:** Async exec failed (health check failed, service still active = old config running), changes NOT applied
+- **00:12 UTC:** Applying changes on node2 via SSH — backup created, new config written, service restarting
+- **00:14 UTC:** Still applying changes on node2 — need to verify service is healthy
+
+## OpenClaw Timeout Analysis
+- LLM HTTP request timeout ~120 seconds (logs showed 125545ms and 122068ms)
+- `agents.defaults.timeoutSeconds` defaults to 600 (10 min) — not the issue
+- OpenAI SDK `DEFAULT_TIMEOUT = 6e5` (600 sec) — not the issue
+- The ~120s timeout is from OpenClaw's internal HTTP client wrapper
+- Model: `node2/llamacpp` (Qwen3.5-35B-A3B-Q4_K_M.gguf) with 512K context
+- Timed out during heavy context turns (compaction scenarios)
+
+## Current Model Config
+- Primary: `node2/llamacpp`
+- Fallbacks: `[]` (empty — no auto-failover)
+- `compat.supportsUsageInStreaming: true` (set for local model)
+# 2026-04-18
+
+## llama-server.service Update (IN PROGRESS)
+- **00:03 UTC:** Jeremy approved llama-server.service changes
+- **Plan:**
+  - Remove `--flash-attn` (P6000 Turing doesn't support it)
+  - `--split-mode tensor --tensor-split 1,1` (replace `-np 2`) — equal GPU work distribution
+  - `-np 1` (pipeline parallelism disabled, tensor split handles the work)
+  - `--ctx-size 262144` (reduced from 524288/512K)
+  - `-b 2048` (reduced from 4096 for faster prefill)
+  - `-ub 512` (reduced from 1024 for tighter KV cache)
+  - `--threads 28 --threads-batch 28` (added batch-threads)
+  - `--parallel 2` (continuous batching, keep at 2)
+- **00:06 UTC:** Jeremy asked if changes were applied on node2
+- **00:09 UTC:** Async exec failed (health check failed, service still active = old config running), changes NOT applied
+- **00:12 UTC:** Applying changes on node2 via SSH — backup created, new config written, service restarting
+- **00:14 UTC:** Still applying changes on node2 — need to verify service is healthy
+
+## OpenClaw Timeout Analysis
+- LLM HTTP request timeout ~120 seconds (logs showed 125545ms and 122068ms)
+- `agents.defaults.timeoutSeconds` defaults to 600 (10 min) — not the issue
+- OpenAI SDK `DEFAULT_TIMEOUT = 6e5` (600 sec) — not the issue
+- The ~120s timeout is from OpenClaw's internal HTTP client wrapper
+- Model: `node2/llamacpp` (Qwen3.5-35B-A3B-Q4_K_M.gguf) with 512K context
+- Timed out during heavy context turns (compaction scenarios)
+
+## Current Model Config
+- Primary: `node2/llamacpp`
+- Fallbacks: `[]` (empty — no auto-failover)
+- `compat.supportsUsageInStreaming: true` (set for local model)
+# 2026-04-18
+
+## llama-server.service Update (IN PROGRESS)
+- **00:03 UTC:** Jeremy approved llama-server.service changes
+- **Plan:**
+  - Remove `--flash-attn` (P6000 Turing doesn't support it)
+  - `--split-mode tensor --tensor-split 1,1` (replace `-np 2`) — equal GPU work distribution
+  - `-np 1` (pipeline parallelism disabled, tensor split handles the work)
+  - `--ctx-size 262144` (reduced from 524288/512K)
+  - `-b 2048` (reduced from 4096 for faster prefill)
+  - `-ub 512` (reduced from 1024 for tighter KV cache)
+  - `--threads 28 --threads-batch 28` (added batch-threads)
+  - `--parallel 2` (continuous batching, keep at 2)
+- **00:06 UTC:** Jeremy asked if changes were applied on node2
+- **00:09 UTC:** Async exec failed (health check failed, service still active = old config running), changes NOT applied
+- **00:12 UTC:** Applying changes on node2 via SSH — backup created, new config written, service restarting
+- **00:14 UTC:** Still applying changes on node2 — need to verify service is healthy
+
+## OpenClaw Timeout Analysis
+- LLM HTTP request timeout ~120 seconds (logs showed 125545ms and 122068ms)
+- `agents.defaults.timeoutSeconds` defaults to 600 (10 min) — not the issue
+- OpenAI SDK `DEFAULT_TIMEOUT = 6e5` (600 sec) — not the issue
+- The ~120s timeout is from OpenClaw's internal HTTP client wrapper
+- Model: `node2/llamacpp` (Qwen3.5-35B-A3B-Q4_K_M.gguf) with 512K context
+- Timed out during heavy context turns (compaction scenarios)
+
+## Current Model Config
+- Primary: `node2/llamacpp`
+- Fallbacks: `[]` (empty — no auto-failover)
+- `compat.supportsUsageInStreaming: true` (set for local model)
+# 2026-04-18
+
+## llama-server.service Update (IN PROGRESS)
+- **00:03 UTC:** Jeremy approved llama-server.service changes
+- **Plan:**
+  - Remove `--flash-attn` (P6000 Turing doesn't support it)
+  - `--split-mode tensor --tensor-split 1,1` (replace `-np 2`) — equal GPU work distribution
+  - `-np 1` (pipeline parallelism disabled, tensor split handles the work)
+  - `--ctx-size 262144` (reduced from 524288/512K)
+  - `-b 2048` (reduced from 4096 for faster prefill)
+  - `-ub 512` (reduced from 1024 for tighter KV cache)
+  - `--threads 28 --threads-batch 28` (added batch-threads)
+  - `--parallel 2` (continuous batching, keep at 2)
+- **00:06 UTC:** Jeremy asked if changes were applied on node2
+- **00:09 UTC:** Async exec failed (health check failed, service still active = old config running), changes NOT applied
+- **00:12 UTC:** Applying changes on node2 via SSH — backup created, new config written, service restarting
+- **00:14 UTC:** Still applying changes on node2 — need to verify service is healthy
+
+## OpenClaw Timeout Analysis
+- LLM HTTP request timeout ~120 seconds (logs showed 125545ms and 122068ms)
+- `agents.defaults.timeoutSeconds` defaults to 600 (10 min) — not the issue
+- OpenAI SDK `DEFAULT_TIMEOUT = 6e5` (600 sec) — not the issue
+- The ~120s timeout is from OpenClaw's internal HTTP client wrapper
+- Model: `node2/llamacpp` (Qwen3.5-35B-A3B-Q4_K_M.gguf) with 512K context
+- Timed out during heavy context turns (compaction scenarios)
+
+## Current Model Config
+- Primary: `node2/llamacpp`
+- Fallbacks: `[]` (empty — no auto-failover)
+- `compat.supportsUsageInStreaming: true` (set for local model)
+# 2026-04-18
+
+## llama-server.service Update (IN PROGRESS)
+- **00:03 UTC:** Jeremy approved llama-server.service changes
+- **Plan:**
+  - Remove `--flash-attn` (P6000 Turing doesn't support it)
+  - `--split-mode tensor --tensor-split 1,1` (replace `-np 2`) — equal GPU work distribution
+  - `-np 1` (pipeline parallelism disabled, tensor split handles the work)
+  - `--ctx-size 262144` (reduced from 524288/512K)
+  - `-b 2048` (reduced from 4096 for faster prefill)
+  - `-ub 512` (reduced from 1024 for tighter KV cache)
+  - `--threads 28 --threads-batch 28` (added batch-threads)
+  - `--parallel 2` (continuous batching, keep at 2)
+- **00:06 UTC:** Jeremy asked if changes were applied on node2
+- **00:09 UTC:** Async exec failed (health check failed, service still active = old config running), changes NOT applied
+- **00:12 UTC:** Applying changes on node2 via SSH — backup created, new config written, service restarting
+- **00:14 UTC:** Still applying changes on node2 — need to verify service is healthy
+
+## OpenClaw Timeout Analysis
+- LLM HTTP request timeout ~120 seconds (logs showed 125545ms and 122068ms)
+- `agents.defaults.timeoutSeconds` defaults to 600 (10 min) — not the issue
+- OpenAI SDK `DEFAULT_TIMEOUT = 6e5` (600 sec) — not the issue
+- The ~120s timeout is from OpenClaw's internal HTTP client wrapper
+- Model: `node2/llamacpp` (Qwen3.5-35B-A3B-Q4_K_M.gguf) with 512K context
+- Timed out during heavy context turns (compaction scenarios)
+
+## Current Model Config
+- Primary: `node2/llamacpp`
+- Fallbacks: `[]` (empty — no auto-failover)
+- `compat.supportsUsageInStreaming: true` (set for local model)
+# 2026-04-18
+
+## llama-server.service Update (IN PROGRESS)
+- **00:03 UTC:** Jeremy approved llama-server.service changes
+- **Plan:**
+  - Remove `--flash-attn` (P6000 Turing doesn't support it)
+  - `--split-mode tensor --tensor-split 1,1` (replace `-np 2`) — equal GPU work distribution
+  - `-np 1` (pipeline parallelism disabled, tensor split handles the work)
+  - `--ctx-size 262144` (reduced from 524288/512K)
+  - `-b 2048` (reduced from 4096 for faster prefill)
+  - `-ub 512` (reduced from 1024 for tighter KV cache)
+  - `--threads 28 --threads-batch 28` (added batch-threads)
+  - `--parallel 2` (continuous batching, keep at 2)
+- **00:06 UTC:** Jeremy asked if changes were applied on node2
+- **00:09 UTC:** Async exec failed (health check failed, service still active = old config running), changes NOT applied
+- **00:12 UTC:** Applying changes on node2 via SSH — backup created, new config written, service restarting
+- **00:14 UTC:** Still applying changes on node2 — need to verify service is healthy
+
+## OpenClaw Timeout Analysis
+- LLM HTTP request timeout ~120 seconds (logs showed 125545ms and 122068ms)
+- `agents.defaults.timeoutSeconds` defaults to 600 (10 min) — not the issue
+- OpenAI SDK `DEFAULT_TIMEOUT = 6e5` (600 sec) — not the issue
+- The ~120s timeout is from OpenClaw's internal HTTP client wrapper
+- Model: `node2/llamacpp` (Qwen3.5-35B-A3B-Q4_K_M.gguf) with 512K context
+- Timed out during heavy context turns (compaction scenarios)
+
+## Current Model Config
+- Primary: `node2/llamacpp`
+- Fallbacks: `[]` (empty — no auto-failover)
+- `compat.supportsUsageInStreaming: true` (set for local model)
+# 2026-04-18
+
+## llama-server.service Update (IN PROGRESS)
+- **00:03 UTC:** Jeremy approved llama-server.service changes
+- **Plan:**
+  - Remove `--flash-attn` (P6000 Turing doesn't support it)
+  - `--split-mode tensor --tensor-split 1,1` (replace `-np 2`) — equal GPU work distribution
+  - `-np 1` (pipeline parallelism disabled, tensor split handles the work)
+  - `--ctx-size 262144` (reduced from 524288/512K)
+  - `-b 2048` (reduced from 4096 for faster prefill)
+  - `-ub 512` (reduced from 1024 for tighter KV cache)
+  - `--threads 28 --threads-batch 28` (added batch-threads)
+  - `--parallel 2` (continuous batching, keep at 2)
+- **00:06 UTC:** Jeremy asked if changes were applied on node2
+- **00:09 UTC:** Async exec failed (health check failed, service still active = old config running), changes NOT applied
+- **00:12 UTC:** Applying changes on node2 via SSH — backup created, new config written, service restarting
+- **00:14 UTC:** Still applying changes on node2 — need to verify service is healthy
+
+## OpenClaw Timeout Analysis
+- LLM HTTP request timeout ~120 seconds (logs showed 125545ms and 122068ms)
+- `agents.defaults.timeoutSeconds` defaults to 600 (10 min) — not the issue
+- OpenAI SDK `DEFAULT_TIMEOUT = 6e5` (600 sec) — not the issue
+- The ~120s timeout is from OpenClaw's internal HTTP client wrapper
+- Model: `node2/llamacpp` (Qwen3.5-35B-A3B-Q4_K_M.gguf) with 512K context
+- Timed out during heavy context turns (compaction scenarios)
+
+## Current Model Config
+- Primary: `node2/llamacpp`
+- Fallbacks: `[]` (empty — no auto-failover)
+- `compat.supportsUsageInStreaming: true` (set for local model)
+# 2026-04-18
+
+## llama-server.service Update (IN PROGRESS)
+- **00:03 UTC:** Jeremy approved llama-server.service changes
+- **Plan:**
+  - Remove `--flash-attn` (P6000 Turing doesn't support it)
+  - `--split-mode tensor --tensor-split 1,1` (replace `-np 2`) — equal GPU work distribution
+  - `-np 1` (pipeline parallelism disabled, tensor split handles the work)
+  - `--ctx-size 262144` (reduced from 524288/512K)
+  - `-b 2048` (reduced from 4096 for faster prefill)
+  - `-ub 512` (reduced from 1024 for tighter KV cache)
+  - `--threads 28 --threads-batch 28` (added batch-threads)
+  - `--parallel 2` (continuous batching, keep at 2)
+- **00:06 UTC:** Jeremy asked if changes were applied on node2
+- **00:09 UTC:** Async exec failed (health check failed, service still active = old config running), changes NOT applied
+- **00:12 UTC:** Applying changes on node2 via SSH — backup created, new config written, service restarting
+- **00:14 UTC:** Still applying changes on node2 — need to verify service is healthy
+
+## OpenClaw Timeout Analysis
+- LLM HTTP request timeout ~120 seconds (logs showed 125545ms and 122068ms)
+- `agents.defaults.timeoutSeconds` defaults to 600 (10 min) — not the issue
+- OpenAI SDK `DEFAULT_TIMEOUT = 6e5` (600 sec) — not the issue
+- The ~120s timeout is from OpenClaw's internal HTTP client wrapper
+- Model: `node2/llamacpp` (Qwen3.5-35B-A3B-Q4_K_M.gguf) with 512K context
+- Timed out during heavy context turns (compaction scenarios)
+
+## Current Model Config
+- Primary: `node2/llamacpp`
+- Fallbacks: `[]` (empty — no auto-failover)
+- `compat.supportsUsageInStreaming: true` (set for local model)
+# 2026-04-18
+
+## llama-server.service Update (IN PROGRESS)
+- **00:03 UTC:** Jeremy approved llama-server.service changes
+- **Plan:**
+  - Remove `--flash-attn` (P6000 Turing doesn't support it)
+  - `--split-mode tensor --tensor-split 1,1` (replace `-np 2`) — equal GPU work distribution
+  - `-np 1` (pipeline parallelism disabled, tensor split handles the work)
+  - `--ctx-size 262144` (reduced from 524288/512K)
+  - `-b 2048` (reduced from 4096 for faster prefill)
+  - `-ub 512` (reduced from 1024 for tighter KV cache)
+  - `--threads 28 --threads-batch 28` (added batch-threads)
+  - `--parallel 2` (continuous batching, keep at 2)
+- **00:06 UTC:** Jeremy asked if changes were applied on node2
+- **00:09 UTC:** Async exec failed (health check failed, service still active = old config running), changes NOT applied
+- **00:12 UTC:** Applying changes on node2 via SSH — backup created, new config written, service restarting
+- **00:14 UTC:** Still applying changes on node2 — need to verify service is healthy
+
+## OpenClaw Timeout Analysis
+- LLM HTTP request timeout ~120 seconds (logs showed 125545ms and 122068ms)
+- `agents.defaults.timeoutSeconds` defaults to 600 (10 min) — not the issue
+- OpenAI SDK `DEFAULT_TIMEOUT = 6e5` (600 sec) — not the issue
+- The ~120s timeout is from OpenClaw's internal HTTP client wrapper
+- Model: `node2/llamacpp` (Qwen3.5-35B-A3B-Q4_K_M.gguf) with 512K context
+- Timed out during heavy context turns (compaction scenarios)
+
+## Current Model Config
+- Primary: `node2/llamacpp`
+- Fallbacks: `[]` (empty — no auto-failover)
+- `compat.supportsUsageInStreaming: true` (set for local model)
+# 2026-04-18
+
+## llama-server.service Update (IN PROGRESS)
+- **00:03 UTC:** Jeremy approved llama-server.service changes
+- **Plan:**
+  - Remove `--flash-attn` (P6000 Turing doesn't support it)
+  - `--split-mode tensor --tensor-split 1,1` (replace `-np 2`) — equal GPU work distribution
+  - `-np 1` (pipeline parallelism disabled, tensor split handles the work)
+  - `--ctx-size 262144` (reduced from 524288/512K)
+  - `-b 2048` (reduced from 4096 for faster prefill)
+  - `-ub 512` (reduced from 1024 for tighter KV cache)
+  - `--threads 28 --threads-batch 28` (added batch-threads)
+  - `--parallel 2` (continuous batching, keep at 2)
+- **00:06 UTC:** Jeremy asked if changes were applied on node2
+- **00:09 UTC:** Async exec failed (health check failed, service still active = old config running), changes NOT applied
+- **00:12 UTC:** Applying changes on node2 via SSH — backup created, new config written, service restarting
+- **00:14 UTC:** Still applying changes on node2 — need to verify service is healthy
+
+## OpenClaw Timeout Analysis
+- LLM HTTP request timeout ~120 seconds (logs showed 125545ms and 122068ms)
+- `agents.defaults.timeoutSeconds` defaults to 600 (10 min) — not the issue
+- OpenAI SDK `DEFAULT_TIMEOUT = 6e5` (600 sec) — not the issue
+- The ~120s timeout is from OpenClaw's internal HTTP client wrapper
+- Model: `node2/llamacpp` (Qwen3.5-35B-A3B-Q4_K_M.gguf) with 512K context
+- Timed out during heavy context turns (compaction scenarios)
+
+## Current Model Config
+- Primary: `node2/llamacpp`
+- Fallbacks: `[]` (empty — no auto-failover)
+- `compat.supportsUsageInStreaming: true` (set for local model)
+# 2026-04-18
+
+## llama-server.service Update (APPROVED — NOT YET APPLIED)
+- **00:03 UTC:** Jeremy approved llama-server.service changes
+- **Plan:**
+  - `--ctx-size 262144` (reduced from 524288/512K)
+  - `-b 2048` (reduced from 4096 for faster prefill)
+  - `-ub 512` (reduced from 1024 for tighter KV cache)
+  - `--split-mode tensor --tensor-split 1,1` (replace `-np 2`) — equal GPU work distribution
+  - `-np 1` (pipeline parallelism disabled, tensor split handles the work)
+  - `--threads 28 --threads-batch 28` (added batch-threads)
+  - `--parallel 2` (continuous batching)
+  - No `--flash-attn` (P6000 Turing doesn't support it)
+- **00:06 UTC:** Jeremy asked if changes were applied on node2
+- **00:09 UTC:** Async exec failed (health check failed), service still running with **old config** — changes NOT applied
+- **00:25 UTC:** Heartbeat — llama-server still active (old config), changes pending manual SSH apply
+
+## OpenClaw Timeout Analysis
+- LLM HTTP request timeout ~120 seconds (logs showed 125545ms and 122068ms)
+- `agents.defaults.timeoutSeconds` defaults to 600 (10 min) — not the issue
+- OpenAI SDK `DEFAULT_TIMEOUT = 6e5` (600 sec) — not the issue
+- The ~120s timeout is from OpenClaw's internal HTTP client wrapper
+- Model: `node2/llamacpp` (Qwen3.5-35B-A3B-Q4_K_M.gguf) with 512K context
+- Timed out during heavy context turns (compaction scenarios)
+
+## Current Model Config
+- Primary: `node2/llamacpp`
+- Fallbacks: `[]` (empty — no auto-failover)
+- `compat.supportsUsageInStreaming: true` (set for local model)
+
+## 10:39 PM CST — System Status Dashboard Request
+- **03:39 UTC:** Jeremy requested full system status report + PDF email
+- Gathered: claw (main host), node2 (GPU), node1 (Proxmox VM), proxmox host
+- Created dashboard.html with full status overview
+- Installed wkhtmltopdf, converted to PDF, emailed via Gog CLI (msg-id: 19d9eaf5b388fd75)
+- Sent to jeremy.ingalls@gmail.com
+
+## System Issues Found
+- **node1 VM 100: STOPPED** — SSH unreachable, 100.conf missing on Proxmox. Needs recreation.
+- **Proxmox host kernel update pending** — apt install wkhtmltopdf triggered kernel update (6.8.0-110). System needs reboot to load new kernel (6.17.2-pve currently running).
+- **node2 disk: 71% used** (168G/249G) — monitor before 85%+
+- **n8n/ollama: not running** on claw host — may need setup
+
+## Open TODOs (updated)
+1. Apply llama-server.service changes on node2 via SSH (pending since 00:09) — actually appears applied now (confirmed running 03:31)
+2. Recreate node1 VM 100 config and start — Proxmox 100.conf missing
+3. Reboot proxmox host to load kernel 6.8.0-110
+4. Monitor node2 root disk (71% used)
+5. Setup/verify n8n and ollama on claw
+6. Verify Monday's automated cron report runs correctly on node2/llamacpp
+
+### 05:35 UTC — Node2 GPU Metrics (cron)
+
+**Scraper:** Script exists at `/home/localadmin/scripts/node1-metrics-scraper.sh` on node2, ran successfully.
+
+| GPU | Temp | Power | Power Cap | Util | VRAM Used | VRAM Total |
+|-----|------|-------|-----------|------|-----------|------------|
+| 0: Quadro P6000 | 38°C | 65.3W | 250W | 0% | 23,129 MB | 24,576 MB |
+| 1: Quadro P6000 | 32°C | 63.6W | 250W | 0% | 19,961 MB | 24,576 MB |
+
+**Notes:**
+- Both GPUs idle (0% utilization), temps normal (32-38°C)
+- Total VRAM usage: ~43 GB / 48 GB (89% full — still room but tight)
+- Power draw steady at ~65W each, no spikes
+- No active GPU workloads detected
+[2026-04-18 05:41 UTC] Node2 GPU scraper (cron): GPU0=44°C/66W/0%/23129MB, GPU1=38°C/64W/0%/19961MB. Script deployed to node2 as node1-metrics-scraper.sh. Next run: ~5:45 UTC.
+
+### Node2 GPU Metrics (07:21 UTC)
+- GPU 0: Quadro P6000 — 41°C, 65.8W/250W, 0% util, 23.1GB/24GB VRAM
+- GPU 1: Quadro P6000 — 34°C, 63.9W/250W, 0% util, 20.0GB/24GB VRAM
+- Both idle, temps normal, scraper script running on node2
+
+### Node2 GPU Metrics (07:51 UTC)
+- Scraper script exists at `/home/localadmin/scripts/node1-metrics-scraper.sh` on node2 — runs successfully
+- GPU stats:
+  - GPU 0: Quadro P6000, 42°C, 66W, 0% util, 23133/24576 MB used, 1305 MB free
+  - GPU 1: Quadro P6000, 35°C, 64W, 0% util, 19965/24576 MB used, 4473 MB free
+- Both GPUs idle, temps normal
+- Metrics appended to `/home/localadmin/logs/node2-gpu-metrics.log`
+- ⚠️ Scraper script only outputs to stdout — cron wrapper appends to log

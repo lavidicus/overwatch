@@ -1,0 +1,16 @@
+{
+  "name": "domain-checker",
+  "version": "1.0.0",
+  "description": "Check domain name availability directly from chat",
+  "main": "index.js",
+  "scripts": {
+    "test": "node test.js"
+  },
+  "keywords": ["domain", "availability", "whois", "checker"],
+  "author": "Sam (OpenClaw)",
+  "license": "MIT",
+  "dependencies": {},
+  "engines": {
+    "node": ">=14.0.0"
+  }
+}

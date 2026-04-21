@@ -1,0 +1,14 @@
+[Unit]
+Description=GPU Utilization Sampler for Dashboard
+After=network.target
+
+[Service]
+Type=simple
+User=localadmin
+Environment=SAMPLER_INTERVAL=10
+ExecStart=/home/localadmin/.openclaw/workspace/skills/daily-systems-status/scripts/gpu-util-sampler.sh
+Restart=always
+RestartSec=5
+
+[Install]
+WantedBy=multi-user.target

@@ -1,0 +1,17 @@
+[Unit]
+Description=Realtime Systems Dashboard
+After=network.target
+
+[Service]
+Type=simple
+User=localadmin
+WorkingDirectory=/home/localadmin/.openclaw/workspace/projects/realtime-dashboard
+ExecStart=/usr/bin/node server.js
+Restart=on-failure
+RestartSec=5
+StandardOutput=append:/home/localadmin/.openclaw/logs/realtime-dashboard.log
+StandardError=append:/home/localadmin/.openclaw/logs/realtime-dashboard.log
+Environment=NODE_ENV=production
+
+[Install]
+WantedBy=multi-user.target

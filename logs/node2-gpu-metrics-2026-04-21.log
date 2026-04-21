@@ -1,0 +1,5 @@
+=== Node2 GPU Metrics ===
+Timestamp: 2026-04-21 07:05:23 UTC
+
+0, Quadro P6000, 41, 65.85 W, 250.00 W, 0 %, 23261 MiB, 24576 MiB
+1, Quadro P6000, 35, 64.21 W, 250.00 W, 0 %, 22839 MiB, 24576 MiB

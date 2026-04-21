@@ -1,0 +1,5 @@
+0, Quadro P6000, 42, 65.94 W, 250.00 W, 0 %, 23315 MiB, 24576 MiB
+1, Quadro P6000, 35, 64.08 W, 250.00 W, 0 %, 22893 MiB, 24576 MiB
+index, name, temperature.gpu, utilization.gpu [%], utilization.memory [%], power.draw [W], power.limit [W], memory.used [MiB], memory.total [MiB], memory.free [MiB]
+0, Quadro P6000, 46, 0 %, 0 %, 66.72 W, 250.00 W, 23315 MiB, 24576 MiB, 1123 MiB
+1, Quadro P6000, 39, 0 %, 0 %, 64.47 W, 250.00 W, 22893 MiB, 24576 MiB, 1545 MiB

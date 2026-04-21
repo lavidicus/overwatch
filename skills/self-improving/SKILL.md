@@ -98,6 +98,14 @@ Log automatically when you notice these patterns:
 - Workflow that works well repeatedly
 - User praises specific approach
 
+**Resource waste signals** → log immediately (no 3x needed):
+- Compaction model differs from session model (extra API call + context reload)
+- Switching providers/models mid-task unnecessarily
+- Redundant tool calls (same query 3+ times)
+- Loading large files that aren't used
+- Cron jobs that fire but have nothing to do
+- Any pattern where user says "that's a waste" or "why do you keep..."
+
 **Ignore** (don't log):
 - One-time instructions ("do X now")
 - Context-specific ("in this file...")

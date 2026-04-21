@@ -1,0 +1,13 @@
+=== Node2 GPU Metrics ===
+Timestamp: 2026-04-21 12:31:36 UTC
+Query: index,name,temperature.gpu,utilization.gpu,memory.used,memory.total,power.draw,power.limit
+
+0, Quadro P6000, 39°C, 0% util, 23261/24576 MiB, 65.40W/250.00W
+1, Quadro P6000, 33°C, 0% util, 22839/24576 MiB, 63.92W/250.00W
+
+Notes:
+- Both GPUs idle (0% utilization)
+- Temps: 39°C / 33°C (very cool, no load)
+- VRAM: ~95% utilized on both cards (22-23GB of 24GB used - likely llama.cpp working sets)
+- Power draw: ~64W each (idle, not at 250W cap)
+- Both cards fully populated with model weights, just sitting idle waiting for inference

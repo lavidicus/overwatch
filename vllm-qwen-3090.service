@@ -1,0 +1,44 @@
+[Unit]
+Description=vLLM Qwen3.5-9B Inference Service (NVIDIA RTX 3090)
+After=network.target
+Wants=network.target
+
+[Service]
+Type=simple
+User=localadmin
+Group=localadmin
+WorkingDirectory=/opt/vllm
+
+# CUDA environment for RTX 3090
+Environment="PATH=/opt/vllm/venv/bin:/usr/local/cuda/bin:/usr/local/bin:/usr/bin:/bin"
+Environment="LD_LIBRARY_PATH=/usr/local/cuda/lib64"
+Environment="CUDA_VISIBLE_DEVICES=0"
+Environment="VLLM_WORKER_MULTIPROC_METHOD=spawn"
+
+# vLLM serve — Qwen3.5-9B AWQ-4bit (~8.5GB weights)
+# Leaves ~13GB for KV cache on 24GB RTX 3090
+ExecStart=/opt/vllm/venv/bin/vllm serve \
+    /opt/models/vllm/Qwen3.5-9B-AWQ-4bit \
+    --served-model-name qwen3.5-9b \
+    --quantization compressed-tensors \
+    --dtype float16 \
+    --tensor-parallel-size 1 \
+    --gpu-memory-utilization 0.95 \
+    --max-model-len 65536 \
+    --max-num-seqs 4 \
+    --enable-prefix-caching \
+    --reasoning-parser qwen3 \
+    --host 172.16.254.100 \
+    --port 8000
+
+Restart=on-failure
+RestartSec=15
+LimitNOFILE=65536
+LimitMEMLOCK=infinity
+
+StandardOutput=journal
+StandardError=journal
+SyslogIdentifier=vllm-qwen
+
+[Install]
+WantedBy=multi-user.target

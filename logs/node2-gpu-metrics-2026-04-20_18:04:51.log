@@ -1,0 +1,18 @@
+=== Node2 GPU Metrics ===
+Timestamp: 2026-04-20 18:04:44 UTC
+Source: ssh localadmin@node2 /home/localadmin/scripts/node1-metrics-scraper.sh
+
+GPU 0 - Quadro P6000:
+  Temperature: 38°C
+  GPU Utilization: 0%
+  Power Draw: 65.30W / 250.00W (max)
+  Memory Used: 23,099 MB / 24,576 MB
+
+GPU 1 - Quadro P6000:
+  Temperature: 33°C
+  GPU Utilization: 0%
+  Power Draw: 64.02W / 250.00W (max)
+  Memory Used: 22,767 MB / 24,576 MB
+
+Summary: Both GPUs idle (0% util), temps cool (38°C / 33°C), ~22.5GB VRAM used each (~92% full).
+Power draw is ~65W each — baseline idle with heavy VRAM committed.

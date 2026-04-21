@@ -1,0 +1,22 @@
+{
+  "timestamp": "2026-04-18T01:25:27Z",
+  "source": "node2",
+  "script": "/home/localadmin/scripts/node1-metrics-scraper.sh",
+  "gpu_summary": [
+    {
+      "gpu": 0,
+      "temperature": "58°C",
+      "vram_used": "21481/24576 MiB",
+      "utilization": "0%",
+      "power": "69.31W/250.0W"
+    },
+    {
+      "gpu": 1,
+      "temperature": "50°C",
+      "vram_used": "18949/24576 MiB",
+      "utilization": "0%",
+      "power": "65.01W/250.0W"
+    }
+  ],
+  "notes": "Script exists on node2. GPU utilization at 0% — no inference running. Both GPUs idle."
+}
