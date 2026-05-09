@@ -342,74 +342,152 @@ function selectForMove(groupIndex, fileIndex) {
 }
 
 // ===== SCAN =====
+let currentScanServerId = null;
+
 async function loadScanPage() {
   const servers = await fetchJSON(`${API}/servers`);
   const select = document.getElementById('scan-server');
   select.innerHTML = servers.map(s => `<option value="${s.id}">${s.name} (${s.host})</option>`).join('');
-  if (servers.length > 0) loadTree();
+  if (servers.length > 0) {
+    currentScanServerId = servers[0].id;
+    loadTree();
+  }
+}
+
+function onServerChange() {
+  currentScanServerId = document.getElementById('scan-server').value;
+  loadTree();
 }
 
 async function loadTree() {
   const serverId = document.getElementById('scan-server').value;
   const rootPath = document.getElementById('tree-root').value || '/';
   const container = document.getElementById('tree-container');
+  const statusEl = document.getElementById('tree-status');
 
   if (!serverId) {
     container.innerHTML = '<p style="color:var(--text-muted);padding:20px">Select a server first</p>';
     return;
   }
 
-  container.innerHTML = '<p style="color:var(--text-secondary);padding:20px">Loading directory tree...</p>';
+  currentScanServerId = serverId;
+  container.innerHTML = '<p style="color:var(--text-secondary);padding:20px">Loading...</p>';
+  statusEl.classList.add('hidden');
 
   try {
-    const tree = await fetchJSON(`${API}/tree/${serverId}?path=${encodeURIComponent(rootPath)}&depth=3`);
-    container.innerHTML = renderTree(tree, serverId);
+    const tree = await fetchJSON(`${API}/tree/${serverId}?path=${encodeURIComponent(rootPath)}`);
+    container.innerHTML = '';
+    renderTreeNode(tree, serverId, container, 0);
   } catch (err) {
-    container.innerHTML = `<p style="color:var(--danger);padding:20px">Failed to load tree: ${esc(err.message)}</p>`;
+    statusEl.textContent = '⚠️ ' + err.message;
+    statusEl.classList.remove('hidden');
+    container.innerHTML = '<p style="color:var(--text-muted);padding:20px">Check server credentials and try again</p>';
   }
 }
 
-function renderTree(node, serverId) {
+function renderTreeNode(node, serverId, parentEl, depth) {
+  const div = document.createElement('div');
+  div.className = 'tree-node';
+  if (depth === 0) div.style.marginLeft = '0';
+  else div.style.marginLeft = `${depth * 20}px`;
+
+  // The folder row
+  const row = document.createElement('div');
+  row.className = 'tree-item';
+  row.style.paddingLeft = `${8 + depth * 4}px`;
+
+  const hasChildren = node.children && node.children.length > 0;
+  const isLoading = node.children === null && !node.loaded;
+
+  let icon = '📁';
+  if (!hasChildren && !isLoading) icon = '📂';
+
   const countBadge = node.mediaCount > 0
     ? `<span class="tree-count has-media">${node.mediaCount} media</span>`
     : '';
 
-  let html = `
-    <div class="tree-item" onclick="selectPath('${esc(node.path)}', '${esc(serverId)}')">
-      <span class="tree-icon">📁</span>
-      <span class="tree-name">${esc(node.name || '/')}</span>
-      ${countBadge}
-    </div>
+  row.innerHTML = `
+    <span class="tree-toggle" onclick="event.stopPropagation();toggleFolder(this, '${esc(node.path)}', '${esc(serverId)}')">${hasChildren || isLoading ? '▶' : ' '}</span>
+    <span class="tree-icon">${icon}</span>
+    <span class="tree-name" title="${esc(node.path)}">${esc(node.name || '/')}</span>
+    ${countBadge}
   `;
 
-  if (node.children && node.children.length > 0) {
-    html += '<div class="tree-node">';
+  // Click row → select as scan path
+  row.addEventListener('click', () => selectPath(node.path, serverId, row));
+
+  div.appendChild(row);
+
+  // Children container
+  const childrenContainer = document.createElement('div');
+  childrenContainer.className = 'tree-children';
+  childrenContainer.style.display = 'none';
+
+  if (hasChildren) {
     for (const child of node.children) {
-      html += renderTree(child, serverId);
+      renderTreeNode(child, serverId, childrenContainer, depth + 1);
     }
-    html += '</div>';
+    // Auto-expand root level
+    if (depth === 0) childrenContainer.style.display = 'block';
   }
 
-  return html;
+  div.appendChild(childrenContainer);
+  parentEl.appendChild(div);
 }
 
-async function selectPath(path, serverId) {
+async function toggleFolder(toggleEl, dirPath, serverId) {
+  const row = toggleEl.closest('.tree-item');
+  const parentDiv = row.closest('.tree-node');
+  const childrenContainer = parentDiv.querySelector('.tree-children');
+
+  if (!childrenContainer) return;
+
+  // Already loaded — just toggle visibility
+  if (childrenContainer.style.display === 'block') {
+    childrenContainer.style.display = 'none';
+    toggleEl.textContent = '▶';
+    return;
+  }
+
+  // If children are already rendered, just show them
+  if (childrenContainer.children.length > 0) {
+    childrenContainer.style.display = 'block';
+    toggleEl.textContent = '▼';
+    return;
+  }
+
+  // Lazy load children
+  toggleEl.textContent = '⏳';
+  childrenContainer.innerHTML = '<p style="color:var(--text-muted);padding:8px;font-size:0.8rem">Loading...</p>';
+  childrenContainer.style.display = 'block';
+
+  try {
+    const children = await fetchJSON(`${API}/tree-expand/${serverId}?path=${encodeURIComponent(dirPath)}`);
+    childrenContainer.innerHTML = '';
+    for (const child of children) {
+      renderTreeNode(child, serverId, childrenContainer, 0);
+    }
+    toggleEl.textContent = '▼';
+  } catch (err) {
+    childrenContainer.innerHTML = `<p style="color:var(--danger);padding:8px;font-size:0.8rem">${esc(err.message)}</p>`;
+    toggleEl.textContent = '⚠';
+  }
+}
+
+function selectPath(path, serverId, rowEl) {
   // Set as scan path
   document.getElementById('scan-path').value = path;
 
   // Highlight selected
-  document.querySelectorAll('.tree-item').forEach(el => el.classList.remove('selected'));
-  event.currentTarget.classList.add('selected');
+  document.querySelectorAll('.tree-item.selected').forEach(el => el.classList.remove('selected'));
+  rowEl.classList.add('selected');
 
-  // Show file count info
-  try {
-    const info = await fetchJSON(`${API}/count/${serverId}?path=${encodeURIComponent(path)}`);
+  // Show file count info (async, non-blocking)
+  fetchJSON(`${API}/count/${serverId}?path=${encodeURIComponent(path)}`).then(info => {
     document.getElementById('path-info').classList.remove('hidden');
     document.getElementById('info-total').textContent = info.total.toLocaleString();
     document.getElementById('info-media').textContent = info.media.toLocaleString();
-  } catch (err) {
-    // Ignore count errors
-  }
+  }).catch(() => {});
 }
 
 async function startScan() {
@@ -437,44 +515,61 @@ async function startScan() {
       body: JSON.stringify({ path: scanPath }),
     });
 
-    document.getElementById('progress-text').textContent = 'Scan started in background...';
+    document.getElementById('progress-text').textContent = 'Starting scan...';
     document.getElementById('progress-fill').style.width = '0%';
+    document.getElementById('progress-count').textContent = '';
 
-    pollScanProgress();
+    pollScanProgress(serverId);
   } catch (err) {
     alert('Scan failed: ' + err.message);
     progress.classList.add('hidden');
   }
 }
 
-async function pollScanProgress() {
+async function pollScanProgress(serverId) {
   const fill = document.getElementById('progress-fill');
   const text = document.getElementById('progress-text');
   const count = document.getElementById('progress-count');
-  let prevCount = 0;
-  let stagnant = 0;
 
-  for (let i = 0; i < 120; i++) {
-    await sleep(5000);
+  for (let i = 0; i < 600; i++) {  // Up to 30 min
+    await sleep(3000);
     try {
-      const stats = await fetchJSON(`${API}/stats`);
-      const pct = Math.min((stats.totalFiles / 1000) * 100, 99);
-      fill.style.width = `${Math.max(pct, 5)}%`;
-      text.textContent = `Indexed ${stats.totalFiles.toLocaleString()} files...`;
-      count.textContent = `${stats.duplicateGroups} duplicate groups`;
+      const scan = await fetchJSON(`${API}/scan/${serverId}`);
 
-      if (stats.totalFiles === prevCount && stats.totalFiles > 0) {
-        stagnant++;
-        if (stagnant >= 3) {
-          fill.style.width = '100%';
-          text.textContent = 'Scan complete!';
-          loadDashboard();
-          break;
-        }
-      } else {
-        stagnant = 0;
+      if (scan.status === 'idle') {
+        text.textContent = 'Waiting for scan to start...';
+        continue;
       }
-      prevCount = stats.totalFiles;
+
+      if (scan.total > 0) {
+        const pct = Math.round((scan.scanned / scan.total) * 100);
+        fill.style.width = `${pct}%`;
+        text.textContent = `Checksumming: ${scan.scanned.toLocaleString()} / ${scan.total.toLocaleString()} files (${pct}%)`;
+      } else {
+        text.textContent = scan.current || 'Finding files...';
+        fill.style.width = '5%';
+      }
+
+      if (scan.errors > 0) {
+        count.textContent = `${scan.filesAdded} indexed, ${scan.errors} errors`;
+      } else {
+        count.textContent = `${scan.filesAdded} files indexed`;
+      }
+
+      if (scan.status === 'complete') {
+        fill.style.width = '100%';
+        text.textContent = `Done! ${scan.filesAdded} files indexed, ${scan.duplicatesFound || 0} duplicate groups found`;
+        count.textContent = scan.errors > 0 ? `${scan.errors} errors occurred` : '';
+        loadDashboard();
+        break;
+      }
+
+      if (scan.status === 'error') {
+        fill.style.width = '100%';
+        fill.style.background = 'var(--danger)';
+        text.textContent = `Scan failed: ${scan.error || 'Unknown error'}`;
+        break;
+      }
     } catch (err) {
       // Ignore poll errors
     }

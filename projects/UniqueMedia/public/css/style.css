@@ -611,16 +611,32 @@ body {
 
 .tree-container {
   margin-top: 12px;
+  max-height: 60vh;
+  overflow-y: auto;
+}
+
+.tree-status {
+  padding: 8px 12px;
+  margin-top: 8px;
+  border-radius: var(--radius);
+  font-size: 0.8rem;
+  background: rgba(255,80,80,0.1);
+  color: var(--danger);
+  border: 1px solid rgba(255,80,80,0.2);
+}
+
+.tree-children {
+  /* controlled by inline display */
 }
 
 .tree-node {
-  margin-left: 20px;
+  /* margin-left set inline per depth */
 }
 
 .tree-item {
   display: flex;
   align-items: center;
-  gap: 8px;
+  gap: 6px;
   padding: 6px 10px;
   border-radius: var(--radius);
   cursor: pointer;
@@ -632,7 +648,17 @@ body {
 
 .tree-item.selected {
   background: rgba(88,166,255,0.15);
-  border: 1px solid var(--accent);
+  outline: 1px solid var(--accent);
+}
+
+.tree-toggle {
+  width: 16px;
+  text-align: center;
+  font-size: 0.7rem;
+  color: var(--text-muted);
+  cursor: pointer;
+  flex-shrink: 0;
+  user-select: none;
 }
 
 .tree-item .tree-icon { font-size: 1rem; flex-shrink: 0; }
@@ -642,10 +668,11 @@ body {
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
+  min-width: 0;
 }
 
 .tree-item .tree-count {
-  font-size: 0.75rem;
+  font-size: 0.7rem;
   color: var(--text-muted);
   background: var(--bg-tertiary);
   padding: 1px 6px;

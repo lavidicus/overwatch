@@ -1,11 +1,14 @@
 const express = require('express');
 const { v4: uuidv4 } = require('uuid');
 const { stmts, rebuildDuplicateGroups } = require('../db');
-const { scanDirectory } = require('../services/scanner');
+const { scanDirectory, getScanStatus } = require('../services/scanner');
 const { moveFile, listDirectory, testConnection } = require('../services/ssh-manager');
-const { getDirectoryTree, countFiles } = require('../services/tree-browser');
+const { listDirectoryWithCounts, expandDirectory, countFiles } = require('../services/tree-browser');
 
 const router = express.Router();
+
+// In-memory scan state tracker
+const activeScans = new Map();
 
 // ==================== SERVERS ====================
 
@@ -56,18 +59,60 @@ router.post('/scan/:serverId', async (req, res) => {
     const { path: scanPath } = req.body;
     if (!scanPath) return res.status(400).json({ error: 'Scan path required' });
 
-    // Respond immediately, scan runs in background
-    res.json({ started: true, serverId: req.params.serverId, path: scanPath });
+    // Cancel any active scan for this server
+    const scanId = req.params.serverId;
+    if (activeScans.has(scanId)) {
+      activeScans.get(scanId).cancelled = true;
+    }
 
-    const results = await scanDirectory(server, scanPath, (progress) => {
-      // Could emit via WebSocket in future
-      console.log(`[Scan] ${progress.scanned}/${progress.total} - ${progress.current}`);
+    const scanState = {
+      status: 'running',
+      total: 0,
+      scanned: 0,
+      filesAdded: 0,
+      errors: 0,
+      current: 'Starting...',
+      path: scanPath,
+      cancelled: false,
+      startedAt: Date.now(),
+    };
+    activeScans.set(scanId, scanState);
+
+    // Start scan in background
+    scanDirectory(server, scanPath, (progress) => {
+      scanState.status = progress.status || 'running';
+      scanState.total = progress.total;
+      scanState.scanned = progress.scanned;
+      scanState.filesAdded = progress.filesAdded;
+      scanState.errors = progress.errors;
+      scanState.current = progress.current;
+    }).then((results) => {
+      scanState.status = 'complete';
+      scanState.filesAdded = results.filesAdded;
+      scanState.errors = results.errors;
+      scanState.duplicatesFound = results.duplicatesFound;
+      scanState.completedAt = Date.now();
+      console.log(`[Scan] Complete: ${results.filesAdded} files, ${results.duplicatesFound} dup groups, ${results.errors} errors`);
+    }).catch((err) => {
+      scanState.status = 'error';
+      scanState.error = err.message;
+      console.error('[Scan Error]', err.message);
     });
 
-    console.log(`[Scan] Complete: ${results.filesAdded} files, ${results.duplicatesFound} duplicate groups`);
+    res.json({ started: true, serverId: scanId, path: scanPath });
   } catch (err) {
     console.error('[Scan Error]', err);
+    res.status(500).json({ error: err.message });
   }
+});
+
+// Get scan progress
+router.get('/scan/:serverId', (req, res) => {
+  const scanState = activeScans.get(req.params.serverId);
+  if (!scanState) {
+    return res.json({ status: 'idle', total: 0, scanned: 0, filesAdded: 0 });
+  }
+  res.json(scanState);
 });
 
 // ==================== FILES ====================
@@ -179,15 +224,31 @@ router.get('/browse/:serverId', async (req, res) => {
   }
 });
 
-// Get directory tree (2 levels deep with media counts)
+// Get root-level directories with media counts (lazy tree root)
 router.get('/tree/:serverId', async (req, res) => {
   try {
     const server = stmts.getServer.run(req.params.serverId);
     if (!server) return res.status(404).json({ error: 'Server not found' });
 
-    const { path: browsePath = '/', depth } = req.query;
-    const tree = await getDirectoryTree(server, browsePath, parseInt(depth) || 2);
+    const { path: browsePath = '/' } = req.query;
+    const tree = await listDirectoryWithCounts(server, browsePath);
     res.json(tree);
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
+// Expand a directory node (lazy load children)
+router.get('/tree-expand/:serverId', async (req, res) => {
+  try {
+    const server = stmts.getServer.run(req.params.serverId);
+    if (!server) return res.status(404).json({ error: 'Server not found' });
+
+    const { path: dirPath } = req.query;
+    if (!dirPath) return res.status(400).json({ error: 'Path required' });
+
+    const children = await expandDirectory(server, dirPath);
+    res.json(children);
   } catch (err) {
     res.status(500).json({ error: err.message });
   }
