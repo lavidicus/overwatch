@@ -1,4 +1,5 @@
 const Client = require('ssh2').Client;
+const { getConnectOptions } = require('./ssh-conn');
 
 /**
  * List one directory level — returns entries with media file counts.
@@ -61,13 +62,7 @@ function listDirectoryWithCounts(server, remotePath) {
         });
       });
     });
-    conn.connect({
-      host: server.host,
-      port: server.port || 22,
-      username: server.username,
-      password: server.password,
-      readyTimeout: 20000,
-    });
+    conn.connect(getConnectOptions(server));
   });
 }
 
@@ -106,13 +101,7 @@ function countFiles(server, remotePath) {
         });
       });
     });
-    conn.connect({
-      host: server.host,
-      port: server.port || 22,
-      username: server.username,
-      password: server.password,
-      readyTimeout: 20000,
-    });
+    conn.connect(getConnectOptions(server));
   });
 }
 

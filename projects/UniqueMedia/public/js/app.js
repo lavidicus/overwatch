@@ -181,7 +181,16 @@ async function saveServer() {
 async function testServer(id) {
   try {
     const res = await fetchJSON(`${API}/servers/${id}/test`);
-    alert(res.ok ? '✓ Connection successful!' : `✗ ${res.error}`);
+    if (res.ok) {
+      alert('✓ Connection successful!');
+    } else {
+      const msg = res.error || 'Unknown error';
+      if (msg.includes('authentication') || msg.includes('password') || msg.includes('All configured')) {
+        alert('✗ Authentication failed.\n\nCheck that the password is correct.\nEdit this server to update credentials.');
+      } else {
+        alert('✗ ' + msg);
+      }
+    }
   } catch (err) {
     alert('Connection failed: ' + err.message);
   }

@@ -5,6 +5,7 @@ const { scanDirectory, getScanStatus } = require('../services/scanner');
 const { moveFile, listDirectory, testConnection } = require('../services/ssh-manager');
 const { listDirectoryWithCounts, expandDirectory, countFiles } = require('../services/tree-browser');
 const sharp = require('sharp');
+const { getConnectOptions } = require('../services/ssh-conn');
 
 const router = express.Router();
 
@@ -127,10 +128,6 @@ router.get('/file/:fileId', async (req, res) => {
     const server = stmts.getServer.run(file.server_id);
     if (!server) return res.status(404).json({ error: 'Server not found' });
 
-    if (!server.password && !server.private_key) {
-      return res.status(503).json({ error: 'Server credentials not configured' });
-    }
-
     const Client = require('ssh2').Client;
     const conn = new Client();
     conn.on('ready', () => {
@@ -152,13 +149,7 @@ router.get('/file/:fileId', async (req, res) => {
     conn.on('error', (err) => {
       if (!res.headersSent) res.status(500).json({ error: err.message });
     });
-    conn.connect({
-      host: server.host,
-      port: server.port || 22,
-      username: server.username,
-      password: server.password,
-      readyTimeout: 15000,
-    });
+    conn.connect(getConnectOptions(server));
   } catch (err) {
     if (!res.headersSent) res.status(500).json({ error: err.message });
   }
@@ -186,12 +177,6 @@ router.get('/thumb/:fileId', async (req, res) => {
       res.setHeader('Content-Type', 'image/jpeg');
       res.setHeader('Cache-Control', 'public, max-age=604800');
       return res.send(buf);
-    }
-
-    // Check if server has credentials
-    if (!server.password && !server.private_key) {
-      // Return a placeholder SVG instead of failing
-      return sendPlaceholderThumb(res, file.file_name);
     }
 
     const w = Math.min(parseInt(req.query.w) || 160, 320);
@@ -234,13 +219,7 @@ router.get('/thumb/:fileId', async (req, res) => {
     conn.on('error', () => {
       sendPlaceholderThumb(res, file.file_name);
     });
-    conn.connect({
-      host: server.host,
-      port: server.port || 22,
-      username: server.username,
-      password: server.password,
-      readyTimeout: 10000,
-    });
+    conn.connect(getConnectOptions(server));
   } catch (err) {
     if (!res.headersSent) res.status(500).json({ error: err.message });
   }
@@ -422,13 +401,7 @@ router.post('/test-connection/:serverId', async (req, res) => {
       const conn = new Client();
       conn.on('ready', () => { conn.end(); resolve({ ok: true }); });
       conn.on('error', (err) => reject(new Error(err.message)));
-      conn.connect({
-        host: server.host,
-        port: server.port || 22,
-        username: server.username,
-        password: server.password,
-        readyTimeout: 10000,
-      });
+      conn.connect(getConnectOptions(server));
     });
     res.json(result);
   } catch (err) {

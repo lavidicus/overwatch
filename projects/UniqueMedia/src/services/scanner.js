@@ -1,4 +1,4 @@
-const Client = require('ssh2').Client;
+const { connect } = require('./ssh-conn');
 const { stmts, rebuildDuplicateGroups, db } = require('../db');
 
 const IMAGE_EXTS = new Set(['jpg', 'jpeg', 'png', 'gif', 'bmp', 'webp', 'tiff', 'tif', 'heic', 'heif', 'svg', 'ico']);
@@ -46,7 +46,7 @@ function scanDirectory(server, remotePath, onProgress) {
       }
     }
 
-    const conn = new Client();
+    const conn = new (require('ssh2').Client)();
 
     conn.on('error', (err) => {
       reject(new Error(`SSH connection failed: ${err.message}`));
@@ -188,15 +188,10 @@ function scanDirectory(server, remotePath, onProgress) {
       });
     });
 
-    conn.connect({
-      host: server.host,
-      port: server.port || 22,
-      username: server.username,
-      password: server.password,
-      readyTimeout: 20000,
-      keepaliveInterval: 10000,
-      keepaliveCountMax: 5,
-    });
+    const opts = getConnectOptions(server);
+    opts.keepaliveInterval = 10000;
+    opts.keepaliveCountMax = 5;
+    conn.connect(opts);
   });
 }
 
