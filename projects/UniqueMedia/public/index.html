@@ -1,0 +1,198 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>UniqueMedia</title>
+  <link rel="stylesheet" href="/css/style.css">
+</head>
+<body>
+  <div id="app">
+    <!-- Sidebar -->
+    <aside class="sidebar">
+      <div class="sidebar-header">
+        <h1>UniqueMedia</h1>
+        <p class="subtitle">Duplicate Media Manager</p>
+      </div>
+
+      <nav class="sidebar-nav">
+        <button class="nav-btn active" data-page="dashboard">
+          <span class="icon">📊</span> Dashboard
+        </button>
+        <button class="nav-btn" data-page="servers">
+          <span class="icon">🖥️</span> Servers
+        </button>
+        <button class="nav-btn" data-page="files">
+          <span class="icon">📁</span> Files
+        </button>
+        <button class="nav-btn" data-page="duplicates">
+          <span class="icon">🔄</span> Duplicates
+        </button>
+        <button class="nav-btn" data-page="scan">
+          <span class="icon">🔍</span> Scan
+        </button>
+      </nav>
+
+      <div class="sidebar-footer">
+        <div id="stats-mini" class="stats-mini">
+          <div class="stat-item">
+            <span class="stat-value" id="stat-files">0</span>
+            <span class="stat-label">Files</span>
+          </div>
+          <div class="stat-item">
+            <span class="stat-value" id="stat-dupes">0</span>
+            <span class="stat-label">Groups</span>
+          </div>
+        </div>
+      </div>
+    </aside>
+
+    <!-- Main Content -->
+    <main class="main-content">
+      <!-- Dashboard Page -->
+      <div id="page-dashboard" class="page active">
+        <div class="page-header">
+          <h2>Dashboard</h2>
+        </div>
+        <div class="dashboard-grid">
+          <div class="stat-card">
+            <div class="stat-card-icon">📁</div>
+            <div class="stat-card-content">
+              <div class="stat-card-value" id="dash-total-files">0</div>
+              <div class="stat-card-label">Total Files Indexed</div>
+            </div>
+          </div>
+          <div class="stat-card">
+            <div class="stat-card-icon">🔄</div>
+            <div class="stat-card-content">
+              <div class="stat-card-value" id="dash-dup-groups">0</div>
+              <div class="stat-card-label">Duplicate Groups</div>
+            </div>
+          </div>
+          <div class="stat-card">
+            <div class="stat-card-icon">🗑️</div>
+            <div class="stat-card-content">
+              <div class="stat-card-value" id="dash-wasted-space">0 B</div>
+              <div class="stat-card-label">Wasted Space</div>
+            </div>
+          </div>
+          <div class="stat-card">
+            <div class="stat-card-icon">🖥️</div>
+            <div class="stat-card-content">
+              <div class="stat-card-value" id="dash-servers">0</div>
+              <div class="stat-card-label">Connected Servers</div>
+            </div>
+          </div>
+        </div>
+
+        <div class="breakdown-section">
+          <h3>Media Breakdown</h3>
+          <div id="media-breakdown" class="breakdown-bars"></div>
+        </div>
+
+        <div class="recent-section">
+          <h3>Recent Duplicate Groups</h3>
+          <div id="recent-duplicates" class="duplicate-list"></div>
+        </div>
+      </div>
+
+      <!-- Servers Page -->
+      <div id="page-servers" class="page">
+        <div class="page-header">
+          <h2>Servers</h2>
+          <button class="btn btn-primary" onclick="showAddServerModal()">+ Add Server</button>
+        </div>
+        <div id="server-list" class="server-list"></div>
+      </div>
+
+      <!-- Files Page -->
+      <div id="page-files" class="page">
+        <div class="page-header">
+          <h2>Files</h2>
+          <div class="search-bar">
+            <input type="text" id="file-search" placeholder="Search files..." oninput="searchFiles()">
+            <select id="file-filter-type" onchange="searchFiles()">
+              <option value="">All Types</option>
+              <option value="image">Images</option>
+              <option value="video">Videos</option>
+              <option value="audio">Audio</option>
+            </select>
+          </div>
+        </div>
+        <div id="file-grid" class="file-grid"></div>
+        <div id="file-list-view" class="file-list"></div>
+        <div class="view-toggle">
+          <button class="btn btn-sm active" onclick="setView('grid')">Grid</button>
+          <button class="btn btn-sm" onclick="setView('list')">List</button>
+        </div>
+      </div>
+
+      <!-- Duplicates Page -->
+      <div id="page-duplicates" class="page">
+        <div class="page-header">
+          <h2>Duplicates</h2>
+          <div class="dup-controls">
+            <select id="dup-filter-type" onchange="loadDuplicates()">
+              <option value="">All Types</option>
+              <option value="image">Images Only</option>
+              <option value="video">Videos Only</option>
+            </select>
+          </div>
+        </div>
+        <div id="duplicate-groups" class="duplicate-groups"></div>
+      </div>
+
+      <!-- Scan Page -->
+      <div id="page-scan" class="page">
+        <div class="page-header">
+          <h2>Scan Server</h2>
+        </div>
+        <div class="scan-form">
+          <div class="form-group">
+            <label>Server</label>
+            <select id="scan-server"></select>
+          </div>
+          <div class="form-group">
+            <label>Path to Scan</label>
+            <div class="input-with-btn">
+              <input type="text" id="scan-path" placeholder="/path/to/media">
+              <button class="btn btn-sm" onclick="browseServerPath()">Browse</button>
+            </div>
+          </div>
+          <button class="btn btn-primary" onclick="startScan()">Start Scan</button>
+        </div>
+        <div id="scan-progress" class="scan-progress hidden">
+          <div class="progress-bar-container">
+            <div class="progress-bar" id="progress-fill"></div>
+          </div>
+          <div class="progress-info">
+            <span id="progress-text">Scanning...</span>
+            <span id="progress-count">0 / 0</span>
+          </div>
+        </div>
+        <div id="scan-results" class="scan-results hidden"></div>
+      </div>
+    </main>
+
+    <!-- Modals -->
+    <div id="modal-overlay" class="modal-overlay hidden">
+      <div class="modal" id="modal-content">
+        <!-- Dynamic modal content -->
+      </div>
+    </div>
+
+    <!-- Image/Video Preview Modal -->
+    <div id="preview-overlay" class="preview-overlay hidden" onclick="closePreview()">
+      <div class="preview-container" onclick="event.stopPropagation()">
+        <button class="preview-close" onclick="closePreview()">✕</button>
+        <button class="preview-nav preview-prev" onclick="navigatePreview(-1)">‹</button>
+        <div class="preview-content" id="preview-content"></div>
+        <button class="preview-nav preview-next" onclick="navigatePreview(1)">›</button>
+        <div class="preview-info" id="preview-info"></div>
+      </div>
+    </div>
+  </div>
+
+  <script src="/js/app.js"></script>
+</body>
+</html>
