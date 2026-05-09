@@ -3,6 +3,7 @@ const { v4: uuidv4 } = require('uuid');
 const { stmts, rebuildDuplicateGroups } = require('../db');
 const { scanDirectory } = require('../services/scanner');
 const { moveFile, listDirectory, testConnection } = require('../services/ssh-manager');
+const { getDirectoryTree, countFiles } = require('../services/tree-browser');
 
 const router = express.Router();
 
@@ -178,10 +179,38 @@ router.get('/browse/:serverId', async (req, res) => {
   }
 });
 
+// Get directory tree (2 levels deep with media counts)
+router.get('/tree/:serverId', async (req, res) => {
+  try {
+    const server = stmts.getServer.run(req.params.serverId);
+    if (!server) return res.status(404).json({ error: 'Server not found' });
+
+    const { path: browsePath = '/', depth } = req.query;
+    const tree = await getDirectoryTree(server, browsePath, parseInt(depth) || 2);
+    res.json(tree);
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
+// Count files in a directory
+router.get('/count/:serverId', async (req, res) => {
+  try {
+    const server = stmts.getServer.run(req.params.serverId);
+    if (!server) return res.status(404).json({ error: 'Server not found' });
+
+    const { path: browsePath = '/' } = req.query;
+    const counts = await countFiles(server, browsePath);
+    res.json(counts);
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
 // ==================== STATS ====================
 
 router.get('/stats', (req, res) => {
-  const fileCount = stmts.getFileCount.get().count;
+  const fileCount = stmts.getFileCount.run().count;
   const dupGroups = stmts.getDuplicateGroups.all();
   const totalDupes = dupGroups.reduce((sum, g) => sum + g.file_count, 0);
   const wastedSpace = dupGroups.reduce((sum, g) => sum + (g.file_count - 1) * (g.total_size / g.file_count), 0);

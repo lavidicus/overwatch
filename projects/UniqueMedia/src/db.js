@@ -3,13 +3,9 @@ const path = require('path');
 const fs = require('fs');
 
 const DB_PATH = path.join(__dirname, '..', 'data', 'registry.db');
-
-// Ensure data directory exists
 fs.mkdirSync(path.dirname(DB_PATH), { recursive: true });
 
 const db = new Database(DB_PATH);
-
-// Enable WAL mode for better concurrent read performance
 db.pragma('journal_mode = WAL');
 db.pragma('foreign_keys = ON');
 
@@ -51,65 +47,78 @@ db.exec(`
   CREATE INDEX IF NOT EXISTS idx_files_media_type ON files(media_type);
 `);
 
-// Prepared statements for performance
-const stmts = {
+// --- Queries (use .get() for single row, .all() for many, .run() for mutations) ---
+const queries = {
   // Servers
-  insertServer: db.prepare(`
-    INSERT OR REPLACE INTO servers (id, name, host, port, username, password)
-    VALUES (?, ?, ?, ?, ?, ?)
-  `),
-  getServer: db.prepare('SELECT * FROM servers WHERE id = ?'),
-  getAllServers: db.prepare('SELECT id, name, host, port, username, created_at FROM servers'),
-  deleteServer: db.prepare('DELETE FROM servers WHERE id = ?'),
+  insertServer: 'INSERT OR REPLACE INTO servers (id, name, host, port, username, password) VALUES (?, ?, ?, ?, ?, ?)',
+  getServer: 'SELECT * FROM servers WHERE id = ?',
+  getAllServers: 'SELECT id, name, host, port, username, created_at FROM servers',
+  deleteServer: 'DELETE FROM servers WHERE id = ?',
 
   // Files
-  insertFile: db.prepare(`
-    INSERT INTO files (server_id, file_path, file_name, file_size, checksum, media_type, mime_type)
-    VALUES (?, ?, ?, ?, ?, ?, ?)
-  `),
-  getFile: db.prepare('SELECT * FROM files WHERE id = ?'),
-  getFilesByChecksum: db.prepare('SELECT * FROM files WHERE checksum = ?'),
-  getFilesByServer: db.prepare('SELECT * FROM files WHERE server_id = ? ORDER BY file_path'),
-  getFilesByPath: db.prepare('SELECT * FROM files WHERE file_path LIKE ? ORDER BY file_path'),
-  searchFiles: db.prepare(`
-    SELECT * FROM files
-    WHERE file_name LIKE ? OR file_path LIKE ? OR media_type LIKE ?
-    ORDER BY file_path
-    LIMIT ?
-  `),
-  updateFilePath: db.prepare('UPDATE files SET file_path = ? WHERE id = ?'),
-  deleteFile: db.prepare('DELETE FROM files WHERE id = ?'),
-  getFileCount: db.prepare('SELECT COUNT(*) as count FROM files'),
-  getFilesByServerAndPath: db.prepare('SELECT * FROM files WHERE server_id = ? AND file_path LIKE ? ORDER BY file_path'),
-  getFileByPath: db.prepare('SELECT * FROM files WHERE file_path = ?'),
-  deleteFileByServer: db.prepare('DELETE FROM files WHERE server_id = ?'),
-  getFileTypeBreakdown: db.prepare('SELECT media_type, COUNT(*) as count FROM files GROUP BY media_type'),
-  getAllFiles: db.prepare('SELECT * FROM files ORDER BY file_path'),
-  getFilesByMediaType: db.prepare('SELECT * FROM files WHERE media_type = ? ORDER BY file_path'),
+  insertFile: 'INSERT INTO files (server_id, file_path, file_name, file_size, checksum, media_type, mime_type) VALUES (?, ?, ?, ?, ?, ?, ?)',
+  getFile: 'SELECT * FROM files WHERE id = ?',
+  getFilesByChecksum: 'SELECT * FROM files WHERE checksum = ?',
+  getFilesByServer: 'SELECT * FROM files WHERE server_id = ? ORDER BY file_path',
+  getFilesByPath: 'SELECT * FROM files WHERE file_path LIKE ? ORDER BY file_path',
+  searchFiles: 'SELECT * FROM files WHERE file_name LIKE ? OR file_path LIKE ? OR media_type LIKE ? ORDER BY file_path LIMIT ?',
+  updateFilePath: 'UPDATE files SET file_path = ? WHERE id = ?',
+  deleteFile: 'DELETE FROM files WHERE id = ?',
+  getFileCount: 'SELECT COUNT(*) as count FROM files',
+  getFilesByServerAndPath: 'SELECT * FROM files WHERE server_id = ? AND file_path LIKE ? ORDER BY file_path',
+  getFileByPath: 'SELECT * FROM files WHERE file_path = ?',
+  deleteFileByServer: 'DELETE FROM files WHERE server_id = ?',
+  getFileTypeBreakdown: 'SELECT media_type, COUNT(*) as count FROM files GROUP BY media_type',
+  getAllFiles: 'SELECT * FROM files ORDER BY file_path',
+  getFilesByMediaType: 'SELECT * FROM files WHERE media_type = ? ORDER BY file_path',
 
-  // Duplicate groups (no FK to files.checksum since it's not a PK)
-  upsertDuplicateGroup: db.prepare(`
-    INSERT INTO duplicate_groups (checksum, file_count, total_size)
-    VALUES (?, ?, ?)
-    ON CONFLICT(checksum) DO UPDATE SET
-      file_count = excluded.file_count,
-      total_size = excluded.total_size
-  `),
-  getDuplicateGroups: db.prepare('SELECT * FROM duplicate_groups WHERE file_count > 1 ORDER BY total_size DESC'),
-  getDuplicateGroupWithFiles: db.prepare(`
-    SELECT f.*, dg.id as group_id, dg.file_count, dg.total_size
-    FROM files f
-    JOIN duplicate_groups dg ON f.checksum = dg.checksum
-    WHERE dg.checksum = ?
-  `),
-  getAllDuplicates: db.prepare(`
-    SELECT f.*, dg.id as group_id, dg.file_count, dg.total_size
-    FROM files f
-    JOIN duplicate_groups dg ON f.checksum = dg.checksum
-    WHERE dg.file_count > 1
-    ORDER BY dg.checksum, f.file_path
-  `),
+  // Duplicate groups
+  upsertDuplicateGroup: 'INSERT INTO duplicate_groups (checksum, file_count, total_size) VALUES (?, ?, ?) ON CONFLICT(checksum) DO UPDATE SET file_count = excluded.file_count, total_size = excluded.total_size',
+  getDuplicateGroups: 'SELECT * FROM duplicate_groups WHERE file_count > 1 ORDER BY total_size DESC',
+  getDuplicateGroupWithFiles: 'SELECT f.*, dg.id as group_id, dg.file_count, dg.total_size FROM files f JOIN duplicate_groups dg ON f.checksum = dg.checksum WHERE dg.checksum = ?',
+  getAllDuplicates: 'SELECT f.*, dg.id as group_id, dg.file_count, dg.total_size FROM files f JOIN duplicate_groups dg ON f.checksum = dg.checksum WHERE dg.file_count > 1 ORDER BY dg.checksum, f.file_path',
 };
+
+// Execute a query with proper method selection
+function q(sql, params = []) {
+  const stmt = db.prepare(sql);
+  if (sql.trim().startsWith('SELECT')) {
+    if (params.length === 0) return stmt.get();
+    return stmt.get(...params);
+  }
+  if (params.length === 0) return stmt.run();
+  return stmt.run(...params);
+}
+
+function qAll(sql, params = []) {
+  const stmt = db.prepare(sql);
+  if (params.length === 0) return stmt.all();
+  return stmt.all(...params);
+}
+
+// Re-export as stmts for backward compat with existing code
+const stmts = {};
+for (const [name, sql] of Object.entries(queries)) {
+  const isSelect = sql.trim().startsWith('SELECT');
+  stmts[name] = {
+    run: (...args) => {
+      const stmt = db.prepare(sql);
+      return isSelect ? stmt.get(...args) : stmt.run(...args);
+    },
+    all: (...args) => {
+      const stmt = db.prepare(sql);
+      return stmt.all(...args);
+    },
+    get: (...args) => {
+      const stmt = db.prepare(sql);
+      return stmt.get(...args);
+    },
+    limit: (n) => {
+      const stmt = db.prepare(sql);
+      return { all: (...args) => stmt.all(...args).slice(0, n) };
+    },
+  };
+}
 
 // Rebuild duplicate groups from current file registry
 function rebuildDuplicateGroups() {
@@ -124,15 +133,15 @@ function rebuildDuplicateGroups() {
     groups[file.checksum].size += file.file_size;
   }
 
-  // Clear and rebuild
   db.prepare('DELETE FROM duplicate_groups').run();
   for (const [checksum, info] of Object.entries(groups)) {
     if (info.count > 1) {
-      stmts.upsertDuplicateGroup.run(checksum, info.count, info.size);
+      db.prepare('INSERT INTO duplicate_groups (checksum, file_count, total_size) VALUES (?, ?, ?) ON CONFLICT(checksum) DO UPDATE SET file_count = excluded.file_count, total_size = excluded.total_size')
+        .run(checksum, info.count, info.size);
     }
   }
 
   return Object.keys(groups).filter(k => groups[k].count > 1).length;
 }
 
-module.exports = { db, stmts, rebuildDuplicateGroups };
+module.exports = { db, stmts, rebuildDuplicateGroups, q, qAll };

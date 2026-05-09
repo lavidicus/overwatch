@@ -346,14 +346,82 @@ async function loadScanPage() {
   const servers = await fetchJSON(`${API}/servers`);
   const select = document.getElementById('scan-server');
   select.innerHTML = servers.map(s => `<option value="${s.id}">${s.name} (${s.host})</option>`).join('');
+  if (servers.length > 0) loadTree();
+}
+
+async function loadTree() {
+  const serverId = document.getElementById('scan-server').value;
+  const rootPath = document.getElementById('tree-root').value || '/';
+  const container = document.getElementById('tree-container');
+
+  if (!serverId) {
+    container.innerHTML = '<p style="color:var(--text-muted);padding:20px">Select a server first</p>';
+    return;
+  }
+
+  container.innerHTML = '<p style="color:var(--text-secondary);padding:20px">Loading directory tree...</p>';
+
+  try {
+    const tree = await fetchJSON(`${API}/tree/${serverId}?path=${encodeURIComponent(rootPath)}&depth=3`);
+    container.innerHTML = renderTree(tree, serverId);
+  } catch (err) {
+    container.innerHTML = `<p style="color:var(--danger);padding:20px">Failed to load tree: ${esc(err.message)}</p>`;
+  }
+}
+
+function renderTree(node, serverId) {
+  const countBadge = node.mediaCount > 0
+    ? `<span class="tree-count has-media">${node.mediaCount} media</span>`
+    : '';
+
+  let html = `
+    <div class="tree-item" onclick="selectPath('${esc(node.path)}', '${esc(serverId)}')">
+      <span class="tree-icon">📁</span>
+      <span class="tree-name">${esc(node.name || '/')}</span>
+      ${countBadge}
+    </div>
+  `;
+
+  if (node.children && node.children.length > 0) {
+    html += '<div class="tree-node">';
+    for (const child of node.children) {
+      html += renderTree(child, serverId);
+    }
+    html += '</div>';
+  }
+
+  return html;
+}
+
+async function selectPath(path, serverId) {
+  // Set as scan path
+  document.getElementById('scan-path').value = path;
+
+  // Highlight selected
+  document.querySelectorAll('.tree-item').forEach(el => el.classList.remove('selected'));
+  event.currentTarget.classList.add('selected');
+
+  // Show file count info
+  try {
+    const info = await fetchJSON(`${API}/count/${serverId}?path=${encodeURIComponent(path)}`);
+    document.getElementById('path-info').classList.remove('hidden');
+    document.getElementById('info-total').textContent = info.total.toLocaleString();
+    document.getElementById('info-media').textContent = info.media.toLocaleString();
+  } catch (err) {
+    // Ignore count errors
+  }
 }
 
 async function startScan() {
   const serverId = document.getElementById('scan-server').value;
   const scanPath = document.getElementById('scan-path').value;
 
-  if (!serverId || !scanPath) {
-    alert('Please select a server and enter a path');
+  if (!serverId) {
+    alert('Please select a server');
+    return;
+  }
+  if (!scanPath) {
+    alert('Please select a path to scan (click a folder in the tree)');
     return;
   }
 
@@ -372,69 +440,44 @@ async function startScan() {
     document.getElementById('progress-text').textContent = 'Scan started in background...';
     document.getElementById('progress-fill').style.width = '0%';
 
-    // Poll for results
-    pollScanProgress(serverId, scanPath);
+    pollScanProgress();
   } catch (err) {
     alert('Scan failed: ' + err.message);
     progress.classList.add('hidden');
   }
 }
 
-async function pollScanProgress(serverId, scanPath) {
+async function pollScanProgress() {
   const fill = document.getElementById('progress-fill');
   const text = document.getElementById('progress-text');
   const count = document.getElementById('progress-count');
+  let prevCount = 0;
+  let stagnant = 0;
 
-  for (let i = 0; i < 60; i++) {
-    await sleep(3000);
+  for (let i = 0; i < 120; i++) {
+    await sleep(5000);
     try {
       const stats = await fetchJSON(`${API}/stats`);
-      const pct = Math.min((stats.totalFiles / 100) * 100, 99);
-      fill.style.width = `${pct}%`;
-      text.textContent = `Indexed ${stats.totalFiles} files...`;
-      count.textContent = `${stats.duplicateGroups} duplicate groups found`;
+      const pct = Math.min((stats.totalFiles / 1000) * 100, 99);
+      fill.style.width = `${Math.max(pct, 5)}%`;
+      text.textContent = `Indexed ${stats.totalFiles.toLocaleString()} files...`;
+      count.textContent = `${stats.duplicateGroups} duplicate groups`;
 
-      if (stats.totalFiles > 0) {
-        // Check if scan is done by comparing with previous count
-        break;
+      if (stats.totalFiles === prevCount && stats.totalFiles > 0) {
+        stagnant++;
+        if (stagnant >= 3) {
+          fill.style.width = '100%';
+          text.textContent = 'Scan complete!';
+          loadDashboard();
+          break;
+        }
+      } else {
+        stagnant = 0;
       }
+      prevCount = stats.totalFiles;
     } catch (err) {
       // Ignore poll errors
     }
-  }
-
-  fill.style.width = '100%';
-  text.textContent = 'Scan complete!';
-
-  // Reload dashboard stats
-  loadDashboard();
-}
-
-async function browseServerPath() {
-  const serverId = document.getElementById('scan-server').value;
-  const currentPath = document.getElementById('scan-path').value || '/';
-
-  try {
-    const res = await fetchJSON(`${API}/browse/${serverId}?path=${encodeURIComponent(currentPath)}`);
-    const dirs = res.entries.filter(e => e.isDir && !e.name.startsWith('.'));
-
-    if (dirs.length === 0) {
-      alert('No subdirectories found at ' + currentPath);
-      return;
-    }
-
-    const choice = prompt(
-      'Subdirectories:\n' + dirs.map(d => `  ${d.name}`).join('\n') +
-      '\n\nEnter directory name to navigate into:'
-    );
-
-    if (choice && dirs.find(d => d.name === choice)) {
-      document.getElementById('scan-path').value = currentPath === '/'
-        ? `/${choice}`
-        : `${currentPath}/${choice}`;
-    }
-  } catch (err) {
-    alert('Browse failed: ' + err.message);
   }
 }
 

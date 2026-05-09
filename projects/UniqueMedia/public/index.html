@@ -147,30 +147,61 @@
         <div class="page-header">
           <h2>Scan Server</h2>
         </div>
-        <div class="scan-form">
-          <div class="form-group">
-            <label>Server</label>
-            <select id="scan-server"></select>
-          </div>
-          <div class="form-group">
-            <label>Path to Scan</label>
-            <div class="input-with-btn">
-              <input type="text" id="scan-path" placeholder="/path/to/media">
-              <button class="btn btn-sm" onclick="browseServerPath()">Browse</button>
+
+        <div class="scan-layout">
+          <!-- Left: Directory Tree Browser -->
+          <div class="scan-browser">
+            <div class="browser-header">
+              <h3>📁 Browse Server</h3>
+              <div class="browser-controls">
+                <select id="scan-server" onchange="loadTree()"></select>
+                <button class="btn btn-sm" onclick="loadTree()">Refresh</button>
+              </div>
+            </div>
+            <div class="form-group">
+              <label>Start browsing from:</label>
+              <div class="input-with-btn">
+                <input type="text" id="tree-root" placeholder="/export/storage" value="/export/storage">
+                <button class="btn btn-sm btn-primary" onclick="loadTree()">Go</button>
+              </div>
+            </div>
+            <div id="tree-container" class="tree-container">
+              <p style="color:var(--text-muted);padding:20px">Select a server and click Go to browse</p>
             </div>
           </div>
-          <button class="btn btn-primary" onclick="startScan()">Start Scan</button>
-        </div>
-        <div id="scan-progress" class="scan-progress hidden">
-          <div class="progress-bar-container">
-            <div class="progress-bar" id="progress-fill"></div>
+
+          <!-- Right: Scan Config -->
+          <div class="scan-config">
+            <h3>🔍 Scan Configuration</h3>
+            <div class="form-group">
+              <label>Path to Scan</label>
+              <input type="text" id="scan-path" placeholder="Click a folder in the tree above">
+            </div>
+            <div id="path-info" class="path-info hidden">
+              <div class="info-row">
+                <span class="info-label">Total files:</span>
+                <span class="info-value" id="info-total">-</span>
+              </div>
+              <div class="info-row">
+                <span class="info-label">Media files:</span>
+                <span class="info-value" id="info-media">-</span>
+              </div>
+            </div>
+            <button class="btn btn-primary btn-lg" onclick="startScan()">Start Scan</button>
+            <p style="font-size:0.8rem;color:var(--text-muted);margin-top:8px">Scans recursively, computes SHA-256 checksums, finds duplicates</p>
+
+            <div id="scan-progress" class="scan-progress hidden">
+              <div class="progress-bar-container">
+                <div class="progress-bar" id="progress-fill"></div>
+              </div>
+              <div class="progress-info">
+                <span id="progress-text">Scanning...</span>
+                <span id="progress-count">0 / 0</span>
+              </div>
+            </div>
+            <div id="scan-results" class="scan-results hidden"></div>
           </div>
-          <div class="progress-info">
-            <span id="progress-text">Scanning...</span>
-            <span id="progress-count">0 / 0</span>
-          </div>
         </div>
-        <div id="scan-results" class="scan-results hidden"></div>
       </div>
     </main>
 
