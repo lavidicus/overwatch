@@ -233,8 +233,9 @@ function renderFiles(files) {
   if (currentView === 'grid') {
     grid.classList.remove('hidden');
     list.classList.add('hidden');
-    grid.innerHTML = files.map(f => `
-      <div class="file-card" onclick="openPreview(${f.id}, ${JSON.stringify(files).replace(/"/g, '&quot;')}, ${files.indexOf(f)})">
+    window._currentFiles = files; // for preview navigation
+    grid.innerHTML = files.map((f, i) => `
+      <div class="file-card" onclick="openPreview(${f.id})">
         ${f.media_type === 'image' ? `<img class="thumb" src="${API}/thumb/${f.id}?w=160&h=160" loading="lazy" alt="">` : ''}
         ${f.media_type === 'video' ? `<img class="thumb" src="${API}/thumb/${f.id}?w=160&h=160" loading="lazy" alt="">` : ''}
         <span class="media-badge badge-${f.media_type}">${f.media_type}</span>
@@ -607,15 +608,13 @@ async function pollScanProgress(serverId) {
 }
 
 // ===== PREVIEW =====
-function openPreview(fileId, filesJson, index) {
-  // If called from grid with files context
-  if (filesJson && index !== undefined) {
-    try {
-      currentPreviewFiles = typeof filesJson === 'string' ? JSON.parse(filesJson) : filesJson;
-      currentPreviewIndex = index;
-    } catch {
-      currentPreviewFiles = [];
-      currentPreviewIndex = 0;
+function openPreview(fileId) {
+  // Use global file list for navigation context
+  if (window._currentFiles && window._currentFiles.length > 0) {
+    const idx = window._currentFiles.findIndex(f => f.id === fileId);
+    if (idx !== -1) {
+      currentPreviewFiles = window._currentFiles;
+      currentPreviewIndex = idx;
     }
   }
 
