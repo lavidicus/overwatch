@@ -236,7 +236,7 @@ function renderFiles(files) {
     grid.innerHTML = files.map(f => `
       <div class="file-card" onclick="openPreview(${f.id}, ${JSON.stringify(files).replace(/"/g, '&quot;')}, ${files.indexOf(f)})">
         ${f.media_type === 'image' ? `<img class="thumb" src="${API}/thumb/${f.id}?w=160&h=160" loading="lazy" alt="">` : ''}
-        ${f.media_type === 'video' ? `<div class="thumb" style="display:flex;align-items:center;justify-content:center;font-size:2rem">🎬</div>` : ''}
+        ${f.media_type === 'video' ? `<img class="thumb" src="${API}/thumb/${f.id}?w=160&h=160" loading="lazy" alt="">` : ''}
         <span class="media-badge badge-${f.media_type}">${f.media_type}</span>
         <div class="file-info">
           <div class="file-name">${esc(f.file_name)}</div>
@@ -249,7 +249,9 @@ function renderFiles(files) {
     list.classList.remove('hidden');
     list.innerHTML = files.map(f => `
       <div class="file-list-row" onclick="openPreview(${f.id})">
-        ${f.media_type === 'image' ? `<img class="thumb-sm" src="${API}/thumb/${f.id}?w=80&h=80" loading="lazy">` : `<div class="thumb-sm" style="display:flex;align-items:center;justify-content:center">📄</div>`}
+        ${f.media_type === 'image' ? `<img class="thumb-sm" src="${API}/thumb/${f.id}?w=80&h=80" loading="lazy">` : ''}
+        ${f.media_type === 'video' ? `<img class="thumb-sm" src="${API}/thumb/${f.id}?w=80&h=80" loading="lazy">` : ''}
+        ${f.media_type === 'audio' ? `<div class="thumb-sm" style="display:flex;align-items:center;justify-content:center">🎵</div>` : ''}
         <div class="file-details">
           <div class="file-name">${esc(f.file_name)}</div>
           <div class="file-path">${esc(f.file_path)}</div>
@@ -295,7 +297,7 @@ async function loadDuplicates() {
           ${group.files.map((f, fi) => `
             <div class="dup-file-card" id="dup-file-${gi}-${fi}" onclick="selectDupFile(${gi}, ${fi}, event)">
               ${f.media_type === 'image' ? `<img class="thumb" src="${API}/thumb/${f.id}?w=160&h=160" loading="lazy">` : ''}
-              ${f.media_type === 'video' ? `<div class="thumb" style="display:flex;align-items:center;justify-content:center;font-size:2rem;aspect-ratio:1;background:var(--bg-tertiary)">🎬</div>` : ''}
+              ${f.media_type === 'video' ? `<img class="thumb" src="${API}/thumb/${f.id}?w=160&h=160" loading="lazy">` : ''}
               <div class="dup-file-info">
                 <div class="dup-file-name">${esc(f.file_name)}</div>
                 <div class="dup-file-path">${esc(f.file_path)}</div>

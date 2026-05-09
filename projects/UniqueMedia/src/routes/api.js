@@ -156,12 +156,13 @@ router.get('/file/:fileId', async (req, res) => {
 });
 
 // Generate lightweight thumbnail (JPEG, max 160x160, quality 70)
-// Uses cached local thumbnails if available, otherwise generates on-demand via SSH
+// Images: resized via sharp. Videos: first frame via ffmpeg.
+// Uses cached local thumbnails if available, otherwise generates on-demand via SSH.
 router.get('/thumb/:fileId', async (req, res) => {
   try {
     const file = stmts.getFile.run(req.params.fileId);
-    if (!file || file.media_type !== 'image') {
-      return res.status(404).json({ error: 'Image not found' });
+    if (!file || (file.media_type !== 'image' && file.media_type !== 'video')) {
+      return res.status(404).json({ error: 'Media not found' });
     }
 
     const server = stmts.getServer.run(file.server_id);
@@ -182,55 +183,77 @@ router.get('/thumb/:fileId', async (req, res) => {
     const w = Math.min(parseInt(req.query.w) || 160, 320);
     const h = Math.min(parseInt(req.query.h) || 160, 320);
 
-    const Client = require('ssh2').Client;
-    const conn = new Client();
-    conn.on('ready', () => {
-      conn.sftp((err, sftp) => {
-        if (err) return res.status(500).json({ error: err.message });
-        const stream = sftp.createReadStream(file.file_path);
-        const chunks = [];
-        stream.on('data', c => chunks.push(c));
-        stream.on('end', async () => {
-          try {
-            const buf = Buffer.concat(chunks);
-            const img = await sharp(buf)
-              .resize(w, h, { fit: 'cover' })
-              .jpeg({ quality: 70 })
-              .toBuffer();
-            // Cache it
+    const sendThumb = (img) => {
+      try { fs.mkdirSync(cacheDir, { recursive: true }); fs.writeFileSync(cacheFile, img); } catch(e) {}
+      res.setHeader('Content-Type', 'image/jpeg');
+      res.setHeader('Cache-Control', 'public, max-age=86400');
+      res.send(img);
+    };
+
+    if (file.media_type === 'video') {
+      // For video: extract frame on remote server via SSH exec (much faster than downloading)
+      const Client = require('ssh2').Client;
+      const conn = new Client();
+      conn.on('ready', () => {
+        // Use ffmpeg on the remote server to extract and return the frame
+        const cmd = `ffmpeg -y -v error -ss 00:00:01 -i "${file.file_path}" -vframes 1 -f image2 - 2>/dev/null || ffmpeg -y -v error -i "${file.file_path}" -vframes 1 -f image2 - 2>/dev/null`;
+        conn.exec(cmd, (err, stream) => {
+          if (err) { conn.end(); return sendPlaceholderThumb(res, file.file_name, file.media_type); }
+          const chunks = [];
+          stream.on('data', c => chunks.push(c));
+          stream.on('close', async (code) => {
+            conn.end();
+            if (code !== 0 || chunks.length === 0) return sendPlaceholderThumb(res, file.file_name, file.media_type);
             try {
-              fs.mkdirSync(cacheDir, { recursive: true });
-              fs.writeFileSync(cacheFile, img);
-            } catch (e) { /* ignore cache errors */ }
-            res.setHeader('Content-Type', 'image/jpeg');
-            res.setHeader('Cache-Control', 'public, max-age=86400');
-            res.send(img);
-          } catch (e) {
-            sendPlaceholderThumb(res, file.file_name);
-          }
-          conn.end();
-        });
-        stream.on('error', () => {
-          conn.end();
-          sendPlaceholderThumb(res, file.file_name);
+              const frame = Buffer.concat(chunks);
+              const img = await sharp(frame).resize(w, h, { fit: 'cover' }).jpeg({ quality: 70 }).toBuffer();
+              sendThumb(img);
+            } catch (e) {
+              sendPlaceholderThumb(res, file.file_name, file.media_type);
+            }
+          });
         });
       });
-    });
-    conn.on('error', () => {
-      sendPlaceholderThumb(res, file.file_name);
-    });
-    conn.connect(getConnectOptions(server));
+      conn.on('error', () => sendPlaceholderThumb(res, file.file_name, file.media_type));
+      conn.connect(getConnectOptions(server));
+    } else {
+      // Image: download via SFTP, resize with sharp
+      const Client = require('ssh2').Client;
+      const conn = new Client();
+      conn.on('ready', () => {
+        conn.sftp((err, sftp) => {
+          if (err) return res.status(500).json({ error: err.message });
+          const stream = sftp.createReadStream(file.file_path);
+          const chunks = [];
+          stream.on('data', c => chunks.push(c));
+          stream.on('end', async () => {
+            try {
+              const buf = Buffer.concat(chunks);
+              const img = await sharp(buf).resize(w, h, { fit: 'cover' }).jpeg({ quality: 70 }).toBuffer();
+              sendThumb(img);
+            } catch (e) {
+              sendPlaceholderThumb(res, file.file_name, file.media_type);
+            }
+            conn.end();
+          });
+          stream.on('error', () => { conn.end(); sendPlaceholderThumb(res, file.file_name, file.media_type); });
+        });
+      });
+      conn.on('error', () => sendPlaceholderThumb(res, file.file_name, file.media_type));
+      conn.connect(getConnectOptions(server));
+    }
   } catch (err) {
     if (!res.headersSent) res.status(500).json({ error: err.message });
   }
 });
 
-function sendPlaceholderThumb(res, filename) {
+function sendPlaceholderThumb(res, filename, mediaType) {
   // Lightweight inline SVG placeholder
   const name = (filename || '?').split('/').pop().substring(0, 12);
+  const icon = mediaType === 'video' ? '🎬' : '📷';
   const svg = `<svg xmlns="http://www.w3.org/2000/svg" width="160" height="160" viewBox="0 0 160 160">
     <rect width="160" height="160" fill="#1a1a2e"/>
-    <text x="80" y="70" text-anchor="middle" fill="#555" font-size="32">📷</text>
+    <text x="80" y="70" text-anchor="middle" fill="#555" font-size="32">${icon}</text>
     <text x="80" y="100" text-anchor="middle" fill="#888" font-size="10" font-family="sans-serif">${name}</text>
   </svg>`;
   res.setHeader('Content-Type', 'image/svg+xml');
