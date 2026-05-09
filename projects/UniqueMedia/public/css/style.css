@@ -1015,9 +1015,33 @@ body {
   /* Breakdown bars */
   .breakdown-bar .label { width: 50px; font-size: 0.75rem; }
 
-  /* Tree browser */
-  .tree-node { margin-left: 12px; }
-  .tree-item { padding: 8px; font-size: 0.8rem; }
+  /* Path info mobile */
+  .path-info { padding: 8px 10px; }
+  .info-row { font-size: 0.75rem; }
+  .info-label { font-size: 0.7rem; }
+  .info-value { font-size: 0.75rem; }
+
+  /* Scan page mobile */
+  .scan-browser { padding: 12px; }
+  .browser-header h3 { font-size: 1rem; }
+  .browser-controls { flex-direction: row; gap: 6px; }
+  .browser-controls select { flex: 1; font-size: 0.8rem; padding: 6px 8px; }
+  .browser-controls .btn-sm { padding: 6px 10px; font-size: 0.8rem; }
+  .form-group label { font-size: 0.8rem; }
+  .form-group input { font-size: 0.8rem; padding: 8px 10px; }
+  .input-with-btn input { font-size: 0.8rem; }
+  .input-with-btn .btn-sm { padding: 8px 10px; font-size: 0.8rem; }
+  .scan-config h3 { font-size: 1rem; }
+  .scan-config input { font-size: 0.8rem; padding: 8px 10px; }
+  .scan-config .btn-lg { padding: 10px 16px; font-size: 0.9rem; }
+
+  /* Tree browser mobile */
+  .tree-node { margin-left: 8px !important; }
+  .tree-item { padding: 7px 6px !important; font-size: 0.75rem; gap: 4px; }
+  .tree-toggle { width: 12px; font-size: 0.6rem; }
+  .tree-item .tree-icon { font-size: 0.85rem; }
+  .tree-item .tree-name { font-size: 0.75rem; }
+  .tree-item .tree-count { font-size: 0.6rem; padding: 1px 4px; }
 
   /* Dup controls */
   .dup-controls {

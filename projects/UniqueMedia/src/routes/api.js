@@ -254,6 +254,31 @@ router.get('/tree-expand/:serverId', async (req, res) => {
   }
 });
 
+// Test SSH connection
+router.post('/test-connection/:serverId', async (req, res) => {
+  try {
+    const server = stmts.getServer.run(req.params.serverId);
+    if (!server) return res.status(404).json({ error: 'Server not found' });
+
+    const Client = require('ssh2').Client;
+    const result = await new Promise((resolve, reject) => {
+      const conn = new Client();
+      conn.on('ready', () => { conn.end(); resolve({ ok: true }); });
+      conn.on('error', (err) => reject(new Error(err.message)));
+      conn.connect({
+        host: server.host,
+        port: server.port || 22,
+        username: server.username,
+        password: server.password,
+        readyTimeout: 10000,
+      });
+    });
+    res.json(result);
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
 // Count files in a directory
 router.get('/count/:serverId', async (req, res) => {
   try {

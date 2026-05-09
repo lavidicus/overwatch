@@ -361,7 +361,7 @@ function onServerChange() {
 
 async function loadTree() {
   const serverId = document.getElementById('scan-server').value;
-  const rootPath = document.getElementById('tree-root').value || '/';
+  const rootPath = (document.getElementById('tree-root').value || '/').replace(/\/+$/, '') || '/';
   const container = document.getElementById('tree-container');
   const statusEl = document.getElementById('tree-status');
 
@@ -371,17 +371,21 @@ async function loadTree() {
   }
 
   currentScanServerId = serverId;
-  container.innerHTML = '<p style="color:var(--text-secondary);padding:20px">Loading...</p>';
+  container.innerHTML = '<p style="color:var(--text-secondary);padding:20px">Connecting and loading directories...</p>';
   statusEl.classList.add('hidden');
 
   try {
     const tree = await fetchJSON(`${API}/tree/${serverId}?path=${encodeURIComponent(rootPath)}`);
+    if (!tree || !tree.children || tree.children.length === 0) {
+      container.innerHTML = '<p style="color:var(--text-muted);padding:20px">Empty directory or no subdirectories found</p>';
+      return;
+    }
     container.innerHTML = '';
     renderTreeNode(tree, serverId, container, 0);
   } catch (err) {
     statusEl.textContent = '⚠️ ' + err.message;
     statusEl.classList.remove('hidden');
-    container.innerHTML = '<p style="color:var(--text-muted);padding:20px">Check server credentials and try again</p>';
+    container.innerHTML = '<p style="color:var(--danger);padding:20px">Cannot connect. Check the server password in Servers → Edit.</p>';
   }
 }
 
