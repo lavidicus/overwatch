@@ -1,4 +1,4 @@
-const { connect } = require('./ssh-conn');
+const { connect, getConnectOptions } = require('./ssh-conn');
 const { stmts, rebuildDuplicateGroups, db } = require('../db');
 
 const IMAGE_EXTS = new Set(['jpg', 'jpeg', 'png', 'gif', 'bmp', 'webp', 'tiff', 'tif', 'heic', 'heif', 'svg', 'ico']);
