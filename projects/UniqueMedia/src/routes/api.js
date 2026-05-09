@@ -4,6 +4,7 @@ const { stmts, rebuildDuplicateGroups } = require('../db');
 const { scanDirectory, getScanStatus } = require('../services/scanner');
 const { moveFile, listDirectory, testConnection } = require('../services/ssh-manager');
 const { listDirectoryWithCounts, expandDirectory, countFiles } = require('../services/tree-browser');
+const sharp = require('sharp');
 
 const router = express.Router();
 
@@ -114,6 +115,162 @@ router.get('/scan/:serverId', (req, res) => {
   }
   res.json(scanState);
 });
+
+// ==================== MEDIA ====================
+
+// Stream file from remote server via SSH
+router.get('/file/:fileId', async (req, res) => {
+  try {
+    const file = stmts.getFile.run(req.params.fileId);
+    if (!file) return res.status(404).json({ error: 'File not found' });
+
+    const server = stmts.getServer.run(file.server_id);
+    if (!server) return res.status(404).json({ error: 'Server not found' });
+
+    if (!server.password && !server.private_key) {
+      return res.status(503).json({ error: 'Server credentials not configured' });
+    }
+
+    const Client = require('ssh2').Client;
+    const conn = new Client();
+    conn.on('ready', () => {
+      conn.sftp((err, sftp) => {
+        if (err) return res.status(500).json({ error: err.message });
+        sftp.stat(file.file_path, (statErr, stat) => {
+          if (statErr) {
+            conn.end();
+            return res.status(404).json({ error: 'File not found on server' });
+          }
+          res.setHeader('Content-Length', stat.size);
+          res.setHeader('Content-Type', getMimeType(file.file_name));
+          sftp.createReadStream(file.file_path).pipe(res);
+          res.on('finish', () => conn.end());
+          res.on('close', () => conn.end());
+        });
+      });
+    });
+    conn.on('error', (err) => {
+      if (!res.headersSent) res.status(500).json({ error: err.message });
+    });
+    conn.connect({
+      host: server.host,
+      port: server.port || 22,
+      username: server.username,
+      password: server.password,
+      readyTimeout: 15000,
+    });
+  } catch (err) {
+    if (!res.headersSent) res.status(500).json({ error: err.message });
+  }
+});
+
+// Generate lightweight thumbnail (JPEG, max 160x160, quality 70)
+// Uses cached local thumbnails if available, otherwise generates on-demand via SSH
+router.get('/thumb/:fileId', async (req, res) => {
+  try {
+    const file = stmts.getFile.run(req.params.fileId);
+    if (!file || file.media_type !== 'image') {
+      return res.status(404).json({ error: 'Image not found' });
+    }
+
+    const server = stmts.getServer.run(file.server_id);
+    if (!server) return res.status(404).json({ error: 'Server not found' });
+
+    // Check for cached thumbnail first
+    const fs = require('fs');
+    const path = require('path');
+    const cacheDir = path.join(__dirname, '..', '.thumb-cache');
+    const cacheFile = path.join(cacheDir, req.params.fileId + '.jpg');
+    if (fs.existsSync(cacheFile)) {
+      const buf = fs.readFileSync(cacheFile);
+      res.setHeader('Content-Type', 'image/jpeg');
+      res.setHeader('Cache-Control', 'public, max-age=604800');
+      return res.send(buf);
+    }
+
+    // Check if server has credentials
+    if (!server.password && !server.private_key) {
+      // Return a placeholder SVG instead of failing
+      return sendPlaceholderThumb(res, file.file_name);
+    }
+
+    const w = Math.min(parseInt(req.query.w) || 160, 320);
+    const h = Math.min(parseInt(req.query.h) || 160, 320);
+
+    const Client = require('ssh2').Client;
+    const conn = new Client();
+    conn.on('ready', () => {
+      conn.sftp((err, sftp) => {
+        if (err) return res.status(500).json({ error: err.message });
+        const stream = sftp.createReadStream(file.file_path);
+        const chunks = [];
+        stream.on('data', c => chunks.push(c));
+        stream.on('end', async () => {
+          try {
+            const buf = Buffer.concat(chunks);
+            const img = await sharp(buf)
+              .resize(w, h, { fit: 'cover' })
+              .jpeg({ quality: 70 })
+              .toBuffer();
+            // Cache it
+            try {
+              fs.mkdirSync(cacheDir, { recursive: true });
+              fs.writeFileSync(cacheFile, img);
+            } catch (e) { /* ignore cache errors */ }
+            res.setHeader('Content-Type', 'image/jpeg');
+            res.setHeader('Cache-Control', 'public, max-age=86400');
+            res.send(img);
+          } catch (e) {
+            sendPlaceholderThumb(res, file.file_name);
+          }
+          conn.end();
+        });
+        stream.on('error', () => {
+          conn.end();
+          sendPlaceholderThumb(res, file.file_name);
+        });
+      });
+    });
+    conn.on('error', () => {
+      sendPlaceholderThumb(res, file.file_name);
+    });
+    conn.connect({
+      host: server.host,
+      port: server.port || 22,
+      username: server.username,
+      password: server.password,
+      readyTimeout: 10000,
+    });
+  } catch (err) {
+    if (!res.headersSent) res.status(500).json({ error: err.message });
+  }
+});
+
+function sendPlaceholderThumb(res, filename) {
+  // Lightweight inline SVG placeholder
+  const name = (filename || '?').split('/').pop().substring(0, 12);
+  const svg = `<svg xmlns="http://www.w3.org/2000/svg" width="160" height="160" viewBox="0 0 160 160">
+    <rect width="160" height="160" fill="#1a1a2e"/>
+    <text x="80" y="70" text-anchor="middle" fill="#555" font-size="32">📷</text>
+    <text x="80" y="100" text-anchor="middle" fill="#888" font-size="10" font-family="sans-serif">${name}</text>
+  </svg>`;
+  res.setHeader('Content-Type', 'image/svg+xml');
+  res.setHeader('Cache-Control', 'public, max-age=3600');
+  res.send(svg);
+}
+
+function getMimeType(filename) {
+  const ext = (filename || '').split('.').pop().toLowerCase();
+  const map = {
+    jpg: 'image/jpeg', jpeg: 'image/jpeg', png: 'image/png',
+    gif: 'image/gif', webp: 'image/webp', bmp: 'image/bmp',
+    mp4: 'video/mp4', mov: 'video/quicktime', avi: 'video/x-msvideo',
+    mkv: 'video/x-matroska', webm: 'video/webm',
+    mp3: 'audio/mpeg', wav: 'audio/wav', flac: 'audio/flac',
+    heic: 'image/heic', heif: 'image/heif',
+  };
+  return map[ext] || 'application/octet-stream';
+}
 
 // ==================== FILES ====================
 

@@ -226,7 +226,7 @@ function renderFiles(files) {
     list.classList.add('hidden');
     grid.innerHTML = files.map(f => `
       <div class="file-card" onclick="openPreview(${f.id}, ${JSON.stringify(files).replace(/"/g, '&quot;')}, ${files.indexOf(f)})">
-        ${f.media_type === 'image' ? `<img class="thumb" src="${API}/thumb/${f.id}?w=300&h=300" loading="lazy" alt="">` : ''}
+        ${f.media_type === 'image' ? `<img class="thumb" src="${API}/thumb/${f.id}?w=160&h=160" loading="lazy" alt="">` : ''}
         ${f.media_type === 'video' ? `<div class="thumb" style="display:flex;align-items:center;justify-content:center;font-size:2rem">🎬</div>` : ''}
         <span class="media-badge badge-${f.media_type}">${f.media_type}</span>
         <div class="file-info">
@@ -240,7 +240,7 @@ function renderFiles(files) {
     list.classList.remove('hidden');
     list.innerHTML = files.map(f => `
       <div class="file-list-row" onclick="openPreview(${f.id})">
-        ${f.media_type === 'image' ? `<img class="thumb-sm" src="${API}/thumb/${f.id}?w=40&h=40" loading="lazy">` : `<div class="thumb-sm" style="display:flex;align-items:center;justify-content:center">📄</div>`}
+        ${f.media_type === 'image' ? `<img class="thumb-sm" src="${API}/thumb/${f.id}?w=80&h=80" loading="lazy">` : `<div class="thumb-sm" style="display:flex;align-items:center;justify-content:center">📄</div>`}
         <div class="file-details">
           <div class="file-name">${esc(f.file_name)}</div>
           <div class="file-path">${esc(f.file_path)}</div>
@@ -285,7 +285,7 @@ async function loadDuplicates() {
         <div class="dup-group-files" id="dup-files-${gi}" style="display:none">
           ${group.files.map((f, fi) => `
             <div class="dup-file-card" id="dup-file-${gi}-${fi}" onclick="selectDupFile(${gi}, ${fi}, event)">
-              ${f.media_type === 'image' ? `<img class="thumb" src="${API}/thumb/${f.id}?w=300&h=300" loading="lazy">` : ''}
+              ${f.media_type === 'image' ? `<img class="thumb" src="${API}/thumb/${f.id}?w=160&h=160" loading="lazy">` : ''}
               ${f.media_type === 'video' ? `<div class="thumb" style="display:flex;align-items:center;justify-content:center;font-size:2rem;aspect-ratio:1;background:var(--bg-tertiary)">🎬</div>` : ''}
               <div class="dup-file-info">
                 <div class="dup-file-name">${esc(f.file_name)}</div>
@@ -509,8 +509,17 @@ async function startScan() {
 
   const progress = document.getElementById('scan-progress');
   const results = document.getElementById('scan-results');
+  const btn = event.currentTarget;
+
+  // Show progress immediately, disable button
   progress.classList.remove('hidden');
   results.classList.add('hidden');
+  btn.disabled = true;
+  btn.textContent = 'Scanning...';
+
+  document.getElementById('progress-text').textContent = 'Starting scan...';
+  document.getElementById('progress-fill').style.width = '0%';
+  document.getElementById('progress-count').textContent = '';
 
   try {
     const res = await fetchJSON(`${API}/scan/${serverId}`, {
@@ -519,14 +528,15 @@ async function startScan() {
       body: JSON.stringify({ path: scanPath }),
     });
 
-    document.getElementById('progress-text').textContent = 'Starting scan...';
-    document.getElementById('progress-fill').style.width = '0%';
-    document.getElementById('progress-count').textContent = '';
-
+    console.log('[Scan] Started:', res);
     pollScanProgress(serverId);
   } catch (err) {
-    alert('Scan failed: ' + err.message);
-    progress.classList.add('hidden');
+    console.error('[Scan] Failed:', err);
+    document.getElementById('progress-text').textContent = 'Failed to start: ' + err.message;
+    document.getElementById('progress-fill').style.width = '100%';
+    document.getElementById('progress-fill').style.background = 'var(--danger)';
+    btn.disabled = false;
+    btn.textContent = 'Start Scan';
   }
 }
 
@@ -562,8 +572,11 @@ async function pollScanProgress(serverId) {
 
       if (scan.status === 'complete') {
         fill.style.width = '100%';
+        fill.style.background = '';
         text.textContent = `Done! ${scan.filesAdded} files indexed, ${scan.duplicatesFound || 0} duplicate groups found`;
         count.textContent = scan.errors > 0 ? `${scan.errors} errors occurred` : '';
+        const startBtn = document.querySelector('.scan-config .btn-lg');
+        if (startBtn) { startBtn.disabled = false; startBtn.textContent = 'Start Scan'; }
         loadDashboard();
         break;
       }
@@ -572,6 +585,8 @@ async function pollScanProgress(serverId) {
         fill.style.width = '100%';
         fill.style.background = 'var(--danger)';
         text.textContent = `Scan failed: ${scan.error || 'Unknown error'}`;
+        const startBtn = document.querySelector('.scan-config .btn-lg');
+        if (startBtn) { startBtn.disabled = false; startBtn.textContent = 'Start Scan'; }
         break;
       }
     } catch (err) {

@@ -302,6 +302,7 @@ body {
   height: 100%;
   object-fit: cover;
   background: var(--bg-tertiary);
+  background-color: #1a1a2e;
 }
 
 .file-card .file-info {
