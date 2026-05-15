@@ -38,7 +38,7 @@
 
 ## 🔧 N8n Workflow Automation (CRITICAL — READ BEFORE ANY N8N CALL)
 
-**Server:** `http://ocg.9xc.local:5678` (NEVER `localhost`)
+**Server:** `http://localhost:5678` (moved from ocg.9xc.local to claw)
 **Owner:** Jeremy Ingalls (`jeremy.ingalls@gmail.com`)
 **Service:** `systemctl status n8n`
 **API Key:** stored in `openclaw.json` → `skills.entries.n8n-mcp.config.apiKey`
@@ -62,22 +62,47 @@
 **Quick Reference:**
 ```bash
 # List workflows
-curl -s "http://ocg.9xc.local:5678/api/v1/workflows" -H "X-N8N-API-KEY: $KEY"
+curl -s "http://localhost:5678/api/v1/workflows" -H "X-N8N-API-KEY: $KEY"
 
 # Create workflow (from file — always use file to avoid escaping)
-curl -s -X POST "http://ocg.9xc.local:5678/api/v1/workflows" -H "X-N8N-API-KEY: $KEY" -H "Content-Type: application/json" -d @workflow.json
+curl -s -X POST "http://localhost:5678/api/v1/workflows" -H "X-N8N-API-KEY: $KEY" -H "Content-Type: application/json" -d @workflow.json
 
 # Activate
-curl -s -X POST "http://ocg.9xc.local:5678/api/v1/workflows/{id}/activate" -H "X-N8N-API-KEY: $KEY"
+curl -s -X POST "http://localhost:5678/api/v1/workflows/{id}/activate" -H "X-N8N-API-KEY: $KEY"
 
 # Trigger webhook
-curl -s -X POST "http://ocg.9xc.local:5678/webhook/{path}" -H "Content-Type: application/json" -d '{}'
+curl -s -X POST "http://localhost:5678/webhook/{path}" -H "Content-Type: application/json" -d '{}'
 ```
 
 **Gog Bridge (for CLI tools in workflows):**
 - Service: `gog-bridge.service` on port 18790
-- URL in workflows: `http://127.0.0.1:18790/fetch-emails`
-- Management: `sudo systemctl {start|stop|restart} gog-bridge`
+- Source: `~/.openclaw/workspace/services/gog-bridge/server.js`
+- Management: `sudo systemctl {start|stop|restart|status} gog-bridge`
+- Auth: `GOG_KEYRING_PASSWORD=openclaw` (set in systemd unit)
+- Account: `ops@claw-sync.com`
+
+**Endpoints (POST with JSON body, GET for health/auth):**
+```
+GET  /health              — Health check
+GET  /auth                — Authenticated accounts
+POST /gmail/search        — Search threads (body: {query, max, account?})
+POST /gmail/messages      — List unthreaded messages (body: {query, max, account?})
+POST /gmail/send          — Send email (body: {to, subject, body|bodyFile|bodyHtml, account?, replyToMessageId?, draft?})
+POST /calendar/events     — List events (body: {calendarId?, from, to, account?})
+POST /calendar/create     — Create event (body: {calendarId?, summary, from, to, account?, eventColor?})
+POST /drive/search        — Search Drive (body: {query, max, account?})
+POST /contacts/list       — List contacts (body: {max, account?})
+POST /sheets/get          — Read range (body: {sheetId, range, account?})
+POST /sheets/append       — Append (body: {sheetId, range, valuesJson, account?})
+POST /sheets/update       — Update (body: {sheetId, range, valuesJson, account?})
+POST /sheets/metadata     — Sheet metadata (body: {sheetId, account?})
+```
+
+**n8n workflow usage:**
+- Use HTTP Request node with `127.0.0.1:18790` (not localhost — IPv6)
+- Method: POST, Content-Type: application/json
+- Body: JSON matching endpoint schema above
+- Example: fetch recent emails → `POST http://127.0.0.1:18790/gmail/search` with `{"query":"newer_than:1d","max":10}`
 
 **Full playbook:** `ITIL/playbooks/openclaw-n8n-integration.md`
 **PKB reference:** `pkb/resources/n8n-workflow-automation.md`
@@ -110,14 +135,56 @@ Skills define _how_ tools work. This file is for _your_ specifics — the stuff 
 - **RAM:** 251 GB
 - **Storage:** 17.3 TiB SAS pool + 2.7 TiB FAST pool
 - **VMs:** node1 (VM 100) — GPU machine with 2× P6000
+  - **Node1 IP:** 172.16.254.100
+  - **Node2 IP:** 172.16.254.101
+  - **Model:** Qwen3.6-35B Q4_K_M (`llamacpp.gguf`)
+  - **Optimized config (2026-05-15):** `--poll 2048 --poll-batch 1 --ctx-size 32768 --tensor-split 0.5,0.5 --threads 32 --threads-batch 32 --mlock --numa numactl --flash-attn on`
+  - **Benchmarks (post-opt):** ~53 tok/s generation, ~200 tok/s prompt | Both P6000s at ~23GB/24GB | Service on port 11434
+  - **Streaming:** SSE supported, OpenClaw `supportsUsageInStreaming: true`
+  - **Note:** Optimization knobs (`--poll`, `--ctx-size`) don't change raw decode throughput — model is GPU-bound. Use pve3090-111 for faster decode.
 
-### Decommissioned
-- **USM1:** Physically removed (drives wiped)
-- **USM2:** Physically removed (drives wiped)
+### USM1 (new hardware, May 2026)
+- **Hostname:** `usm1` (replaced old USM1 — completely different machine)
+- **Access:** `ssh root@usm1`
+- **Hardware:** Supermicro (board date Jan 2020)
+- **CPU:** 1× Xeon E5-2620 v4 (8 cores / 16 threads, 2.10GHz)
+- **RAM:** 62 GB
+- **Storage:** 355 GB ZFS (rpool)
+- **OS:** Proxmox (Debian Trixie 13.4), kernel 6.17.2-1-pve
+- **GPU:** None
+- **Notes:** Single-socket, much less powerful than old USM1. Chassis intrusion log from May 12 (hardware swap). No additional storage pools detected.
+
+
 
 ### Other SSH Aliases
 
+- `pve3090-111` → user1@pve3090-111, 2x RTX 3090 (24GB each), 62GB RAM, Ubuntu — llama.cpp host (port 11434)
+- `hermes` → 10.50.15.231, user: localadmin, purpose: NousResearch Hermes 3 agent (CPU-only, 16 cores, 15GB RAM)
 - `home-server` → 192.168.1.100, user: admin
+
+## 🧠 LLM Inference (removed: dell — decommissioned from network 2026-05-15)
+
+### Active Providers
+| Provider | Host | GPU | Model | tok/s | Port |
+|---|---|---|---|---|---|
+| **node1** | 172.16.254.100 | 2× P6000 (48GB) | Qwen3.6-35B Q4_K_M | ~53 gen / ~200 prompt | 11434 |
+| **node2** | 172.16.254.101 | 2× P6000 (48GB) | Qwen3.6-35B Q4_K_M | ~53 gen / ~200 prompt | 11434 |
+| **pve3090-111** | pve3090-111 | 2× RTX 3090 (48GB) | Qwen3.6-35B-A3B Q8_K_XL | ~126 gen | 11434 |
+
+**dell** was: 1x RTX PRO 6000 Blackwell (96GB), vLLM, Qwen3-Next-FP8, ~193 tok/s — removed from network 2026-05-15.
+
+### Tuning Notes
+- `--poll 2048` — main speed knob for GPU inference (was default 50)
+- `--ctx-size 32768` — reduced from 262144 (huge context wastes VRAM on KV cache)
+- `--tensor-split 0.5,0.5` — explicit split across both GPUs
+- `--mlock` — keep model in RAM, prevent swap
+- `--numa numactl` — dual-socket CPU optimization
+- Raw decode speed is model+GPU bound; tuning improves consistency/latency, not throughput
+- For faster decode: use pve3090-111 (2.4×) or run a smaller MoE model on P6000s
+
+## 🧠 Sub-Agent Model Rule
+
+**All coding/compilation sub-agents MUST use `model="pve3090-111"`** (the RTX 3090 node running llama.cpp). This gives faster build times and better code generation quality. Dell server has been removed from the network.
 
 ## What Goes Here
 
