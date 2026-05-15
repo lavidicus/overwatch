@@ -168,7 +168,7 @@ Skills define _how_ tools work. This file is for _your_ specifics — the stuff 
 | Provider | Host | GPU | Model | tok/s | Port |
 |---|---|---|---|---|---|
 | **node1** | 172.16.254.100 | 2× P6000 (48GB) | Qwen3.6-35B Q4_K_M | ~53 gen / ~200 prompt | 11434 |
-| **node2** | 172.16.254.101 | 2× P6000 (48GB) | Qwen3.6-35B Q4_K_M | ~53 gen / ~200 prompt | 11434 |
+| **node2** | 172.16.254.101 | 1× P6000 (24GB) | Qwen3.6-35B Q4_K_M | ~53 gen / ~200 prompt | 11434 |
 | **pve3090-111** | pve3090-111 | 2× RTX 3090 (48GB) | Qwen3.6-35B-A3B Q8_K_XL | ~126 gen | 11434 |
 
 **dell** was: 1x RTX PRO 6000 Blackwell (96GB), vLLM, Qwen3-Next-FP8, ~193 tok/s — removed from network 2026-05-15.
