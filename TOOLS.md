@@ -110,6 +110,12 @@ POST /sheets/metadata     — Sheet metadata (body: {sheetId, account?})
 
 ---
 
+## 🔧 OpenClaw Service Check (CRITICAL)
+
+**Service name:** `openclaw-gateway` (user-level systemd service)
+**Correct command:** `systemctl --user is-active openclaw-gateway`
+**NOT** `systemctl is-active openclaw` — that checks the system-level service which doesn't exist
+
 ## 🚨 File Edit Tool Constraint (CRITICAL)
 
 **Problem:** The `edit` tool fails silently with "Invalid diff" errors when text doesn't match exactly (whitespace, line endings, etc.)
