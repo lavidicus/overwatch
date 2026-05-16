@@ -141,7 +141,7 @@ Skills define _how_ tools work. This file is for _your_ specifics — the stuff 
   - **Optimized config (2026-05-15):** `--poll 2048 --poll-batch 1 --ctx-size 32768 --tensor-split 0.5,0.5 --threads 32 --threads-batch 32 --mlock --numa numactl --flash-attn on`
   - **Benchmarks (post-opt):** ~53 tok/s generation, ~200 tok/s prompt | Both P6000s at ~23GB/24GB | Service on port 11434
   - **Streaming:** SSE supported, OpenClaw `supportsUsageInStreaming: true`
-  - **Note:** Optimization knobs (`--poll`, `--ctx-size`) don't change raw decode throughput — model is GPU-bound. Use pve3090-111 for faster decode.
+  - **Note:** Optimization knobs (`--poll`, `--ctx-size`) don't change raw decode throughput — model is GPU-bound.
 
 ### USM1 (new hardware, May 2026)
 - **Hostname:** `usm1` (replaced old USM1 — completely different machine)
@@ -158,20 +158,22 @@ Skills define _how_ tools work. This file is for _your_ specifics — the stuff 
 
 ### Other SSH Aliases
 
-- `pve3090-111` → user1@pve3090-111, 2x RTX 3090 (24GB each), 62GB RAM, Ubuntu — llama.cpp host (port 11434)
+- `pve3090-111` → user1@pve3090-111, 2x RTX 3090 (48GB each), 62GB RAM, Ubuntu — llama.cpp host (port 11434), main session only (slot contention)
 - `hermes` → 10.50.15.231, user: localadmin, purpose: NousResearch Hermes 3 agent (CPU-only, 16 cores, 15GB RAM)
-- `home-server` → 192.168.1.100, user: admin
 
-## 🧠 LLM Inference (removed: dell — decommissioned from network 2026-05-15)
+## 🧠 LLM Inference
 
 ### Active Providers
 | Provider | Host | GPU | Model | tok/s | Port |
 |---|---|---|---|---|---|
-| **node1** | 172.16.254.100 | 2× P6000 (48GB) | Qwen3.6-35B Q4_K_M | ~53 gen / ~200 prompt | 11434 |
-| **node2** | 172.16.254.101 | 1× P6000 (24GB) | Qwen3.6-35B Q4_K_M | ~53 gen / ~200 prompt | 11434 |
-| **pve3090-111** | pve3090-111 | 2× RTX 3090 (48GB) | Qwen3.6-35B-A3B Q8_K_XL | ~126 gen | 11434 |
+| **node1** | 172.16.254.100 | 2× P6000 (48GB) | Qwen3.6-35B Q4_K_M | ~52 gen / ~200 prompt | 11434 |
+| **node2** | 172.16.254.101 | 1× P6000 (24GB) | Qwen3.6-35B Q4_K_M | ~52 gen / ~200 prompt | 11434 |
+| **pve3090-111** | pve3090-111 | 2× RTX 3090 (48GB) | Qwen3.6-35B-A3B Q8_K_XL | ~102 gen (clean) | 11434 |
 
-**dell** was: 1x RTX PRO 6000 Blackwell (96GB), vLLM, Qwen3-Next-FP8, ~193 tok/s — removed from network 2026-05-15.
+### Model Routing
+- **Main session:** pve3090-111/llamacpp (VM111)
+- **Sub-agents:** node1/llamacpp OR node2/llamacpp, alternating 50/50 to balance load
+- VM111 reserved for main session only — slot contention makes it unsuitable for sub-agents
 
 ### Tuning Notes
 - `--poll 2048` — main speed knob for GPU inference (was default 50)
@@ -180,11 +182,15 @@ Skills define _how_ tools work. This file is for _your_ specifics — the stuff 
 - `--mlock` — keep model in RAM, prevent swap
 - `--numa numactl` — dual-socket CPU optimization
 - Raw decode speed is model+GPU bound; tuning improves consistency/latency, not throughput
-- For faster decode: use pve3090-111 (2.4×) or run a smaller MoE model on P6000s
+- For faster decode: consider running a smaller MoE model on P6000s or using pve3090-111 for interactive use
 
 ## 🧠 Sub-Agent Model Rule
 
-**All coding/compilation sub-agents MUST use `model="pve3090-111"`** (the RTX 3090 node running llama.cpp). This gives faster build times and better code generation quality. Dell server has been removed from the network.
+**All sub-agents alternate between node1 and node2, 50/50 split to balance load.**
+- Use `model="node1/llamacpp` for even-numbered sub-agents in a session
+- Use `model="node2/llamacpp` for odd-numbered sub-agents in a session
+- Track last-used in memory if needed to maintain balance
+- VM111 (pve3090-111) is reserved for main session only — slot contention kills sub-agent throughput
 
 ## What Goes Here
 
