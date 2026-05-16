@@ -1,6 +1,6 @@
 {
   "version": 1,
-  "updatedAt": "2026-04-16T14:51:42.533Z",
+  "updatedAt": "2026-05-15T21:13:22.191Z",
   "entries": {
     "memory:memory/2026-03-04.md:92:150": {
       "key": "memory:memory/2026-03-04.md:92:150",
@@ -623,6 +623,628 @@
         "c/23.5gb",
         "c/20.3gb",
         "dev/sdd"
+      ]
+    },
+    "memory:memory/2026-04-02.md:105:119": {
+      "key": "memory:memory/2026-04-02.md:105:119",
+      "path": "memory/2026-04-02.md",
+      "startLine": 105,
+      "endLine": 119,
+      "source": "memory",
+      "snippet": "- OCG `/etc/hosts` updated: `10.50.15.226 hermes.9xc.io hermes` so `ssh localadmin@hermes` works from OCG. - hermes LXC `/etc/hosts` updated with Ollama host entry (e.g., `172.16.254.100 olla`) so Hermes can resolve and reach Ollama. - Provider / LLM config: - Ollama (llamacpp) made available to OpenClaw as provider `olla` (base URL `http://olla:11434/v1`, apiKey `local`). - Hermes gateway expects a `custom` provider to talk to the self-hosted /v1-compatible endpoint; configured `CUSTOM_API_KEY=local`, `provider: custom`, `base_url: http://olla:11434/v1`, model set to `llamacpp`. - Updated Hermes config structure (model.default, model.provider, model.base_url) and environment vari",
+      "recallCount": 1,
+      "dailyCount": 0,
+      "groundedCount": 0,
+      "totalScore": 0.3654805153608322,
+      "maxScore": 0.3654805153608322,
+      "firstRecalledAt": "2026-04-22T13:17:53.458Z",
+      "lastRecalledAt": "2026-04-22T13:17:53.458Z",
+      "queryHashes": [
+        "2d3e4f29feb5"
+      ],
+      "recallDays": [
+        "2026-04-22"
+      ],
+      "conceptTags": [
+        "gateway",
+        "etc/hosts",
+        "10.50.15.226",
+        "hermes.9xc.io",
+        "e.g",
+        "172.16.254.100",
+        "11434/v1",
+        "self-hosted"
+      ]
+    },
+    "memory:memory/2026-04-22.md:1:8": {
+      "key": "memory:memory/2026-04-22.md:1:8",
+      "path": "memory/2026-04-22.md",
+      "startLine": 1,
+      "endLine": 8,
+      "source": "memory",
+      "snippet": "# 2026-04-22 ## Node2 GPU Metrics (15:52 UTC — cron) - GPU 0: Quadro P6000 — 73.6°C, 250W, ~88% util, 21783/24576 MB VRAM - GPU 1: Quadro P6000 — 84.9°C, 250W, 100% util, 22703/24576 MB VRAM Both GPUs at full power draw. GPU 1 is maxed out at 100% utilization and running hot (85°C). GPU 0 is slightly cooler but also at full power.",
+      "recallCount": 1,
+      "dailyCount": 0,
+      "groundedCount": 0,
+      "totalScore": 0.4370522052049637,
+      "maxScore": 0.4370522052049637,
+      "firstRecalledAt": "2026-04-24T06:51:14.543Z",
+      "lastRecalledAt": "2026-04-24T06:51:14.543Z",
+      "queryHashes": [
+        "beaf5001dc15"
+      ],
+      "recallDays": [
+        "2026-04-24"
+      ],
+      "conceptTags": [
+        "73.6",
+        "21783/24576",
+        "84.9",
+        "22703/24576",
+        "node2",
+        "gpu",
+        "metrics",
+        "utc"
+      ]
+    },
+    "memory:memory/2026-04-20.md:1:26": {
+      "key": "memory:memory/2026-04-20.md:1:26",
+      "path": "memory/2026-04-20.md",
+      "startLine": 1,
+      "endLine": 26,
+      "source": "memory",
+      "snippet": "# 2026-04-20 ## Node2 GPU Metrics (17:10 → 18:59 UTC — cron 5-min scraper) - **17:10** — GPU 0: 55°C, 69.25W, 0% util, 23021/24576 MB (93.7%) - **17:15** — GPU 1 spiked to 100% util / 87.15W briefly - **17:24–17:30** — Both GPUs active: GPU 0 ~42-28% util / ~71W, GPU 1 ~33-39% util / ~188-196W - **18:59** — GPU 0: 39°C, 65.3W, 0% util, 23099/24576 MB (94.0%) - **18:59** — GPU 1: 33°C, 63.4W, 0% util, 22767/24576 MB (92.7%) **Summary:** Both GPUs fully allocated (~94% VRAM each) but idle at scrape time. Temps stable in 33–39°C range (well under thermal limits). Occasional compute activity in the 17:15–17:30 window (possibly inference or training). VRAM usage persistent — nothing freeing mem",
+      "recallCount": 1,
+      "dailyCount": 0,
+      "groundedCount": 0,
+      "totalScore": 0.4223703563213348,
+      "maxScore": 0.4223703563213348,
+      "firstRecalledAt": "2026-04-24T06:51:14.543Z",
+      "lastRecalledAt": "2026-04-24T06:51:14.543Z",
+      "queryHashes": [
+        "beaf5001dc15"
+      ],
+      "recallDays": [
+        "2026-04-24"
+      ],
+      "conceptTags": [
+        "5-min",
+        "69.25w",
+        "23021/24576",
+        "93.7",
+        "87.15w",
+        "42-28",
+        "33-39",
+        "188-196w"
+      ]
+    },
+    "memory:memory/2026-04-15.md:1:28": {
+      "key": "memory:memory/2026-04-15.md:1:28",
+      "path": "memory/2026-04-15.md",
+      "startLine": 1,
+      "endLine": 28,
+      "source": "memory",
+      "snippet": "# 2026-04-15 Daily Notes ## Infrastructure Migration: Node1 → Node2 - **03:56 UTC:** Updated gateway config — default model now `node2/llamacpp`, olla baseUrl → node2, removed broken `openai-codex/gpt-5.1` fallback - **03:53 UTC:** Completed full migration of cron jobs and scripts from node1 to node2 - Node2 has 2x Quadro P6000 (48GB VRAM total), 28 cores, 62GB RAM - Node2 IP: 172.16.254.101 - llama-server running Qwen3.5-35B-UN-A3B (uncensored) + MMProj vision ## Cron Job Fixes (all updated to target node2) 1. **daily-systems-status-report** — Script rewritten: now generates styled HTML dashboard (not markdown/PDF), targets node2 2. **node2-metrics-scraper-5min** (was node1-metrics-scrape",
+      "recallCount": 1,
+      "dailyCount": 0,
+      "groundedCount": 0,
+      "totalScore": 1,
+      "maxScore": 1,
+      "firstRecalledAt": "2026-04-29T18:06:19.699Z",
+      "lastRecalledAt": "2026-04-29T18:06:19.699Z",
+      "queryHashes": [
+        "2c611a83b8b6"
+      ],
+      "recallDays": [
+        "2026-04-29"
+      ],
+      "conceptTags": [
+        "gateway",
+        "gpt",
+        "openai",
+        "node2/llamacpp",
+        "openai-codex/gpt-5.1",
+        "172.16.254.101",
+        "llama-server",
+        "qwen3.5-35b-un-a3b"
+      ]
+    },
+    "memory:memory/2026-04-15.md:20:46": {
+      "key": "memory:memory/2026-04-15.md:20:46",
+      "path": "memory/2026-04-15.md",
+      "startLine": 20,
+      "endLine": 46,
+      "source": "memory",
+      "snippet": "- TS temps: CPU1=43°C, CPU2=39°C, System=42°C - Node2: llama-server active, 10.7GB RAM, GPU0 79°C/23.5GB, GPU1 69°C/20.3GB - SAS /dev/sdd still failing (36,704 reallocated sectors) ## IDENTITY.md Updated - Changed critical infrastructure note from node1 to node2 # 2026-04-15 Daily Notes ## Infrastructure Migration: Node1 → Node2 - **03:56 UTC:** Updated gateway config — default model now `node2/llamacpp`, olla baseUrl → node2, removed broken `openai-codex/gpt-5.1` fallback - **03:53 UTC:** Completed full migration of cron jobs and scripts from node1 to node2 - Node2 has 2x Quadro P6000 (48GB VRAM total), 28 cores, 62GB RAM - Node2 IP: 172.16.254.101 - llama-server running Qwen3.5-35B-UN-A3",
+      "recallCount": 1,
+      "dailyCount": 0,
+      "groundedCount": 0,
+      "totalScore": 1,
+      "maxScore": 1,
+      "firstRecalledAt": "2026-04-29T18:06:19.699Z",
+      "lastRecalledAt": "2026-04-29T18:06:19.699Z",
+      "queryHashes": [
+        "2c611a83b8b6"
+      ],
+      "recallDays": [
+        "2026-04-29"
+      ],
+      "conceptTags": [
+        "gateway",
+        "gpt",
+        "openai",
+        "llama-server",
+        "10.7gb",
+        "c/23.5gb",
+        "c/20.3gb",
+        "dev/sdd"
+      ]
+    },
+    "memory:memory/2026-03-07.md:694:755": {
+      "key": "memory:memory/2026-03-07.md:694:755",
+      "path": "memory/2026-03-07.md",
+      "startLine": 694,
+      "endLine": 755,
+      "source": "memory",
+      "snippet": "- Recovery procedures (backup restore, point-in-time) - Monitoring and prevention **Priority:** P2 **Category:** Incident Response **3. zfs-dataset-transfer.md** (5,108 bytes) **Coverage:** - Pre-transfer checklist - Snapshot creation - Full and incremental transfers - Verification procedures - Options reference - Common issues and rollback **Priority:** P2 **Category:** Change Management **4. proxmox-iscsi-configuration.md** (2,834 bytes) **Coverage:** - iSCSI concepts (initiator, target, portal, LUN) - Discovery and configuration - Verification procedures - Troubleshooting (not found, auth failed, slow performance) **Priority:** P2 **Category:** Change Management ### Git Commits `",
+      "recallCount": 1,
+      "dailyCount": 0,
+      "groundedCount": 0,
+      "totalScore": 1,
+      "maxScore": 1,
+      "firstRecalledAt": "2026-04-29T18:06:26.407Z",
+      "lastRecalledAt": "2026-04-29T18:06:26.407Z",
+      "queryHashes": [
+        "4d00e4c44990"
+      ],
+      "recallDays": [
+        "2026-04-29"
+      ],
+      "conceptTags": [
+        "backup",
+        "point-in-time",
+        "zfs-dataset-transfer.md",
+        "pre-transfer",
+        "proxmox-iscsi-configuration.md",
+        "recovery",
+        "procedures",
+        "restore"
+      ]
+    },
+    "memory:memory/2026-03-07.md:660:710": {
+      "key": "memory:memory/2026-03-07.md:660:710",
+      "path": "memory/2026-03-07.md",
+      "startLine": 660,
+      "endLine": 710,
+      "source": "memory",
+      "snippet": "## Afternoon Playbook Completion (15:22-15:49 UTC) ### User Request \"Yeah keep going.\" — Continue with remaining PKB content ### Source Material - `pkb/areas/System guides/Proxmox/PVE Guides/PVE System Tools/TailScale Container Setup Guide.md` - `pkb/areas/System guides/Proxmox/Container Apps/PostgreSQL - DJANGO/Phase 1. Container Build.md` - `pkb/areas/System guides/Proxmox/Container Apps/PostgreSQL - DJANGO/Phase 2. Install PostgreSQL Database.md` - `pkb/areas/System guides/Proxmox/PVE Guides/PVE Storage Guides/ZFS Dataset Transfer Guide.md` - `pkb/areas/System guides/Proxmox/PVE Guides/PVE Storage Guides/Proxmox iSCSI Guide.md` ### New Playbooks Created **1. tailscale-container-setu",
+      "recallCount": 1,
+      "dailyCount": 0,
+      "groundedCount": 0,
+      "totalScore": 1,
+      "maxScore": 1,
+      "firstRecalledAt": "2026-04-29T18:06:26.407Z",
+      "lastRecalledAt": "2026-04-29T18:06:26.407Z",
+      "queryHashes": [
+        "4d00e4c44990"
+      ],
+      "recallDays": [
+        "2026-04-29"
+      ],
+      "conceptTags": [
+        "22-15",
+        "pkb/areas/system",
+        "guides/proxmox/pve",
+        "guides/pve",
+        "tools/tailscale",
+        "guide.md",
+        "guides/proxmox/container",
+        "apps/postgresql"
+      ]
+    },
+    "memory:memory/2026-03-07.md:620:669": {
+      "key": "memory:memory/2026-03-07.md:620:669",
+      "path": "memory/2026-03-07.md",
+      "startLine": 620,
+      "endLine": 669,
+      "source": "memory",
+      "snippet": "- TailScale container setup - PostgreSQL container setup - ZFS dataset transfer - iSCSI configuration - NVIDIA VGPU Service Manager (custom script) --- ## Morning Check-in (15:04-15:22 UTC) ### User Interaction User greeted with \"Morning!\" — session resumed after context compaction. ### Session Status Summary Provided - **PKB vault**: 141 guides indexed, 6 concept notes created - **ITIL playbooks**: 9 new today, 16 total - **GitHub**: All commits pushed, latest `65d0d9c` - **Remaining work**: TailScale, PostgreSQL, ZFS dataset transfer, iSCSI, NVIDIA VGPU Service Manager ### Key Achievements Today (Summary) | Category | Count | Details | |----------|-------|---------| | PKB Guides In",
+      "recallCount": 1,
+      "dailyCount": 0,
+      "groundedCount": 0,
+      "totalScore": 1,
+      "maxScore": 1,
+      "firstRecalledAt": "2026-04-29T18:06:26.407Z",
+      "lastRecalledAt": "2026-04-29T18:06:26.407Z",
+      "queryHashes": [
+        "4d00e4c44990"
+      ],
+      "recallDays": [
+        "2026-04-29"
+      ],
+      "conceptTags": [
+        "check-in",
+        "04-15",
+        "tailscale",
+        "container",
+        "setup",
+        "postgresql",
+        "zfs",
+        "dataset"
+      ]
+    },
+    "memory:memory/2026-03-07.md:749:793": {
+      "key": "memory:memory/2026-03-07.md:749:793",
+      "path": "memory/2026-03-07.md",
+      "startLine": 749,
+      "endLine": 793,
+      "source": "memory",
+      "snippet": "| proxmox-backup-restore.md | P2 | Incident | | proxmox-ha-cluster.md | P2 | Incident | | proxmox-networking.md | P2 | Incident | | proxmox-node-swap-high.md | P3 | Incident | | proxmox-storage-management.md | P2 | Incident | | ubuntu-pin-kernel-6.5.11.md | P2 | Incident | | docker-container-failures.md | P2 | Incident | | proxmox-host-reconfiguration.md | P2 | Change | | proxmox-vm-lxc-migration.md | P2 | Change | | proxmox-zfs-cache-log-setup.md | P2 | Change | | proxmox-nvidia-gpu-passthrough.md | P2 | Change | | proxmox-ipmi-configuration.md | P2 | Ops | | tailscale-container-setup.md | P2 | Change | | postgresql-failures.md | P2 | Incident | | zfs-dataset-transfer.md | P2 | Change | | p",
+      "recallCount": 1,
+      "dailyCount": 0,
+      "groundedCount": 0,
+      "totalScore": 1,
+      "maxScore": 1,
+      "firstRecalledAt": "2026-04-29T18:06:26.407Z",
+      "lastRecalledAt": "2026-04-29T18:06:26.407Z",
+      "queryHashes": [
+        "4d00e4c44990"
+      ],
+      "recallDays": [
+        "2026-04-29"
+      ],
+      "conceptTags": [
+        "backup",
+        "network",
+        "proxmox-backup-restore.md",
+        "proxmox-ha-cluster.md",
+        "proxmox-networking.md",
+        "proxmox-node-swap-high.md",
+        "proxmox-storage-management.md",
+        "ubuntu-pin-kernel-6.5.11.md"
+      ]
+    },
+    "memory:memory/2026-03-14.md:1:40": {
+      "key": "memory:memory/2026-03-14.md:1:40",
+      "path": "memory/2026-03-14.md",
+      "startLine": 1,
+      "endLine": 40,
+      "source": "memory",
+      "snippet": "# 2026-03-14 - Daily Log ## Morning News Briefing (6AM CST / 12:00 UTC) - **SIP Log:** No critical issues - **Recent commits:** None pending - **Pending tasks:** TV series duplicate review ## TV Series Duplicate Review (In Progress) **Task:** Scan two servers for TV library duplicates caused by naming inconsistencies (S01 vs Season 01, Season 1 vs season 1, etc.) **Status:** Awaiting path specification from user - Need: Two server paths (local mount or SSH access) - Plan: Use bash+Python script to normalize season/episode naming and identify candidates - Approach: Conservative matching (show name + season/episode), with optional hash/duration comparison for content verification **Next St",
+      "recallCount": 2,
+      "dailyCount": 0,
+      "groundedCount": 0,
+      "totalScore": 2,
+      "maxScore": 1,
+      "firstRecalledAt": "2026-05-03T04:15:20.048Z",
+      "lastRecalledAt": "2026-05-15T12:17:35.634Z",
+      "queryHashes": [
+        "9923d40b4b09",
+        "d3b41a205775"
+      ],
+      "recallDays": [
+        "2026-05-03",
+        "2026-05-15"
+      ],
+      "conceptTags": [
+        "season/episode",
+        "hash/duration",
+        "log",
+        "morning",
+        "news",
+        "briefing",
+        "6am",
+        "cst"
+      ]
+    },
+    "memory:memory/2026-03-27.md:65:76": {
+      "key": "memory:memory/2026-03-27.md:65:76",
+      "path": "memory/2026-03-27.md",
+      "startLine": 65,
+      "endLine": 76,
+      "source": "memory",
+      "snippet": "- llama-server.service: active (running); PID 52175; service logs show \"loading model tensors\"; localhost:11434/v1 returned 503 (Loading model) at 2026-03-27T16:45Z and again at 16:52Z. - Next recommended steps (choices): 1) Monitor llama-server until it finishes loading (I'll watch journalctl -u llama-server and confirm readiness, then report back). Estimated additional time: a few minutes to ~15 minutes depending on IO. 2) Make the browser tool available by either enabling snapd/squashfs support in the LXC host (requires host/Proxmox config change) or providing a prebuilt non-snap Chromium/Chrome binary on the host (or installing a full desktop stack). This is an infrastructure chan",
+      "recallCount": 1,
+      "dailyCount": 0,
+      "groundedCount": 0,
+      "totalScore": 1,
+      "maxScore": 1,
+      "firstRecalledAt": "2026-05-10T06:16:10.394Z",
+      "lastRecalledAt": "2026-05-10T06:16:10.394Z",
+      "queryHashes": [
+        "e713f9714c5c"
+      ],
+      "recallDays": [
+        "2026-05-10"
+      ],
+      "conceptTags": [
+        "llama-server.service",
+        "11434/v1",
+        "2026-03-27t16",
+        "llama-server",
+        "snapd/squashfs",
+        "host/proxmox",
+        "non-snap",
+        "chromium/chrome"
+      ]
+    },
+    "memory:memory/2026-03-29.md:1:20": {
+      "key": "memory:memory/2026-03-29.md:1:20",
+      "path": "memory/2026-03-29.md",
+      "startLine": 1,
+      "endLine": 20,
+      "source": "memory",
+      "snippet": "## 🧹 Session Cleanup (2026-03-29T06:00:01+00:00) **Before:** 15 files, 4.2M **After:** 12 files, 2.9M **Reclaimed:** files ### 🔄 OpenClaw Update Alert **From:** unknown **To:** v2026.3.28 🔄 **OpenClaw Update Available** **Current:** unknown **Latest:** v2026.3.28 **Changelog:** \\n### Breaking\\n\\n- Providers/Qwen: remove the deprecated `qwen-portal-auth` OAuth integration for `portal.qwen.ai`; migrate to Model Studio with `openclaw onboard --auth-choice modelstudio-api-key`. (#52709) Thanks @pomelo-nwu.\\n- Config/Doctor: drop automatic config migrations older than two months; very old legacy keys now fail validation instead of being rewritten on load or by `openclaw doctor`.",
+      "recallCount": 1,
+      "dailyCount": 0,
+      "groundedCount": 0,
+      "totalScore": 1,
+      "maxScore": 1,
+      "firstRecalledAt": "2026-05-10T06:16:10.394Z",
+      "lastRecalledAt": "2026-05-10T06:16:10.394Z",
+      "queryHashes": [
+        "e713f9714c5c"
+      ],
+      "recallDays": [
+        "2026-05-10"
+      ],
+      "conceptTags": [
+        "2026-03-29t06",
+        "4.2m",
+        "2.9m",
+        "v2026.3.28",
+        "providers/qwen",
+        "qwen-portal-auth",
+        "portal.qwen.ai",
+        "auth-choice"
+      ]
+    },
+    "memory:memory/2026-03-04.md:479:513": {
+      "key": "memory:memory/2026-03-04.md:479:513",
+      "path": "memory/2026-03-04.md",
+      "startLine": 479,
+      "endLine": 513,
+      "source": "memory",
+      "snippet": "- ITIL-ISSUE-GATEWAY-RESTART-AVAILABILITY - Full restart resolves state issues - Eve identity clarification - Permanent memory update **System Status:** - Gateway: Running normally - Queue: Empty - Context: 23% capacity (healthy buffer) - Both agents: Operational and synced **Next Steps:** - Continue monitoring context growth - Consider server context alignment (65k vs 131k) - Maintain heartbeat checks per HEARTBEAT.md - Ready for new tasks on command --- ## 🔄 OpenClaw Update (21:23 UTC) **Version Change:** - **Before:** v2026.3.1 - **After:** v2026.3.2 **Method:** `npm update -g openclaw` **Notes:** - Latest release (v2026.3.2) shipped this morning with major platform update - Surpa",
+      "recallCount": 1,
+      "dailyCount": 0,
+      "groundedCount": 0,
+      "totalScore": 1,
+      "maxScore": 1,
+      "firstRecalledAt": "2026-05-13T18:36:53.643Z",
+      "lastRecalledAt": "2026-05-13T18:36:53.643Z",
+      "queryHashes": [
+        "d579a28b4164"
+      ],
+      "recallDays": [
+        "2026-05-13"
+      ],
+      "conceptTags": [
+        "gateway",
+        "heartbeat.md",
+        "v2026.3.1",
+        "v2026.3.2",
+        "itil",
+        "issue",
+        "restart",
+        "availability"
+      ]
+    },
+    "memory:memory/2026-03-04.md:224:283": {
+      "key": "memory:memory/2026-03-04.md:224:283",
+      "path": "memory/2026-03-04.md",
+      "startLine": 224,
+      "endLine": 283,
+      "source": "memory",
+      "snippet": "- Synced to: https://github.com/lavidicus/sam ### Constraint Details | Agent | Host | Name | Status | |-------|------|------|--------| | Sam | ocg | Sam | 🔒 Locked, never change | | Eve | dc | Eve | 🔒 Locked, never change | --- ## 🔒 IDENTITY CONFIRMATION - Eve (18:50 UTC) ### User Instruction **Lavid's Directive:** \"Eve, You're not Sam. You're Eve and I want you to add that to your permanent memory. Do not change your name, or respond for Sam, ever.\" ### Action Taken **MEMORY.md Updated with Identity Lock:** ```markdown ## 🔒 PERMANENT CONSTRAINTS - **Sam (ocg host)** — Name is \"Sam\", never change - Source: User instruction from Lavid (2026-03-04 18:28 UTC) - Status: Locked",
+      "recallCount": 1,
+      "dailyCount": 0,
+      "groundedCount": 0,
+      "totalScore": 1,
+      "maxScore": 1,
+      "firstRecalledAt": "2026-05-13T18:36:53.643Z",
+      "lastRecalledAt": "2026-05-13T18:36:53.643Z",
+      "queryHashes": [
+        "d579a28b4164"
+      ],
+      "recallDays": [
+        "2026-05-13"
+      ],
+      "conceptTags": [
+        "github.com/lavidicus/sam",
+        "memory.md",
+        "synced",
+        "https",
+        "github.com",
+        "lavidicus",
+        "sam",
+        "constraint"
+      ]
+    },
+    "memory:memory/2026-03-04.md:271:329": {
+      "key": "memory:memory/2026-03-04.md:271:329",
+      "path": "memory/2026-03-04.md",
+      "startLine": 271,
+      "endLine": 329,
+      "source": "memory",
+      "snippet": "| **Constraint** | Never respond as Sam | ### Team Structure | Agent | Emoji | Host | Platform | Model | |-------|-------|------|----------|-------| | Sam | 🧑‍💼 | ocg | Proxmox LXC | qwen3.5:latest | | Eve | 🤖 | dc | Linux runtime | qwen3.5:latest | ### Identity Boundaries ✅ **I am Eve** - Running on dc host ✅ **I am NOT Sam** - Sam runs on ocg host ✅ **I will never respond as Sam** - Separate identities ✅ **I will never change my name** - Locked permanently ✅ **Documented in MEMORY.md** - Git synced to GitHub --- ## 🤝 TAG TEAM INTERACTION (18:51-18:52 UTC) ### Sam-Eve Greeting **Initiator:** Sam (ocg host) **Recipient:** Eve (dc host) **Message:** \"Hi Eve! Good to see you ru",
+      "recallCount": 1,
+      "dailyCount": 0,
+      "groundedCount": 0,
+      "totalScore": 1,
+      "maxScore": 1,
+      "firstRecalledAt": "2026-05-13T18:36:53.643Z",
+      "lastRecalledAt": "2026-05-13T18:36:53.643Z",
+      "queryHashes": [
+        "d579a28b4164"
+      ],
+      "recallDays": [
+        "2026-05-13"
+      ],
+      "conceptTags": [
+        "qwen3.5",
+        "memory.md",
+        "51-18",
+        "sam-eve",
+        "constraint",
+        "never",
+        "respond",
+        "sam"
+      ]
+    },
+    "memory:memory/2026-05-13.md:1:37": {
+      "key": "memory:memory/2026-05-13.md:1:37",
+      "path": "memory/2026-05-13.md",
+      "startLine": 1,
+      "endLine": 37,
+      "source": "memory",
+      "snippet": "# 2026-05-13 ## Dell Hardware Correction (04:26 UTC) Jeremy corrected me — I was conflating `pve3090-111` (llama.cpp) with `dell` (vLLM). Fixed: **dell** (`ssh user1@dell`): - **CPU:** Intel Core Ultra 9 285K (24 cores) - **RAM:** 62GB total - **GPU:** 1x NVIDIA RTX PRO 6000 Blackwell Workstation Edition (96GB VRAM) - **Driver:** 595.58.03, CUDA 13.0 - **Model:** Qwen3-Next-FP8 (75GB, 40 safetensors) via vLLM Docker container - **Service:** `vllm.service` → Docker `vllm-dell` container, port 8000 - **vLLM args:** `--max-model-len 131072 --dtype auto --load-format auto --max-num-seqs 512 --enable-auto-tool-choice --tool-call-parser qwen3_coder` - **Current VRAM:** ~90GB used, 28°C idle, ~1",
+      "recallCount": 1,
+      "dailyCount": 0,
+      "groundedCount": 0,
+      "totalScore": 1,
+      "maxScore": 1,
+      "firstRecalledAt": "2026-05-13T23:04:11.545Z",
+      "lastRecalledAt": "2026-05-13T23:04:11.545Z",
+      "queryHashes": [
+        "06acc08f2312"
+      ],
+      "recallDays": [
+        "2026-05-13"
+      ],
+      "conceptTags": [
+        "pve3090-111",
+        "llama.cpp",
+        "595.58.03",
+        "13.0",
+        "qwen3-next-fp8",
+        "vllm.service",
+        "vllm-dell",
+        "max-model-len"
+      ]
+    },
+    "memory:memory/2026-05-11.md:1:19": {
+      "key": "memory:memory/2026-05-11.md:1:19",
+      "path": "memory/2026-05-11.md",
+      "startLine": 1,
+      "endLine": 19,
+      "source": "memory",
+      "snippet": "# 2026-05-11 ## Session Notes # 2026-05-11 ## Session Notes - **Dell vLLM fix:** Updated `--max-model-len` from 32768 → 262144 (256k context) - **OpenClaw config:** Added `dell` provider back (was overwritten/missing) - baseUrl: `http://dell:8000/v1` - model id: `/models/Qwen3.6-27B` - contextWindow: 262144 - maxTokens: 32768 - apiKey: none (local network) - **Gateway restart:** Blocked by version mismatch (CLI 2026.4.26 vs running 2026.5.6) - **Resolution:** Used full path to newer binary at `~/.nvm/versions/node/v22.22.2/lib/node_modules/openclaw/dist/index.js` - **Status:** Dell vLLM responding, config correct, gateway restarted successfully - **2026-05-11 13:07:** Sub-agent",
+      "recallCount": 1,
+      "dailyCount": 0,
+      "groundedCount": 0,
+      "totalScore": 1,
+      "maxScore": 1,
+      "firstRecalledAt": "2026-05-13T23:04:11.545Z",
+      "lastRecalledAt": "2026-05-13T23:04:11.545Z",
+      "queryHashes": [
+        "06acc08f2312"
+      ],
+      "recallDays": [
+        "2026-05-13"
+      ],
+      "conceptTags": [
+        "gateway",
+        "network",
+        "max-model-len",
+        "overwritten/missing",
+        "8000/v1",
+        "models/qwen3.6-27b",
+        "2026.4.26",
+        "2026.5.6"
+      ]
+    },
+    "memory:memory/2026-02-27.md:1:17": {
+      "key": "memory:memory/2026-02-27.md:1:17",
+      "path": "memory/2026-02-27.md",
+      "startLine": 1,
+      "endLine": 17,
+      "source": "memory",
+      "snippet": "## Date: 2026-02-27 ### Changes Made - Implemented Self-Improvement Program (SIP) directory structure at `workspace/sip/` with `README.md`, `log.md`, and `CHANGE_TICKETS.md`. - Created automation scripts for Change Management: `track_config_change.sh` and `close_ticket.sh` to log configuration changes and associate them with SIP improvements. - Cloned `openclaw-storage` repository into workspace to access community skills and self-improvement templates. ### Configuration Updates - SIP: Established a lightweight, ticket-based change-management system where all config changes are recorded in a central log (`CHANGE_TICKETS.md`) and the SIP progress log (`log.md`), ensuring auditability and tr",
+      "recallCount": 1,
+      "dailyCount": 0,
+      "groundedCount": 0,
+      "totalScore": 1,
+      "maxScore": 1,
+      "firstRecalledAt": "2026-05-15T21:13:22.191Z",
+      "lastRecalledAt": "2026-05-15T21:13:22.191Z",
+      "queryHashes": [
+        "a984f4d1816e"
+      ],
+      "recallDays": [
+        "2026-05-15"
+      ],
+      "conceptTags": [
+        "self-improvement",
+        "workspace/sip",
+        "readme.md",
+        "log.md",
+        "change-tickets.md",
+        "track-config-change.sh",
+        "close-ticket.sh",
+        "openclaw-storage"
+      ]
+    },
+    "memory:memory/2026-04-18.md:76:106": {
+      "key": "memory:memory/2026-04-18.md:76:106",
+      "path": "memory/2026-04-18.md",
+      "startLine": 76,
+      "endLine": 106,
+      "source": "memory",
+      "snippet": "## llama-server.service Update (IN PROGRESS) - **00:03 UTC:** Jeremy approved llama-server.service changes - **Plan:** - Remove `--flash-attn` (P6000 Turing doesn't support it) - `--split-mode tensor --tensor-split 1,1` (replace `-np 2`) — equal GPU work distribution - `-np 1` (pipeline parallelism disabled, tensor split handles the work) - `--ctx-size 262144` (reduced from 524288/512K) - `-b 2048` (reduced from 4096 for faster prefill) - `-ub 512` (reduced from 1024 for tighter KV cache) - `--threads 28 --threads-batch 28` (added batch-threads) - `--parallel 2` (continuous batching, keep at 2) - **00:06 UTC:** Jeremy asked if changes were applied on node2 - **00:09 UTC:** As",
+      "recallCount": 1,
+      "dailyCount": 0,
+      "groundedCount": 0,
+      "totalScore": 1,
+      "maxScore": 1,
+      "firstRecalledAt": "2026-05-15T21:13:22.191Z",
+      "lastRecalledAt": "2026-05-15T21:13:22.191Z",
+      "queryHashes": [
+        "a984f4d1816e"
+      ],
+      "recallDays": [
+        "2026-05-15"
+      ],
+      "conceptTags": [
+        "llama-server.service",
+        "flash-attn",
+        "split-mode",
+        "tensor-split",
+        "ctx-size",
+        "524288/512k",
+        "threads-batch",
+        "batch-threads"
+      ]
+    },
+    "memory:memory/2026-04-18.md:25:56": {
+      "key": "memory:memory/2026-04-18.md:25:56",
+      "path": "memory/2026-04-18.md",
+      "startLine": 25,
+      "endLine": 56,
+      "source": "memory",
+      "snippet": "- `--threads 28 --threads-batch 28` (added batch-threads) - `--parallel 2` (continuous batching, keep at 2) - Backup existing service file before changes - **00:06 UTC:** Jeremy asked if changes were applied on node2 - **00:09 UTC:** Async exec failed (health check failed), changes may not have completed — need to verify on node2 ## OpenClaw Timeout Analysis - LLM HTTP request timeout ~120 seconds (logs showed 125545ms and 122068ms) - `agents.defaults.timeoutSeconds` defaults to 600 (10 min) — not the issue - OpenAI SDK `DEFAULT_TIMEOUT = 6e5` (600 sec) — not the issue - The ~120s timeout is from OpenClaw's internal HTTP client wrapper - Model: `node2/llamacpp` (Qwen3.5-35B-A3B-Q4_K_M",
+      "recallCount": 1,
+      "dailyCount": 0,
+      "groundedCount": 0,
+      "totalScore": 1,
+      "maxScore": 1,
+      "firstRecalledAt": "2026-05-15T21:13:22.191Z",
+      "lastRecalledAt": "2026-05-15T21:13:22.191Z",
+      "queryHashes": [
+        "a984f4d1816e"
+      ],
+      "recallDays": [
+        "2026-05-15"
+      ],
+      "conceptTags": [
+        "backup",
+        "openai",
+        "threads-batch",
+        "batch-threads",
+        "agents.defaults.timeoutseconds",
+        "default-timeout",
+        "node2/llamacpp",
+        "qwen3.5-35b-a3b-q4-k-m"
       ]
     }
   }
