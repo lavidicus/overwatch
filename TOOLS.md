@@ -115,6 +115,7 @@ POST /sheets/metadata     — Sheet metadata (body: {sheetId, account?})
 **Service name:** `openclaw-gateway` (user-level systemd service)
 **Correct command:** `systemctl --user is-active openclaw-gateway`
 **NOT** `systemctl is-active openclaw` — that checks the system-level service which doesn't exist
+**Also NOT** `systemctl --user is-active openclaw` — wrong service name, use `openclaw-gateway`
 
 ## 🚨 File Edit Tool Constraint (CRITICAL)
 
