@@ -105,6 +105,33 @@
             }
           }
         ]
+      },
+      "dell": {
+        "baseUrl": "http://dell:8000/v1",
+        "apiKey": "none",
+        "api": "openai-completions",
+        "models": [
+          {
+            "id": "/models/Qwen3.6-27B",
+            "name": "vLLM (dell, RTX PRO 6000 Blackwell, Qwen3.6-27B)",
+            "reasoning": false,
+            "input": [
+              "text"
+            ],
+            "cost": {
+              "input": 0,
+              "output": 0,
+              "cacheRead": 0,
+              "cacheWrite": 0
+            },
+            "contextWindow": 262144,
+            "maxTokens": 32768,
+            "api": "openai-completions",
+            "compat": {
+              "supportsUsageInStreaming": true
+            }
+          }
+        ]
       }
     }
   },
@@ -115,14 +142,29 @@
         "fallbacks": []
       },
       "models": {
-        "openai-codex/gpt-5.4": {"5.4"},
-        "openai-codex/gpt-5.1": {"5.1"},
-        "openai-codex/gpt-5.2": {"5.2"},
-        "github-copilot/gpt-4o": {"4o"},
-        "github-copilot/claude-opus-4.6": {"opus"},
-        "github-copilot/gpt-5-mini": {"mini"},
+        "openai-codex/gpt-5.4": {
+          "alias": "5.4"
+        },
+        "openai-codex/gpt-5.1": {
+          "alias": "5.1"
+        },
+        "openai-codex/gpt-5.2": {
+          "alias": "5.2"
+        },
+        "github-copilot/gpt-4o": {
+          "alias": "4o"
+        },
+        "github-copilot/claude-opus-4.6": {
+          "alias": "opus"
+        },
+        "github-copilot/gpt-5-mini": {
+          "alias": "mini"
+        },
         "node2/llamacpp": {
           "alias": "llamacpp"
+        },
+        "dell//models/Qwen3.6-27B": {
+          "alias": "dell"
         }
       },
       "compaction": {

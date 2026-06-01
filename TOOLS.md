@@ -167,15 +167,16 @@ Skills define _how_ tools work. This file is for _your_ specifics — the stuff 
 ### Active Providers
 | Provider | Host | GPU | Model | tok/s | Port |
 |---|---|---|---|---|---|
-| **vllm** (gateway) | claw:11434 | 2× P6000 (48GB) | Qwen3.6-35B Q4_K_M | ~53 gen / ~200 prompt | 11434 |
-| **pve3090-111** | pve3090-111 | 2× RTX 3090 (48GB) | Qwen3.6-35B-A3B Q8_K_XL | ~102 gen (clean) | 11434 |
+| **vllm** | 100.126.36.12 (vllm host) | 2× P6000 (48GB) | Qwen3.6-35B Q4_K_M | ~53 gen / ~200 prompt | 11434 |
+| **pve3090-111** | 100.79.29.13 (vm111) | 2× RTX 3090 (48GB) | Qwen3.6-35B-A3B Q8_K_XL | ~102 gen (clean) | 11434 |
 
 ### Decommissioned
 - **node1/node2** — powered off since 2026-06-01, P6000s moved to vLLM container on gateway
 
 ### Model Routing
-- **Main session:** pve3090-111/llamacpp (VM111) for interactive use
-- **Sub-agents:** vllm/llamacpp (vLLM container on gateway) — single reliable endpoint
+- **Main session:** ollama/qwen3.5:cloud (interactive)
+- **Sub-agents:** vllm/llamacpp (vllm host, 2× P6000) — single reliable endpoint
+- **pve3090-111** (vm111, 2× RTX 3090) — available as `pve3090-111/llamacpp` (~102 tok/s)
 - VM111 reserved for main session only — slot contention kills sub-agent throughput
 
 ### Tuning Notes
@@ -205,8 +206,8 @@ benchloop suites
 ```
 
 ### Our Nodes
-- **vllm** — `http://vllm:11434` (2× P6000, ~53 tok/s) — vLLM runtime on gateway
-- **pve3090-111** — `http://pve3090-111:11434` (2× RTX 3090, ~102 tok/s) — llama.cpp
+- **vllm** — `http://100.126.36.12:11434` (2× P6000, ~53 tok/s) — vLLM runtime
+- **pve3090-111** — `http://100.79.29.13:11434` (2× RTX 3090, ~102 tok/s) — llama.cpp via Tailscale
 
 All use OpenAI-compatible `/v1/chat/completions` endpoint.
 
