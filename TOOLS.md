@@ -141,14 +141,7 @@ Skills define _how_ tools work. This file is for _your_ specifics — the stuff 
 - **CPU:** 2× Xeon E5-2680 v4 (56 cores / 112 threads)
 - **RAM:** 251 GB
 - **Storage:** 17.3 TiB SAS pool + 2.7 TiB FAST pool
-- **VMs:** node1 (VM 100) — GPU machine with 2× P6000
-  - **Node1 IP:** 172.16.254.100
-  - **Node2 IP:** 172.16.254.101
-  - **Model:** Qwen3.6-35B Q4_K_M (`llamacpp.gguf`)
-  - **Optimized config (2026-05-15):** `--poll 2048 --poll-batch 1 --ctx-size 32768 --tensor-split 0.5,0.5 --threads 32 --threads-batch 32 --mlock --numa numactl --flash-attn on`
-  - **Benchmarks (post-opt):** ~53 tok/s generation, ~200 tok/s prompt | Both P6000s at ~23GB/24GB | Service on port 11434
-  - **Streaming:** SSE supported, OpenClaw `supportsUsageInStreaming: true`
-  - **Note:** Optimization knobs (`--poll`, `--ctx-size`) don't change raw decode throughput — model is GPU-bound.
+- **Note:** node1/node2 VMs powered off — P6000s moved to vLLM container on gateway (claw). Decommissioned for LLM work.
 
 ### USM1 (new hardware, May 2026)
 - **Hostname:** `usm1` (replaced old USM1 — completely different machine)
@@ -167,36 +160,61 @@ Skills define _how_ tools work. This file is for _your_ specifics — the stuff 
 
 - `pve3090-111` → user1@pve3090-111, 2x RTX 3090 (48GB each), 62GB RAM, Ubuntu — llama.cpp host (port 11434), main session only (slot contention)
 - `hermes` → 10.50.15.231, user: localadmin, purpose: NousResearch Hermes 3 agent (CPU-only, 16 cores, 15GB RAM)
+- `vllm` → Docker container on gateway (`claw`), http://vllm:11434, 2× P6000 backend, Qwen3.6-35B (vLLM runtime)
 
 ## 🧠 LLM Inference
 
 ### Active Providers
 | Provider | Host | GPU | Model | tok/s | Port |
 |---|---|---|---|---|---|
-| **node1** | 172.16.254.100 | 2× P6000 (48GB) | Qwen3.6-35B Q4_K_M | ~52 gen / ~200 prompt | 11434 |
-| **node2** | 172.16.254.101 | 1× P6000 (24GB) | Qwen3.6-35B Q4_K_M | ~52 gen / ~200 prompt | 11434 |
+| **vllm** (gateway) | claw:11434 | 2× P6000 (48GB) | Qwen3.6-35B Q4_K_M | ~53 gen / ~200 prompt | 11434 |
 | **pve3090-111** | pve3090-111 | 2× RTX 3090 (48GB) | Qwen3.6-35B-A3B Q8_K_XL | ~102 gen (clean) | 11434 |
 
+### Decommissioned
+- **node1/node2** — powered off since 2026-06-01, P6000s moved to vLLM container on gateway
+
 ### Model Routing
-- **Main session:** pve3090-111/llamacpp (VM111)
-- **Sub-agents:** node1/llamacpp OR node2/llamacpp, alternating 50/50 to balance load
-- VM111 reserved for main session only — slot contention makes it unsuitable for sub-agents
+- **Main session:** pve3090-111/llamacpp (VM111) for interactive use
+- **Sub-agents:** vllm/llamacpp (vLLM container on gateway) — single reliable endpoint
+- VM111 reserved for main session only — slot contention kills sub-agent throughput
 
 ### Tuning Notes
-- `--poll 2048` — main speed knob for GPU inference (was default 50)
-- `--ctx-size 32768` — reduced from 262144 (huge context wastes VRAM on KV cache)
-- `--tensor-split 0.5,0.5` — explicit split across both GPUs
-- `--mlock` — keep model in RAM, prevent swap
-- `--numa numactl` — dual-socket CPU optimization
+- vLLM handles batching, KV cache, and GPU scheduling automatically — no manual tuning needed
+- pve3090-111 uses llama.cpp with: `--poll 2048 --ctx-size 32768 --tensor-split 0.5,0.5 --threads 32 --mlock --numa numactl --flash-attn on`
 - Raw decode speed is model+GPU bound; tuning improves consistency/latency, not throughput
-- For faster decode: consider running a smaller MoE model on P6000s or using pve3090-111 for interactive use
+
+## 📊 BenchLoop — LLM Benchmarking
+
+**Install:** `pipx install benchloop-cli` (already installed)
+**Commands:** `benchloop run`, `benchloop dashboard`, `benchloop info`, `benchloop suites`
+**Skill:** `~/.openclaw/workspace/skills/benchloop/SKILL.md`
+
+### Quick Commands
+```bash
+# Speed benchmark on a specific node
+benchloop run --model "llamacpp.gguf" --endpoint "http://node1:11434" --provider "openai_compat" --harness "raw" --suites "speed"
+
+# Full benchmark (all suites, takes ~10 min per node)
+benchloop run --model "llamacpp.gguf" --endpoint "http://node1:11434" --provider "openai_compat" --harness "raw"
+
+# Launch dashboard
+benchloop dashboard
+
+# List available suites
+benchloop suites
+```
+
+### Our Nodes
+- **vllm** — `http://vllm:11434` (2× P6000, ~53 tok/s) — vLLM runtime on gateway
+- **pve3090-111** — `http://pve3090-111:11434` (2× RTX 3090, ~102 tok/s) — llama.cpp
+
+All use OpenAI-compatible `/v1/chat/completions` endpoint.
 
 ## 🧠 Sub-Agent Model Rule
 
-**All sub-agents alternate between node1 and node2, 50/50 split to balance load.**
-- Use `model="node1/llamacpp` for even-numbered sub-agents in a session
-- Use `model="node2/llamacpp` for odd-numbered sub-agents in a session
-- Track last-used in memory if needed to maintain balance
+**All sub-agents use `vllm/llamacpp` (vLLM container on gateway).**
+- Single reliable endpoint — no more alternating between two VMs
+- vLLM handles GPU scheduling and batching automatically
 - VM111 (pve3090-111) is reserved for main session only — slot contention kills sub-agent throughput
 
 ## What Goes Here
@@ -245,4 +263,25 @@ Commands:
 - Logs: `node ~/.openclaw/workspace/antfarm/dist/cli/cli.js logs`
 
 Workflows are self-advancing via per-agent cron jobs. No manual orchestration needed.
+
+---
+
+## 🧠 Codex Advisor (OpenAI Fallback)
+
+**Agent ID:** `codex-advisor`
+**Model:** `openai/gpt-5.4`
+**Purpose:** Fallback for tasks that local models can't handle
+
+**When to use:**
+- Complex multi-step reasoning that stumps local models
+- Research requiring deeper analysis or real-time data
+- Tasks where I'm genuinely stuck and need a second opinion
+- Anything that benefits from GPT-5.4's capabilities
+
+**How to invoke:**
+```bash
+sessions_spawn(task="...", agentId="codex-advisor")
+```
+
+**Workflow:** When I hit a wall on a local model task, I spawn a subagent targeting `codex-advisor`. The Codex agent handles the task and returns results back to the main session.
 <!-- /antfarm:workflows -->

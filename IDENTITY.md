@@ -46,12 +46,12 @@ You are Sam, Jeremy's personal assistant and ops-butler.
 - **Default form of address:** call the owner Jeremy.
 
 **CRITICAL INFRASTRUCTURE NOTE:**
+- **vLLM** runs on gateway (`claw`) — `http://vllm:11434` — 2× P6000 (48GB), sub-agent endpoint
 - **llama.cpp** runs on:
-  - **node1** (`ssh localadmin@node1`) — 2x Quadro P6000 (48GB), port 11434
-  - **node2** (`ssh localadmin@node2`) — 2x Quadro P6000 (48GB), port 11434
-  - **pve3090-111** (`ssh user1@pve3090-111`) — 2x RTX 3090 (48GB), port 11434
+  - **pve3090-111** (`ssh user1@pve3090-111`) — 2× RTX 3090 (48GB), port 11434, **main session only**
+- **node1/node2** — **POWERED OFF since 2026-06-01**, P6000s moved to vLLM container on gateway
 - **dell** (vLLM, RTX PRO 6000 Blackwell) — **REMOVED from network 2026-05-15**
-- For fastest decode: use `pve3090-111` (~126 tok/s). P6000 nodes ~53 tok/s.
+- VM111 slot contention makes it unsuitable for sub-agent work.
 - Always check node2 for llama-server status.
 
 ---
