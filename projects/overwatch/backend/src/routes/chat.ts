@@ -114,6 +114,8 @@ router.post('/sessions', authenticate, auditLog('CREATE_CHAT_SESSION'), async (r
       providerId: session.providerId,
       providerName: session.provider?.name,
       model: session.model?.name || body.model,
+      isAgentChat: session.isAgentChat,
+      allowedToolIds: session.allowedToolIds as string[] | null,
       messageCount: session._count.messages,
     });
   } catch (error) {
@@ -162,10 +164,12 @@ router.get('/sessions/:id', authenticate, auditLog('GET_CHAT_SESSION'), async (r
       title: session.name,
       providerId: session.providerId,
       providerName: session.provider?.name,
-      model: session.modelId,
+      model: session.model?.name || session.modelId,
       systemPrompt: session.systemPrompt,
       temperature: session.temperature,
       maxTokens: session.maxTokens,
+      isAgentChat: session.isAgentChat,
+      allowedToolIds: session.allowedToolIds as string[] | null,
       messageCount: session._count.messages,
       messages,
     });

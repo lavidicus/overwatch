@@ -2,7 +2,7 @@ import { useState, useEffect } from 'react';
 import {
   Dialog, DialogTitle, DialogContent, DialogActions,
   Button, FormControl, FormLabel, RadioGroup, Radio, FormControlLabel, Typography,
-  Box, CircularProgress,
+  Box, CircularProgress, Switch, Divider,
 } from '@mui/material';
 import { getAuthToken } from '../utils/auth';
 
@@ -17,16 +17,18 @@ interface Provider {
 interface ProviderConfigDialogProps {
   open: boolean;
   onClose: () => void;
-  onSelect: (providerId: string, model: string) => void;
+  onSelect: (providerId: string, model: string, opts: { isAgentChat: boolean }) => void;
   initialProviderId?: string;
   initialModel?: string;
+  initialAgentMode?: boolean;
 }
 
-export default function ProviderConfigDialog({ open, onClose, onSelect, initialProviderId, initialModel }: ProviderConfigDialogProps) {
+export default function ProviderConfigDialog({ open, onClose, onSelect, initialProviderId, initialModel, initialAgentMode = true }: ProviderConfigDialogProps) {
   const [providers, setProviders] = useState<Provider[]>([]);
   const [loading, setLoading] = useState(false);
   const [selectedProviderId, setSelectedProviderId] = useState(initialProviderId || '');
   const [selectedModel, setSelectedModel] = useState(initialModel || '');
+  const [agentMode, setAgentMode] = useState<boolean>(initialAgentMode);
 
   useEffect(() => {
     if (open) {
@@ -57,7 +59,7 @@ export default function ProviderConfigDialog({ open, onClose, onSelect, initialP
 
   const handleSelect = () => {
     if (selectedProviderId && selectedModel) {
-      onSelect(selectedProviderId, selectedModel);
+      onSelect(selectedProviderId, selectedModel, { isAgentChat: agentMode });
     }
   };
 
@@ -91,6 +93,14 @@ export default function ProviderConfigDialog({ open, onClose, onSelect, initialP
                 </Typography>
               </Box>
             )}
+            <Divider sx={{ my: 2 }} />
+            <FormControlLabel
+              control={<Switch checked={agentMode} onChange={(e) => setAgentMode(e.target.checked)} />}
+              label="Agent mode (enable tool calling)"
+            />
+            <Typography variant="caption" color="text.secondary" sx={{ display: 'block', mt: 0.5 }}>
+              When on, the assistant can call tools (filesystem, shell, etc.) to answer your messages.
+            </Typography>
           </Box>
         )}
       </DialogContent>

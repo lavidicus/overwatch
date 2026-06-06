@@ -11,6 +11,7 @@ import { execSync } from 'child_process';
 import * as fs from 'fs';
 import * as path from 'path';
 import * as os from 'os';
+import { buildSSHArgs as sharedBuildSSHArgs, sshTarget as sharedSSHTarget, runRemoteSSH as sharedRunRemoteSSH } from './ssh.js';
 
 export interface GGUFMetadata {
   name: string;
@@ -33,78 +34,11 @@ export interface GGUFMetadata {
   mmprojPath?: string;    // Primary mmproj path (for backwards compat)
 }
 
-/**
- * Shared SSH setup — write key to temp file if needed, return SSH args.
- */
-function buildSSHArgs(
-  credentials: { hostname: string; port: number; username: string; sshKey?: string; password?: string }
-): string[] {
-  const sshArgs: string[] = [
-    '-o', 'StrictHostKeyChecking=no',
-    '-o', 'BatchMode=yes',
-    '-o', 'ConnectTimeout=10',
-    '-p', credentials.port.toString(),
-  ];
-
-  if (credentials.sshKey) {
-    const tempKeyFile = path.join(os.tmpdir(), `ssh_key_${Date.now()}_${Math.random().toString(36).slice(2)}`);
-    fs.writeFileSync(tempKeyFile, credentials.sshKey, { mode: 0o600 });
-    sshArgs.push('-i', tempKeyFile);
-
-    // Cleanup after command completes
-    setTimeout(() => {
-      try { fs.unlinkSync(tempKeyFile); } catch { /* ignore */ }
-    }, 30000);
-  } else {
-    // Fallback to default SSH key
-    const defaultKey = path.join(os.homedir(), '.ssh', 'id_rsa');
-    if (fs.existsSync(defaultKey)) {
-      sshArgs.push('-i', defaultKey);
-    }
-  }
-
-  return sshArgs;
-}
-
-/**
- * Build full SSH target string.
- */
-function sshTarget(credentials: { hostname: string; username: string }): string {
-  return `${credentials.username}@${credentials.hostname}`;
-}
-
-/**
- * Run a command on a remote system via SSH.
- */
-function runRemoteSSH(
-  credentials: { hostname: string; port: number; username: string; sshKey?: string },
-  command: string
-): string {
-  const MAX_BUFFER = 50 * 1024 * 1024;
-  const sshArgs = buildSSHArgs(credentials);
-  const targetStr = sshTarget(credentials);
-  const cmdFile = path.join(os.tmpdir(), `ov_cmd_${Date.now()}.sh`);
-  const remoteFile = `/tmp/ov_cmd_${Date.now()}_${Math.random().toString(36).slice(2)}.sh`;
-
-  try {
-    fs.writeFileSync(cmdFile, `#!/bin/bash\n${command}\n`, { mode: 0o755 });
-
-    // Build SCP options (SCP uses -P for port, SSH uses -p)
-    const scpBase = ['-o', 'StrictHostKeyChecking=no', '-o', 'BatchMode=yes', '-o', 'ConnectTimeout=10', '-P', credentials.port.toString()];
-    // Extract the key path from sshArgs for SCP
-    const keyIdx = sshArgs.indexOf('-i');
-    if (keyIdx >= 0) scpBase.push('-i', sshArgs[keyIdx + 1]);
-
-    execSync(`scp ${scpBase.join(' ')} ${cmdFile} ${targetStr}:${remoteFile}`, { timeout: 15000 });
-    const result = execSync(`ssh ${sshArgs.join(' ')} ${targetStr} bash ${remoteFile}`, {
-      timeout: 30000, encoding: 'utf8', maxBuffer: MAX_BUFFER,
-    }).trim();
-    try { execSync(`ssh ${sshArgs.join(' ')} ${targetStr} rm -f ${remoteFile}`, { timeout: 5000 }); } catch {}
-    return result;
-  } finally {
-    try { fs.unlinkSync(cmdFile); } catch {}
-  }
-}
+// SSH helpers now live in ./ssh.ts so other routes can share them.
+// Thin local aliases keep the rest of this file unchanged.
+const buildSSHArgs = sharedBuildSSHArgs;
+const sshTarget = sharedSSHTarget;
+const runRemoteSSH = sharedRunRemoteSSH;
 
 /**
  * Remote Python GGUF header parser — runs on the remote host over SSH.

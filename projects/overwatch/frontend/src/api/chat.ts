@@ -16,9 +16,31 @@ export interface ChatSession {
   systemPrompt?: string | null;
   temperature?: number | null;
   maxTokens?: number | null;
+  isAgentChat?: boolean;
+  allowedToolIds?: string[] | null;
   messageCount: number;
   updatedAt: string;
   createdAt: string;
+}
+
+export interface AgentToolCall {
+  name: string;
+  args: Record<string, unknown>;
+  ok: boolean;
+  error?: string | null;
+}
+
+export interface AgentResult {
+  iterations: number;
+  pending?: string[];
+  invocationIds?: string[];
+  toolCalls: AgentToolCall[];
+}
+
+export interface AgentMessageResponse {
+  userMessage: ChatMessage;
+  assistantMessage: ChatMessage;
+  agent: AgentResult;
 }
 
 export interface ChatMessage {
@@ -41,7 +63,7 @@ export async function listSessions(page = 1, limit = 50): Promise<{ sessions: Ch
   return res.json();
 }
 
-export async function createSession(data: { title?: string; providerId?: string; model?: string; systemPrompt?: string; temperature?: number; maxTokens?: number }): Promise<any> {
+export async function createSession(data: { title?: string; providerId?: string; model?: string; systemPrompt?: string; temperature?: number; maxTokens?: number; isAgentChat?: boolean; allowedToolIds?: string[] }): Promise<any> {
   const res = await fetch(`${API_BASE}/chat/sessions`, { method: 'POST', headers: getAuthHeaders(), body: JSON.stringify(data) });
   if (!res.ok) throw new Error('Failed to create session');
   return res.json();
@@ -149,5 +171,26 @@ export async function sendMessage(sessionId: string, content: string): Promise<a
     body: JSON.stringify({ content, stream: false }),
   });
   if (!res.ok) throw new Error('Failed to send message');
+  return res.json();
+}
+
+// Agent-mode send: runs the backend tool-calling agent loop and returns the
+// assistant message plus any tool calls that were made (or are pending
+// approval). Non-streaming — the agent loop is multi-turn, so callers
+// typically show a “thinking…” indicator while this promise resolves.
+export async function sendAgentMessage(
+  sessionId: string,
+  content: string,
+  opts?: { maxIterations?: number },
+): Promise<AgentMessageResponse> {
+  const res = await fetch(`${API_BASE}/chat/sessions/${sessionId}/agent-message`, {
+    method: 'POST',
+    headers: getAuthHeaders(),
+    body: JSON.stringify({ content, ...(opts?.maxIterations ? { maxIterations: opts.maxIterations } : {}) }),
+  });
+  if (!res.ok) {
+    const err = await res.json().catch(() => ({ error: `HTTP ${res.status}` }));
+    throw new Error(typeof err.error === 'string' ? err.error : `HTTP ${res.status}`);
+  }
   return res.json();
 }

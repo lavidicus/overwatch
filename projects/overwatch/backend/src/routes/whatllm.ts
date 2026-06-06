@@ -4,6 +4,7 @@ import { authenticate, AuthRequest } from '../middleware/auth.js';
 import { auditLog } from '../middleware/audit.js';
 import { EncryptionService } from '../services/encryption.js';
 import { spawn, execSync } from 'child_process';
+import { runRemoteSSH } from '../utils/ssh.js';
 
 const router = Router();
 const prisma = new PrismaClient();
@@ -283,21 +284,116 @@ async function analyzeRemoteHardware(
   hardwareInfo: any;
   recommendations: any[];
 }> {
-  // For remote systems, we'd execute commands over SSH
-  // This is a simplified implementation
-  return {
-    hardwareInfo: {
-      cpuModel: 'Remote system',
-      cpuCores: 0,
-      cpuThreads: 0,
-      ramGB: 0,
-      gpuInfo: [],
-      os: 'Unknown',
-      kernel: 'Unknown',
-      dockerVersion: 'Unknown',
-    },
-    recommendations: [],
-  };
+  // Run the same probes used for local analysis, but over SSH. Each command
+  // is wrapped with `|| echo ""` / `|| true` so a single missing tool (e.g.
+  // nvidia-smi on a CPU box) doesn't poison the whole session.
+  //
+  // We bundle everything into one remote bash invocation and parse the output
+  // by marker lines, minimizing SSH round-trips.
+  const credentials = { hostname, port, username, sshKey, password };
+
+  const remoteScript = [
+    'echo "---CPU_MODEL---"',
+    'cat /proc/cpuinfo 2>/dev/null | grep "model name" | head -1 | cut -d":" -f2 | xargs || true',
+    'echo "---CPU_CORES---"',
+    'grep "cpu cores" /proc/cpuinfo 2>/dev/null | head -1 | cut -d":" -f2 | xargs || true',
+    'echo "---CPU_THREADS---"',
+    'nproc 2>/dev/null || true',
+    'echo "---RAM_KB---"',
+    "grep MemTotal /proc/meminfo 2>/dev/null | awk '{print $2}' || true",
+    'echo "---GPU---"',
+    'nvidia-smi --query-gpu=name,memory.total --format=csv,noheader 2>/dev/null || true',
+    'echo "---OS---"',
+    'cat /etc/os-release 2>/dev/null | grep PRETTY_NAME | cut -d"=" -f2 | tr -d \'"\' || true',
+    'echo "---KERNEL---"',
+    'uname -r 2>/dev/null || true',
+    'echo "---DOCKER---"',
+    'docker --version 2>/dev/null | cut -d" " -f3 || echo "Unknown"',
+    'echo "---END---"',
+  ].join('\n');
+
+  try {
+    const raw = runRemoteSSH(credentials, remoteScript);
+
+    // Parse marker-separated sections
+    const section = (name: string): string => {
+      const re = new RegExp(`---${name}---\\r?\\n([\\s\\S]*?)\\r?\\n---`, 'm');
+      const m = raw.match(re);
+      return m ? m[1].trim() : '';
+    };
+
+    const cpuModel = section('CPU_MODEL') || 'Unknown';
+    const cpuCores = parseInt(section('CPU_CORES'), 10) || 0;
+    const cpuThreads = parseInt(section('CPU_THREADS'), 10) || 0;
+
+    const ramKBStr = section('RAM_KB');
+    const ramKB = parseInt(ramKBStr, 10);
+    const ramGB = Number.isFinite(ramKB) && ramKB > 0
+      ? Math.round((ramKB / 1024 / 1024) * 10) / 10
+      : 0;
+
+    const gpuRaw = section('GPU');
+    const gpuInfo: any[] = gpuRaw
+      ? gpuRaw
+          .split('\n')
+          .map((line) => line.trim())
+          .filter((line) => line.length > 0 && line.includes(','))
+          .map((line) => {
+            const [name, vram] = line.split(',').map((s) => s.trim());
+            const vramMB = parseInt((vram || '').replace(/[^0-9]/g, ''), 10);
+            return {
+              name: name || 'Unknown GPU',
+              vramGB: Number.isFinite(vramMB) ? Math.round(vramMB / 1024) : 0,
+            };
+          })
+      : [];
+
+    const os = section('OS') || 'Unknown';
+    const kernel = section('KERNEL') || 'Unknown';
+    const dockerVersion = section('DOCKER') || 'Unknown';
+
+    const recommendations = generateBasicRecommendations(cpuCores, ramGB, gpuInfo);
+
+    console.log('[WhatLLM] Remote hardware analysis result:', {
+      hostname,
+      cpuModel,
+      cpuCores,
+      cpuThreads,
+      ramGB,
+      gpuCount: gpuInfo.length,
+      os,
+      kernel,
+    });
+
+    return {
+      hardwareInfo: {
+        cpuModel,
+        cpuCores,
+        cpuThreads,
+        ramGB,
+        gpuInfo,
+        os,
+        kernel,
+        dockerVersion,
+      },
+      recommendations,
+    };
+  } catch (error: any) {
+    console.error('[WhatLLM] analyzeRemoteHardware error:', error?.message || error);
+    return {
+      hardwareInfo: {
+        cpuModel: 'Unknown (SSH failed)',
+        cpuCores: 0,
+        cpuThreads: 0,
+        ramGB: 0,
+        gpuInfo: [],
+        os: 'Unknown',
+        kernel: 'Unknown',
+        dockerVersion: 'Unknown',
+      },
+      recommendations: [],
+    };
+  }
 }
 
 function generateBasicRecommendations(

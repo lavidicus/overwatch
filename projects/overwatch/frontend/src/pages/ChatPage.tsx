@@ -10,11 +10,12 @@ import AddIcon from '@mui/icons-material/Add';
 import DeleteIcon from '@mui/icons-material/Delete';
 import MenuIcon from '@mui/icons-material/Menu';
 import ArrowBackIcon from '@mui/icons-material/ArrowBack';
-import { listSessions, createSession, getSession, deleteSession, sendMessageStreaming, ChatMessage } from '../api/chat';
+import { listSessions, createSession, getSession, deleteSession, sendMessageStreaming, sendAgentMessage, ChatMessage, AgentToolCall } from '../api/chat';
 import { useChatEvents, initSocket, leaveChatSession } from '../hooks/useSocket';
 import ChatInput from '../components/ChatInput';
 import MessageBubble from '../components/MessageBubble';
 import ProviderConfigDialog from '../components/ProviderConfig';
+import AgentToolCallCard from '../components/AgentToolCallCard';
 
 const CHAT_DRAWER_WIDTH = 280;
 
@@ -33,6 +34,10 @@ export default function ChatPage() {
   const [showProviderConfig, setShowProviderConfig] = useState(false);
   const [drawerOpen, setDrawerOpen] = useState(!isMobile);
   const [error, setError] = useState<string | null>(null);
+  // Most recent agent turn's tool calls keyed by message id. Rendered inline
+  // beneath the assistant message so users see what the agent did.
+  const [agentToolsByMessageId, setAgentToolsByMessageId] = useState<Record<string, { calls: AgentToolCall[]; pendingIds: string[] }>>({});
+  const [agentThinking, setAgentThinking] = useState(false);
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const abortRef = useRef<AbortController | null>(null);
 
@@ -119,13 +124,14 @@ export default function ChatPage() {
     setShowProviderConfig(true);
   };
 
-  const handleProviderSelect = async (providerId: string, model: string) => {
+  const handleProviderSelect = async (providerId: string, model: string, opts: { isAgentChat: boolean }) => {
     setShowProviderConfig(false);
     try {
       const data = await createSession({
         title: newSessionTitle || undefined,
         providerId,
         model,
+        isAgentChat: opts.isAgentChat,
       });
       setSessions(prev => [data, ...prev]);
       selectSession(data.id);
@@ -136,7 +142,7 @@ export default function ChatPage() {
   };
 
   const handleSend = async (content: string) => {
-    if (!currentSession || streaming) return;
+    if (!currentSession || streaming || agentThinking) return;
 
     const userMsg: ChatMessage = {
       id: `temp-${Date.now()}`,
@@ -146,8 +152,32 @@ export default function ChatPage() {
       createdAt: new Date().toISOString(),
     };
     setMessages(prev => [...prev, userMsg]);
-    setStreaming(true);
     setError(null);
+
+    // Agent mode: non-streaming, runs the backend tool-calling loop.
+    if (currentSession.isAgentChat) {
+      setAgentThinking(true);
+      try {
+        const resp = await sendAgentMessage(currentSession.id, content);
+        setMessages(prev => [...prev, resp.assistantMessage]);
+        setAgentToolsByMessageId(prev => ({
+          ...prev,
+          [resp.assistantMessage.id]: {
+            calls: resp.agent.toolCalls || [],
+            pendingIds: resp.agent.pending || [],
+          },
+        }));
+        loadSessions();
+      } catch (err) {
+        setError(err instanceof Error ? err.message : 'Agent run failed');
+      } finally {
+        setAgentThinking(false);
+      }
+      return;
+    }
+
+    // Plain LLM chat: SSE streaming, unchanged.
+    setStreaming(true);
     setStreamContent('');
 
     try {
@@ -294,6 +324,9 @@ export default function ChatPage() {
               {currentSession.model && (
                 <Chip label={currentSession.model} size="small" variant="outlined" sx={{ fontSize: '0.7rem', height: 22 }} />
               )}
+              {currentSession.isAgentChat && (
+                <Chip label="agent" size="small" color="secondary" sx={{ fontSize: '0.7rem', height: 22 }} />
+              )}
             </Box>
 
             {/* Messages */}
@@ -305,14 +338,30 @@ export default function ChatPage() {
                 </Box>
               )}
 
-              {messages.map(msg => (
-                <MessageBubble
-                  key={msg.id}
-                  role={msg.role}
-                  content={msg.content}
-                  timestamp={msg.createdAt}
-                />
-              ))}
+              {messages.map(msg => {
+                const agentBlock = agentToolsByMessageId[msg.id];
+                return (
+                  <Box key={msg.id}>
+                    <MessageBubble
+                      role={msg.role}
+                      content={msg.content}
+                      timestamp={msg.createdAt}
+                    />
+                    {agentBlock && (agentBlock.calls.length > 0 || agentBlock.pendingIds.length > 0) && (
+                      <Box sx={{ ml: 1, mb: 1 }}>
+                        {agentBlock.calls.map((call, idx) => (
+                          <AgentToolCallCard key={`${msg.id}-${idx}`} call={call} />
+                        ))}
+                        {agentBlock.pendingIds.length > 0 && (
+                          <Typography variant="caption" color="warning.main" sx={{ display: 'block', mx: 1, mb: 1 }}>
+                            {agentBlock.pendingIds.length} tool call(s) require approval. Open the Tools page to approve.
+                          </Typography>
+                        )}
+                      </Box>
+                    )}
+                  </Box>
+                );
+              })}
 
               {streaming && streamContent && (
                 <MessageBubble role="assistant" content={streamContent} streaming />
@@ -320,6 +369,10 @@ export default function ChatPage() {
 
               {streaming && !streamContent && (
                 <MessageBubble role="assistant" content="..." streaming />
+              )}
+
+              {agentThinking && (
+                <MessageBubble role="assistant" content="thinking…" streaming />
               )}
 
               <div ref={messagesEndRef} />
@@ -336,8 +389,8 @@ export default function ChatPage() {
             <Box sx={{ flexShrink: 0 }}>
               <ChatInput
                 onSend={handleSend}
-                disabled={streaming}
-                placeholder="Type a message..."
+                disabled={streaming || agentThinking}
+                placeholder={currentSession.isAgentChat ? 'Ask the agent…' : 'Type a message...'}
               />
             </Box>
           </>
