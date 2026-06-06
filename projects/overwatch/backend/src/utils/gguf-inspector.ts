@@ -156,6 +156,43 @@ PYEOF
   return runRemoteSSH(credentials, shellScript);
 }
 
+// ─── GGUF file_type numeric enum → quantization name ───
+// From ggml-common.h (GGML_TYPE_COUNT / GGUF file_type values)
+const GGUF_FILE_TYPE_MAP: Record<number, string> = {
+  0: 'ALL_F32',
+  1: 'MOSTLY_F16',
+  2: 'MOSTLY_Q4_0',
+  3: 'MOSTLY_Q4_1',
+  4: 'MOSTLY_Q4_1_SOME_F16',
+  5: 'MOSTLY_Q4_2',
+  6: 'MOSTLY_Q4_3',
+  7: 'MOSTLY_Q8_0',
+  8: 'MOSTLY_Q5_0',
+  9: 'MOSTLY_Q5_1',
+  10: 'MOSTLY_Q2_K',
+  11: 'MOSTLY_Q3_K_S',
+  12: 'MOSTLY_Q3_K_M',
+  13: 'MOSTLY_Q3_K_L',
+  14: 'MOSTLY_Q4_K_S',
+  15: 'MOSTLY_Q4_K_M',
+  16: 'MOSTLY_Q5_K_S',
+  17: 'MOSTLY_Q5_K_M',
+  18: 'MOSTLY_Q6_K',
+};
+
+/**
+ * Map GGUF numeric file_type to a quantization label.
+ */
+function fileTypeName(fileType: any): string | undefined {
+  if (typeof fileType === 'number') {
+    return GGUF_FILE_TYPE_MAP[fileType];
+  }
+  if (typeof fileType === 'string') {
+    return fileType;
+  }
+  return undefined;
+}
+
 // ─── Key-value map for common GGUF fields ───
 
 const KEY_MAP: Record<string, string> = {
@@ -250,77 +287,125 @@ export async function inspectGGUFFile(
   }
 
   // ── Local inspection ──
+  // Write Python GGUF parser to a temp file to avoid shell escaping issues.
+  const localPythonScript = path.join(os.tmpdir(), `gguf_inspect_${Date.now()}_${Math.random().toString(36).slice(2)}.py`);
 
-  // Try using gguf-inspect CLI first (most accurate)
   try {
-    const output = execSync(`gguf-inspect "${filePath}" --json 2>/dev/null || echo '{}'`).toString().trim();
-    if (output && output !== '{}') {
-      const data = JSON.parse(output);
-      return parseGGUFInspect(data, filePath, sizeBytes, sizeGB);
-    }
-  } catch {
-    console.log('gguf-inspect not available, falling back to manual parsing');
-  }
+    // Only extract essential metadata keys to avoid huge JSON output (>10MB for tokenizer vocab data).
+    // Full metadata dump can exceed Node's maxBuffer and crash the process.
+    const ESSENTIAL_KEYS = [
+      'general.name', 'general.architecture', 'general.type',
+      'general.parameter_count', 'general.file_type',
+      'general.quantization_version',
+      'llama.context_length', 'llama.embedding_length', 'llama.block_count',
+      'llama.feed_forward_length', 'llama.attention.head_count',
+      'llama.attention.head_count_kv', 'llama.attention.layer_norm_rms_epsilon',
+      'llama.rope.freq_base', 'llama.rope.dimension_count',
+      'clip.context_length', 'clip.vision.embedding_length', 'clip.vision.block_count',
+      'clip.vision.num_heads', 'bert.context_length', 'gpt2.context_length',
+      'bloom.context_length',
+    ];
 
-  // Fallback: Python GGUF header parser (local)
-  try {
-    const escaped = filePath.replace(/'/g, "'\\''");
-    const output = execSync(`python3 -c "
+    const pythonScript = `#!/usr/bin/env python3
 import struct, sys, json
 
-def read_uint64(f): return struct.unpack('<Q', f.read(8))[0]
-def read_uint32(f): return struct.unpack('<I', f.read(4))[0]
+ESSENTIAL_KEYS = ${JSON.stringify(ESSENTIAL_KEYS)}
 
-def read_value(f, value_type):
-    if value_type == 0: return struct.unpack('<B', f.read(1))[0]
-    elif value_type == 1: return struct.unpack('<b', f.read(1))[0]
-    elif value_type == 2: return struct.unpack('<H', f.read(2))[0]
-    elif value_type == 3: return struct.unpack('<h', f.read(2))[0]
-    elif value_type == 4: return struct.unpack('<I', f.read(4))[0]
-    elif value_type == 5: return struct.unpack('<i', f.read(4))[0]
-    elif value_type == 6: return struct.unpack('<f', f.read(4))[0]
-    elif value_type == 7: return bool(struct.unpack('<B', f.read(1))[0])
-    elif value_type == 8:
-        length = read_uint64(f)
-        return f.read(length).decode('utf-8', errors='ignore')
-    elif value_type == 9:
-        arr_type = read_uint32(f)
-        arr_len = read_uint64(f)
-        return [read_value(f, arr_type) for _ in range(arr_len)]
-    elif value_type == 10: return read_uint64(f)
-    elif value_type == 11: return struct.unpack('<q', f.read(8))[0]
-    elif value_type == 12: return struct.unpack('<d', f.read(8))[0]
-    else: return f'<unknown_{value_type}>'
+def ru64(f): return struct.unpack('<Q', f.read(8))[0]
+def ru32(f): return struct.unpack('<I', f.read(4))[0]
+
+def rv(f, t):
+    if t == 0: return struct.unpack('<B', f.read(1))[0]
+    elif t == 1: return struct.unpack('<b', f.read(1))[0]
+    elif t == 2: return struct.unpack('<H', f.read(2))[0]
+    elif t == 3: return struct.unpack('<h', f.read(2))[0]
+    elif t == 4: return struct.unpack('<I', f.read(4))[0]
+    elif t == 5: return struct.unpack('<i', f.read(4))[0]
+    elif t == 6: return struct.unpack('<f', f.read(4))[0]
+    elif t == 7: return bool(struct.unpack('<B', f.read(1))[0])
+    elif t == 8:
+        l = ru64(f); return f.read(l).decode('utf-8', errors='ignore')
+    elif t == 9:
+        at = ru32(f); al = ru64(f); return [rv(f, at) for _ in range(al)]
+    elif t == 10: return ru64(f)
+    elif t == 11: return struct.unpack('<q', f.read(8))[0]
+    elif t == 12: return struct.unpack('<d', f.read(8))[0]
+    else: return str(t)
+
+def skip_value(f, t):
+    """Skip a value without storing it (saves memory)."""
+    if t == 0: f.read(1)
+    elif t == 1: f.read(1)
+    elif t == 2: f.read(2)
+    elif t == 3: f.read(2)
+    elif t == 4: f.read(4)
+    elif t == 5: f.read(4)
+    elif t == 6: f.read(4)
+    elif t == 7: f.read(1)
+    elif t == 8:
+        l = ru64(f); f.read(l)
+    elif t == 9:
+        at = ru32(f); al = ru64(f)
+        for _ in range(al): skip_value(f, at)
+    elif t == 10: f.read(8)
+    elif t == 11: f.read(8)
+    elif t == 12: f.read(8)
+    else: pass
 
 try:
-    with open('${escaped}', 'rb') as f:
-        magic = f.read(4)
-        if magic != b'GGUF': print(json.dumps({\"error\": \"Not GGUF\"})); sys.exit(0)
-        version = read_uint32(f)
-        tensor_count = read_uint64(f)
-        kv_count = read_uint64(f)
-        metadata = {}
-        for _ in range(kv_count):
-            key_len = read_uint64(f)
-            key = f.read(key_len).decode('utf-8', errors='ignore')
-            value_type = read_uint32(f)
-            value = read_value(f, value_type)
-            metadata[key] = value
-        print(json.dumps({\"version\": version, \"tensor_count\": tensor_count, \"kv_count\": kv_count, \"metadata\": metadata}))
+    with open(sys.argv[1], 'rb') as f:
+        m = f.read(4)
+        if m != b'GGUF':
+            print(json.dumps({'error': 'Not GGUF'}))
+            sys.exit(0)
+        v = ru32(f); tc = ru64(f); kc = ru64(f); md = {}
+        for _ in range(kc):
+            k = rv(f, 8)
+            vt = ru32(f)
+            if k in ESSENTIAL_KEYS:
+                val = rv(f, vt)
+                if isinstance(val, float) and val != val: val = 0.0
+                md[k] = val
+            else:
+                skip_value(f, vt)
+        print(json.dumps({'version': v, 'tensor_count': tc, 'kv_count': kc, 'metadata': md}, default=str))
 except Exception as e:
-    print(json.dumps({\"error\": str(e)}))
-" 2>/dev/null || echo '{}'`).toString().trim();
+    print(json.dumps({'error': str(e)}))
+`;
+    fs.writeFileSync(localPythonScript, pythonScript, { mode: 0o755 });
+
+    const { spawn: spawnProc } = await import('child_process');
+
+    // Use spawn instead of execSync to avoid ENOBUFS issues on some systems
+    let output = '';
+    let stderr = '';
+    await new Promise<void>((resolve, reject) => {
+      const proc = spawnProc('python3', [localPythonScript, filePath]);
+      proc.stdout.on('data', (d: Buffer) => { output += d.toString(); });
+      proc.stderr.on('data', (d: Buffer) => { stderr += d.toString(); });
+      proc.on('close', (code) => {
+        if (code === 0) resolve();
+        else reject(new Error(`Python exited with code ${code}: ${stderr.slice(-500)}`));
+      });
+      proc.on('error', reject);
+      setTimeout(() => { proc.kill('SIGKILL'); reject(new Error('Python timeout (30s)')); }, 30000);
+    });
+    output = output.trim();
 
     if (output && output !== '{}') {
       const data = JSON.parse(output);
       if (data.error) {
+        console.log(`GGUF inspection error: ${data.error}, falling back to filename`);
         return parseFromFilename(filePath, sizeBytes, sizeGB);
       }
       return parseGGUFMetadata(data, filePath, sizeBytes, sizeGB);
     }
-  } catch {
-    console.log('Python parsing failed, using filename-based detection');
+  } catch (err) {
+    console.log('Python GGUF parsing failed, using filename-based detection');
+  } finally {
+    try { fs.unlinkSync(localPythonScript); } catch { /* ignore cleanup */ }
   }
+
 
   // Ultimate fallback: extract info from filename
   return parseFromFilename(filePath, sizeBytes, sizeGB);
@@ -345,57 +430,86 @@ function parseGGUFMetadata(
 
   // Extract quantization
   let quantization = 'unknown';
-  if (fileType && typeof fileType === 'string') {
-    const qtMatch = fileType.match(/(Q[0-9]+_[A-Z_]+)/i);
+
+  // 1. Try file_type enum (numeric or string like "MOSTLY_Q8_0")
+  const ftName = fileTypeName(fileType);
+  if (ftName) {
+    const enumMatch = ftName.match(/(Q[0-9]+_[A-Z0-9]+)/i);
+    if (enumMatch) quantization = enumMatch[1];
+  }
+
+  // 2. If numeric file_type didn't yield a Q-label, try string match
+  if (quantization === 'unknown' && typeof fileType === 'string') {
+    const qtMatch = fileType.match(/(Q[0-9]+_[A-Z0-9_]+)/i);
     if (qtMatch) quantization = qtMatch[1];
   }
+
+  // 3. Fallback: extract from filename
   if (quantization === 'unknown') {
-    const fnQt = path.basename(filePath).match(/(Q[0-9]+_[A-Z_]+)/i);
+    const fnQt = path.basename(filePath).match(/(Q[0-9]+_[A-Z0-9]+)/i);
     if (fnQt) quantization = fnQt[1];
   }
 
   // Detect vision models
-  const isVisionModel = archLower.includes('clip') || archLower.includes('llava') ||
+  let isVisionModel = archLower.includes('clip') || archLower.includes('llava') ||
                          archLower.includes('mllama') || archLower.includes('qwen2vl') ||
                          archLower.includes('llama4');
 
-  // Find companion mmproj files
+  // Find companion mmproj files — use flexible glob-style matching.
+  // mmproj files don't always match the base model name exactly (quantization differs).
   const mmprojFiles: string[] = [];
-  if (isVisionModel) {
-    const dir = path.dirname(filePath);
-    const baseName = path.basename(filePath, '.gguf');
-    const candidates = [
-      path.join(dir, `${baseName}.mmproj.gguf`),
-      path.join(dir, `mmproj-${baseName}.gguf`),
-      path.join(dir, `mmproj-${archLower}.gguf`),
-      path.join(dir, 'mmproj.gguf'),
-      path.join(dir, `${baseName}-mmproj.gguf`),
-    ];
+  const dir = path.dirname(filePath);
+  const baseName = path.basename(filePath, '.gguf');
 
-    for (const candidate of candidates) {
-      try {
-        if (fs.existsSync(candidate)) {
-          mmprojFiles.push(candidate);
-        }
-      } catch { /* remote path — file may not exist locally */ }
-    }
+  // First try exact candidates
+  const exactCandidates = [
+    path.join(dir, `${baseName}.mmproj.gguf`),
+    path.join(dir, `mmproj-${baseName}.gguf`),
+    path.join(dir, `mmproj-${archLower}.gguf`),
+    path.join(dir, 'mmproj.gguf'),
+    path.join(dir, `${baseName}-mmproj.gguf`),
+  ];
 
-    // For remote files, also check via SSH
-    // (passed via data.metadata._remote_mmproj_check from the remoteGGUFInspect wrapper)
-    if (data.metadata && data.metadata._remote_mmproj_check) {
-      const remoteMmprojs = data.metadata._remote_mmproj_check as string[];
-      for (const remotePath of remoteMmprojs) {
-        if (!mmprojFiles.includes(remotePath)) {
-          mmprojFiles.push(remotePath);
-        }
+  for (const candidate of exactCandidates) {
+    try {
+      if (fs.existsSync(candidate)) {
+        mmprojFiles.push(candidate);
+      }
+    } catch { /* remote path */ }
+  }
+
+  // If no exact match, try glob-style: any file starting with mmproj- or containing mmproj in same dir
+  if (mmprojFiles.length === 0) {
+    try {
+      const entries = fs.readdirSync(dir);
+      const mmprojGlob = entries
+        .filter(f => f.endsWith('.gguf') && (f.startsWith('mmproj-') || f.includes('-mmproj') || f === 'mmproj.gguf') && f !== path.basename(filePath))
+        .map(f => path.join(dir, f));
+      for (const p of mmprojGlob) {
+        if (!mmprojFiles.includes(p)) mmprojFiles.push(p);
+      }
+    } catch { /* ignore readdir errors */ }
+  }
+
+  // For remote files, also check via SSH
+  if (data.metadata && data.metadata._remote_mmproj_check) {
+    const remoteMmprojs = data.metadata._remote_mmproj_check as string[];
+    for (const remotePath of remoteMmprojs) {
+      if (!mmprojFiles.includes(remotePath)) {
+        mmprojFiles.push(remotePath);
       }
     }
+  }
+
+  // Update isVisionModel based on mmproj file presence (even if architecture name doesn't indicate it)
+  if (mmprojFiles.length > 0) {
+    isVisionModel = true;
   }
 
   return {
     name,
     architecture: rawArchitecture,
-    parameterCount: formatParameterCount(paramCountRaw),
+    parameterCount: formatParameterCount(paramCountRaw, filePath),
     quantization,
     sizeBytes,
     sizeGB,
@@ -426,12 +540,17 @@ function parseGGUFInspect(data: any, filePath: string, sizeBytes: number, sizeGB
   const fileType = metadata['general.file_type'] || 'unknown';
 
   let quantization = 'unknown';
-  if (fileType && typeof fileType === 'string') {
-    const qtMatch = fileType.match(/(Q[0-9]+_[A-Z_]+)/i);
+  const ftName = fileTypeName(fileType);
+  if (ftName) {
+    const enumMatch = ftName.match(/(Q[0-9]+_[A-Z0-9]+)/i);
+    if (enumMatch) quantization = enumMatch[1];
+  }
+  if (quantization === 'unknown' && typeof fileType === 'string') {
+    const qtMatch = fileType.match(/(Q[0-9]+_[A-Z0-9_]+)/i);
     if (qtMatch) quantization = qtMatch[1];
   }
   if (quantization === 'unknown') {
-    const fnQt = path.basename(filePath).match(/(Q[0-9]+_[A-Z_]+)/i);
+    const fnQt = path.basename(filePath).match(/(Q[0-9]+_[A-Z0-9]+)/i);
     if (fnQt) quantization = fnQt[1];
   }
 
@@ -458,7 +577,7 @@ function parseGGUFInspect(data: any, filePath: string, sizeBytes: number, sizeGB
   return {
     name,
     architecture,
-    parameterCount: formatParameterCount(paramCount),
+    parameterCount: formatParameterCount(paramCount, filePath),
     quantization,
     sizeBytes,
     sizeGB,
@@ -529,8 +648,9 @@ function parseFromFilename(filePath: string, sizeBytes: number, sizeGB: number):
  */
 function extractQuantFromFilename(filename: string): string {
   const patterns = [
-    /(Q[0-9]+_[A-Z_]+)/i,    // Q4_K_M, Q8_K, etc.
+    /(Q[0-9]+_[A-Z0-9_]+)/i, // Q4_K_M, Q8_0, Q8_K, etc. (include digits after underscore)
     /(Q[0-9]+)/i,             // Q4, Q8, etc.
+    /(F16|BF16)/i,            // F16, BF16
     /([0-9]bit)/i,            // 4bit, 8bit, etc.
   ];
 
@@ -560,25 +680,53 @@ function extractParametersFromFilename(filename: string): string {
 
 /**
  * Format parameter count from various input formats.
+ * Falls back to filename extraction when header data is missing.
  */
-function formatParameterCount(input: any): string {
-  if (!input) return 'unknown';
+function formatParameterCount(input: any, filePath?: string): string {
+  if (!input) {
+    // Fallback to filename
+    if (filePath) {
+      return extractParametersFromFilename(path.basename(filePath));
+    }
+    return 'unknown';
+  }
 
   if (typeof input === 'string') {
     if (input.match(/^\d+[BM]$/i)) return input.toUpperCase();
     const num = parseFloat(input);
     if (!isNaN(num)) {
-      if (num >= 1e9) return `${(num / 1e9).toFixed(1)}B`.replace('.0B', 'B');
-      if (num >= 1e6) return `${(num / 1e6).toFixed(1)}M`.replace('.0M', 'M');
+      return formatNumberToParams(num);
     }
   }
 
   if (typeof input === 'number') {
-    if (input >= 1e9) return `${(input / 1e9).toFixed(1)}B`.replace('.0B', 'B');
-    if (input >= 1e6) return `${(input / 1e6).toFixed(1)}M`.replace('.0M', 'M');
+    return formatNumberToParams(input);
+  }
+
+  // Try filename fallback
+  if (filePath) {
+    return extractParametersFromFilename(path.basename(filePath));
   }
 
   return 'unknown';
+}
+
+/**
+ * Convert a numeric parameter count to a human-readable string.
+ */
+function formatNumberToParams(num: number): string {
+  if (num >= 1e12) return `${(num / 1e12).toFixed(1)}T`.replace('.0T', 'T');
+  if (num >= 1e9) {
+    const val = num / 1e9;
+    if (Number.isInteger(val)) return `${val}B`;
+    return `${val.toFixed(1)}B`;
+  }
+  if (num >= 1e6) {
+    const val = num / 1e6;
+    if (Number.isInteger(val)) return `${val}M`;
+    return `${val.toFixed(1)}M`;
+  }
+  return `${num}K`;
 }
 
 // ─── Exported scanning functions (unchanged from Phase 1) ───

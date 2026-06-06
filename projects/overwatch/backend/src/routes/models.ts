@@ -147,13 +147,16 @@ router.get('/inspect', authenticate, auditLog('INSPECT_GGUF_MODEL'), async (req:
     const metadata = await inspectGGUFFile(filePath, sshCredentials);
 
     // Build a response format matching the frontend's expected shape
-    const hasMmproj = !!(metadata.isVisionModel && metadata.mmprojFiles && metadata.mmprojFiles.length > 0);
+    // hasMmproj is independent of isVisionModel — a text model can have a vision projection companion
+    const hasMmproj = !!(metadata.mmprojFiles && metadata.mmprojFiles.length > 0);
+    const isVisionModel = metadata.isVisionModel || hasMmproj;
 
     res.json({
       path: filePath,
       systemId,
       metadata: {
         ...metadata,
+        isVisionModel,
         hasMmproj,
         filePath,
         sizeStr: `${metadata.sizeGB} GB`,
