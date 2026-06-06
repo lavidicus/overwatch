@@ -1,0 +1,818 @@
+// Overwatch Prisma Schema
+// Generated from 00-ARCHITECTURE.md
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+// ─── Users & Auth ───
+model User {
+  id            String    @id @default(uuid())
+  email         String    @unique
+  displayName   String
+  passwordHash  String
+  role          Role      @default(USER)
+  department    String?
+  active        Boolean   @default(true)
+  mfaEnabled    Boolean   @default(false)
+  mfaSecret     String?
+  lastLogin     DateTime?
+  createdAt     DateTime  @default(now())
+  updatedAt     DateTime  @updatedAt
+
+  loginLogs          AuditLog[]              @relation("AuditLogUser")
+  chatSessions       ChatSession[]          @relation("ChatSessionUser")
+  groupChats         ChatGroupMember[]      @relation("ChatGroupMemberUser")
+  systemAccess       SystemAccess[]         @relation("SystemAccessUser")
+  benchmarkRuns      BenchmarkRun[]         @relation("BenchmarkRunUser")
+  chatMessages       ChatMessage[]          @relation("ChatMessageUser")
+  agentCommands      AgentCommand[]         @relation("AgentCommandUser")
+  piCalls            PiCall[]               @relation("PiCallUser")
+  memories           Memory[]               @relation("MemoryUser")
+  ownedGroups        ChatGroup[]            @relation("ChatGroupOwner")
+  queueTasks         QueueTask[]            @relation("QueueTaskUser")
+  changeComments     ChangeComment[]        @relation("ChangeCommentUser")
+  proposedChanges    ChangeProposal[]       @relation("ChangeProposalProposedBy")
+  deployedChanges    ChangeProposal[]       @relation("ChangeProposalDeployedBy")
+  deployedVersions   ChangeVersion[]        @relation("ChangeVersionDeployedBy")
+
+  @@map("users")
+}
+
+enum Role {
+  ADMIN
+  OPERATOR
+  USER
+  VIEWER
+}
+
+// ─── AI Providers ───
+model Provider {
+  id            String       @id @default(uuid())
+  name          String
+  type          ProviderType
+  baseUrl       String
+  port          Int?
+  apiKey        String?
+  apiKeyVersion Int          @default(1)
+  model         String
+  status        ProviderStatus
+  lastChecked   DateTime?
+  latencyMs     Int?
+  config        Json?
+  createdAt     DateTime     @default(now())
+  updatedAt     DateTime     @updatedAt
+
+  models              ProviderModel[]     @relation("ProviderModelProvider")
+  benchmarkRuns       BenchmarkRun[]      @relation("BenchmarkRunProvider")
+  chatSessions        ChatSession[]       @relation("ChatSessionProvider")
+  agentChatSessions   ChatSession[]       @relation("ChatSessionAgentProvider")
+  piCalls             PiCall[]            @relation("PiCallProvider")
+  agentConnections    AgentConnection[]   @relation("AgentConnectionProvider")
+  queueTasks          QueueTask[]         @relation("QueueTaskProvider")
+
+  @@unique([name, type])
+  @@map("providers")
+}
+
+enum ProviderType {
+  VLLM
+  OLLAMA
+  LLAMACPP
+  OPENAI
+  ANTHROPIC
+  OPENCLAW
+  HERMES
+  CUSTOM
+}
+
+enum ProviderStatus {
+  CONNECTED
+  DISCONNECTED
+  ERROR
+  TESTING
+}
+
+// ─── Models (instances of a provider) ───
+model ProviderModel {
+  id             String      @id @default(uuid())
+  providerId     String
+  provider       Provider    @relation("ProviderModelProvider", fields: [providerId], references: [id], onDelete: Cascade)
+  name           String
+  displayName    String?
+  quantization   String?
+  sizeGB         Float?
+  parameters     String?
+  source         ModelSource?
+  downloadPath   String?
+  systemId       String?                              // Remote system where model file lives (for LOCAL models)
+  system         RemoteSystem?                         @relation("ModelSystem", fields: [systemId], references: [id])
+  visionModelId  String?                              // Linked vision/MMV model ID (for multimodal models)
+  visionModel    ProviderModel?                         @relation("VisionModelLink", fields: [visionModelId], references: [id])
+  companionModels ProviderModel[]                         @relation("VisionModelLink")
+  status         ModelStatus
+  downloadProgress Float?
+  downloadedAt   DateTime?
+  createdAt      DateTime    @default(now())
+  updatedAt      DateTime    @updatedAt
+
+  benchmarkRuns BenchmarkRun[]    @relation("BenchmarkRunModel")
+  chatSessions  ChatSession[]     @relation("ChatSessionModel")
+  queueTasks    QueueTask[]       @relation("QueueTaskModel")
+
+  @@index([providerId, status])
+  @@index([systemId])
+  @@map("provider_models")
+}
+
+enum ModelStatus {
+  AVAILABLE
+  DOWNLOADING
+  DOWNLOAD_FAILED
+}
+
+enum ModelSource {
+  HUGGINGFACE
+  LOCAL
+  MANUAL
+  DISCOVERED
+}
+
+// ─── Remote Systems ───
+model RemoteSystem {
+  id                String           @id @default(uuid())
+  name              String
+  hostname          String
+  port              Int              @default(22)
+  protocol          ProtocolType
+  username          String
+  authType          AuthType
+  encryptedPassword String?
+  encryptedKey      String?
+  keyPassword       String?
+  active            Boolean          @default(true)
+  createdAt         DateTime         @default(now())
+  updatedAt         DateTime         @updatedAt
+
+  installations   SystemInstallation[] @relation("SystemInstallSystem")
+  hardwareInfo    HardwareInfo?        @relation("HardwareInfoSystem")
+  systemAccess    SystemAccess[]       @relation("SystemAccessSystem")
+  hfDownloads     HFDownload[]         @relation("HFDownloadSystem")
+  models          ProviderModel[]      @relation("ModelSystem")
+
+  @@map("remote_systems")
+}
+
+enum ProtocolType {
+  SSH
+  LOCAL
+}
+
+enum AuthType {
+  PASSWORD
+  SSH_KEY
+  KEY_PAIR
+}
+
+// ─── System Installations ───
+model SystemInstallation {
+  id           String             @id @default(uuid())
+  systemId     String
+  system       RemoteSystem       @relation("SystemInstallSystem", fields: [systemId], references: [id], onDelete: Cascade)
+  softwareType SoftwareType
+  version      String
+  status       InstallationStatus
+  installPath  String?
+  port         Int?
+  gpuCount     Int?
+  gpuModels    Json?
+  ramGB        Float?
+  modelPath    String?
+  logs         String?
+  lastRunAt    DateTime?
+  createdAt    DateTime           @default(now())
+  updatedAt    DateTime           @updatedAt
+
+  @@index([systemId, softwareType])
+  @@map("system_installations")
+}
+
+enum SoftwareType {
+  VLLM
+  OLLAMA
+  LLAMACPP
+}
+
+enum InstallationStatus {
+  INSTALLED
+  UPGRADING
+  FAILED
+}
+
+// ─── Hardware Info ───
+model HardwareInfo {
+  id            String    @id @default(uuid())
+  systemId      String    @unique
+  system        RemoteSystem @relation("HardwareInfoSystem", fields: [systemId], references: [id], onDelete: Cascade)
+  cpuModel      String?
+  cpuCores      Int?
+  cpuThreads    Int?
+  ramGB         Float?
+  gpuInfo       Json?
+  os            String?
+  kernel        String?
+  dockerVersion String?
+  whatllmRecs   Json?
+  analyzedAt    DateTime
+  createdAt     DateTime  @default(now())
+  updatedAt     DateTime  @updatedAt
+
+  @@map("hardware_info")
+}
+
+// ─── Benchmark Runs ───
+model BenchmarkRun {
+  id            String          @id @default(uuid())
+  providerId    String
+  provider      Provider        @relation("BenchmarkRunProvider", fields: [providerId], references: [id], onDelete: Cascade)
+  modelId       String?
+  model         ProviderModel?  @relation("BenchmarkRunModel", fields: [modelId], references: [id])
+  userId        String
+  user          User            @relation("BenchmarkRunUser", fields: [userId], references: [id])
+  name          String
+  benchmarkType BenchmarkType
+  prompt        String?
+  results       Json
+  status        BenchmarkStatus
+  startedAt     DateTime        @default(now())
+  completedAt   DateTime?
+  createdAt     DateTime        @default(now())
+
+  @@index([providerId, status])
+  @@map("benchmark_runs")
+}
+
+enum BenchmarkType {
+  SPEED
+  QUALITY
+  COMPARATIVE
+}
+
+enum BenchmarkStatus {
+  RUNNING
+  COMPLETED
+  FAILED
+}
+
+// ─── Chat Sessions ───
+model ChatSession {
+  id              String       @id @default(uuid())
+  name            String?
+  userId          String
+  user            User         @relation("ChatSessionUser", fields: [userId], references: [id], onDelete: Cascade)
+  providerId      String?
+  provider        Provider?    @relation("ChatSessionProvider", fields: [providerId], references: [id])
+  modelId         String?
+  model           ProviderModel? @relation("ChatSessionModel", fields: [modelId], references: [id])
+  agentProviderId String?
+  agentProvider   Provider?    @relation("ChatSessionAgentProvider", fields: [agentProviderId], references: [id])
+  isAgentChat     Boolean      @default(false)
+  systemPrompt    String?
+  temperature     Float?
+  maxTokens       Int?
+  isActive        Boolean      @default(true)
+  createdAt       DateTime     @default(now())
+  updatedAt       DateTime     @updatedAt
+
+  messages  ChatMessage[]    @relation("ChatMessageSession")
+  toolLogs  AgentToolLog[]   @relation("AgentToolLogSession")
+
+  @@index([userId, isActive])
+  @@map("chat_sessions")
+}
+
+// ─── Chat Messages ───
+model ChatMessage {
+  id        String       @id @default(uuid())
+  sessionId String
+  session   ChatSession  @relation("ChatMessageSession", fields: [sessionId], references: [id], onDelete: Cascade)
+  groupId   String?
+  group     ChatGroup?   @relation("ChatMessageGroup", fields: [groupId], references: [id])
+  userId    String
+  user      User         @relation("ChatMessageUser", fields: [userId], references: [id])
+  role      MessageRole
+  content   String
+  modelUsed String?
+  createdAt DateTime     @default(now())
+
+  @@index([sessionId, createdAt])
+  @@index([groupId, createdAt])
+  @@map("chat_messages")
+}
+
+enum MessageRole {
+  USER
+  ASSISTANT
+  SYSTEM
+}
+
+// ─── Chat Groups ───
+model ChatGroup {
+  id          String            @id @default(uuid())
+  name        String
+  description String?
+  ownerId     String
+  owner       User              @relation("ChatGroupOwner", fields: [ownerId], references: [id])
+  isActive    Boolean           @default(true)
+  createdAt   DateTime          @default(now())
+  updatedAt   DateTime          @updatedAt
+
+  members ChatGroupMember[] @relation("ChatGroupMembers")
+  messages ChatMessage[]    @relation("ChatMessageGroup")
+
+  @@map("chat_groups")
+}
+
+model ChatGroupMember {
+  id       String          @id @default(uuid())
+  groupId  String
+  group    ChatGroup       @relation("ChatGroupMembers", fields: [groupId], references: [id], onDelete: Cascade)
+  userId   String
+  user     User            @relation("ChatGroupMemberUser", fields: [userId], references: [id], onDelete: Cascade)
+  role     GroupMemberRole
+  joinedAt DateTime        @default(now())
+
+  @@unique([groupId, userId])
+  @@map("chat_group_members")
+}
+
+enum GroupMemberRole {
+  MEMBER
+  MODERATOR
+  OWNER
+}
+
+// ─── Routing Rules ───
+model RoutingRule {
+  id              String      @id @default(uuid())
+  name            String
+  description     String?
+  enabled         Boolean     @default(true)
+  priority        Int         @default(0)
+  condition       Json?
+  targetProviderId String?
+  targetModelId   String?
+  routerMode      RouterMode?
+  weight          Int         @default(50)
+  createdAt       DateTime    @default(now())
+  updatedAt       DateTime    @updatedAt
+
+  @@index([enabled, priority])
+  @@map("routing_rules")
+}
+
+enum RouterMode {
+  ROUND_ROBIN
+  WEIGHTED
+  LOWEST_LATENCY
+  HIGHEST_QUALITY
+  CUSTOM
+}
+
+// ─── Task Queue (BullMQ) ───
+model QueueTask {
+  id         String       @id @default(uuid())
+  providerId String
+  provider   Provider     @relation("QueueTaskProvider", fields: [providerId], references: [id])
+  modelId    String
+  model      ProviderModel @relation("QueueTaskModel", fields: [modelId], references: [id])
+  userId     String
+  user       User         @relation("QueueTaskUser", fields: [userId], references: [id])
+  prompt     String
+  status     TaskStatus
+  jobKey     String?
+  result     String?
+  error      String?
+  createdAt  DateTime     @default(now())
+  startedAt  DateTime?
+  completedAt DateTime?
+  priority   Int          @default(0)
+  retryCount Int          @default(0)
+
+  @@index([status, priority])
+  @@map("queue_tasks")
+}
+
+enum TaskStatus {
+  WAITING
+  PROCESSING
+  COMPLETED
+  FAILED
+  RETRYING
+}
+
+// ─── System Access Controls ───
+model SystemAccess {
+  id          String      @id @default(uuid())
+  systemId    String
+  system      RemoteSystem @relation("SystemAccessSystem", fields: [systemId], references: [id], onDelete: Cascade)
+  userId      String
+  user        User        @relation("SystemAccessUser", fields: [userId], references: [id])
+  accessLevel AccessLevel
+  elevated    Boolean     @default(false)
+  elevatedUntil DateTime?
+  grantedAt   DateTime    @default(now())
+  grantedBy   String?
+
+  @@unique([systemId, userId])
+  @@map("system_access")
+}
+
+enum AccessLevel {
+  READ
+  WRITE
+  EXECUTE
+  ADMIN
+}
+
+// ─── Agent Connections ───
+model AgentConnection {
+  id                 String      @id @default(uuid())
+  providerId         String
+  provider           Provider    @relation("AgentConnectionProvider", fields: [providerId], references: [id], onDelete: Cascade)
+  agentType          String
+  gatewayUrl         String
+  authTokenEncrypted String?
+  authKeyVersion     Int         @default(1)
+  status             AgentStatus @default(ONLINE)
+  currentModel       String?
+  activeSessions     Int         @default(0)
+  toolsAvailable     Json?
+  connectedAt        DateTime    @default(now())
+  lastActivity       DateTime?
+  createdAt          DateTime    @default(now())
+  updatedAt          DateTime    @updatedAt
+
+  commands AgentCommand[]   @relation("AgentCommandAgent")
+  toolLogs AgentToolLog[]   @relation("AgentToolLogAgent")
+
+  @@unique([providerId, agentType])
+  @@map("agent_connections")
+}
+
+enum AgentStatus {
+  ONLINE
+  OFFLINE
+  ERROR
+}
+
+// ─── Agent Command Queue ───
+model AgentCommand {
+  id          String         @id @default(uuid())
+  agentId     String
+  agent       AgentConnection @relation("AgentCommandAgent", fields: [agentId], references: [id])
+  userId      String
+  user        User           @relation("AgentCommandUser", fields: [userId], references: [id])
+  command     String
+  commandType String
+  status      CommandStatus  @default(QUEUED)
+  result      String?
+  error       String?
+  progress    Float?
+  startedAt   DateTime?
+  completedAt DateTime?
+  createdAt   DateTime       @default(now())
+
+  toolLogs AgentToolLog[] @relation("AgentToolLogCommand")
+
+  @@index([status, userId])
+  @@map("agent_commands")
+}
+
+enum CommandStatus {
+  QUEUED
+  RUNNING
+  COMPLETED
+  FAILED
+  CANCELLED
+}
+
+// ─── Agent Tool Execution Logs ───
+model AgentToolLog {
+  id        String         @id @default(uuid())
+  sessionId String?
+  session   ChatSession?   @relation("AgentToolLogSession", fields: [sessionId], references: [id])
+  commandId String?
+  command   AgentCommand?  @relation("AgentToolLogCommand", fields: [commandId], references: [id])
+  agentId   String
+  agent     AgentConnection @relation("AgentToolLogAgent", fields: [agentId], references: [id])
+  toolName  String
+  toolParams Json?
+  toolResult Json?
+  success   Boolean
+  error     String?
+  durationMs Int?
+  createdAt DateTime       @default(now())
+
+  @@index([agentId, createdAt])
+  @@index([sessionId, createdAt])
+  @@map("agent_tool_logs")
+}
+
+// ─── Pi Engine Calls ───
+model PiCall {
+  id              String       @id @default(uuid())
+  providerId      String
+  provider        Provider     @relation("PiCallProvider", fields: [providerId], references: [id], onDelete: Cascade)
+  userId          String
+  user            User         @relation("PiCallUser", fields: [userId], references: [id], onDelete: Cascade)
+  rawToolCall     Json
+  translatedCall  Json
+  executionStatus String       @default("QUEUED")
+  result          Json?
+  error           String?
+  durationMs      Int?
+  startedAt       DateTime     @default(now())
+  completedAt     DateTime?
+
+  @@index([executionStatus, userId])
+  @@map("pi_calls")
+}
+
+// ─── Memory (RAG) ───
+model Memory {
+  id             String         @id @default(uuid())
+  userId         String
+  user           User           @relation("MemoryUser", fields: [userId], references: [id], onDelete: Cascade)
+  category       MemoryCategory
+  content        String
+  metadata       Json?
+  relevanceScore Float          @default(0.5)
+  isPromoted     Boolean        @default(false)
+  isEditable     Boolean        @default(true)
+  createdAt      DateTime       @default(now())
+  updatedAt      DateTime       @updatedAt
+  accessedAt     DateTime?
+  accessCount    Int            @default(0)
+  ttlDays        Int?
+
+  vectorIndex      VectorIndex?       @relation("MemoryVectorIndex")
+  pendingDeletions PendingDeletion[]  @relation("PendingDeletionMemory")
+
+  @@index([userId, category, createdAt])
+  @@index([userId, isPromoted])
+  @@map("memories")
+}
+
+enum MemoryCategory {
+  USER_PROFILE
+  CONVERSATION_HIGHLIGHTS
+  LONG_TERM
+  SESSION_CONTEXT
+  TASK_STATE
+  AGENT_BEHAVIOR
+  SYSTEM_CONFIG
+}
+
+model VectorIndex {
+  id        String    @id @default(uuid())
+  memoryId  String    @unique
+  memory    Memory    @relation("MemoryVectorIndex", fields: [memoryId], references: [id], onDelete: Cascade)
+  vectorStore String
+  vectorId  String
+  dimension Int
+  createdAt DateTime  @default(now())
+
+  @@index([vectorStore])
+  @@map("vector_indexes")
+}
+
+// ─── Pending Memory Deletions ───
+model PendingDeletion {
+  id           String     @id @default(uuid())
+  memoryId     String
+  memory       Memory     @relation("PendingDeletionMemory", fields: [memoryId], references: [id])
+  reason       String
+  scheduledFor DateTime
+  confirmedAt  DateTime?
+  createdAt    DateTime   @default(now())
+
+  @@index([scheduledFor])
+  @@map("pending_deletions")
+}
+
+// ─── Change Proposals ───
+model ChangeProposal {
+  id               String           @id @default(uuid())
+  title            String
+  description      String
+  category         ChangeCategory
+  type             ImprovementType
+  source           String?
+  proposedByUserId String?
+  proposedByUser   User?            @relation("ChangeProposalProposedBy", fields: [proposedByUserId], references: [id])
+  proposedBySystem Boolean          @default(false)
+  priority         ChangePriority
+  risk             ChangeRisk
+  status           ChangeStatus
+  configDiff       Json
+  testResults      Json?
+  userFeedback     Json?
+  deployedAt       DateTime?
+  deployedByUserId String?
+  deployedByUser   User?            @relation("ChangeProposalDeployedBy", fields: [deployedByUserId], references: [id])
+  rolledBackAt     DateTime?
+  rollbackReason   String?
+  createdAt        DateTime         @default(now())
+  updatedAt        DateTime         @updatedAt
+
+  comments ChangeComment[]   @relation("ChangeCommentProposal")
+  versions ChangeVersion[]   @relation("ChangeVersionProposal")
+
+  settingsChanged Setting[] @relation("SettingChangeProposal")
+
+  @@index([status, category])
+  @@index([status, priority])
+  @@map("change_proposals")
+}
+
+enum ChangeCategory {
+  CONFIG_TWEAK
+  UI_IMPROVEMENT
+  AGENT_CONFIG
+  COMPONENT_UPDATE
+  SECURITY_PATCH
+}
+
+enum ImprovementType {
+  AUTO_GENERATED
+  USER_SUBMITTED
+  SYSTEM_DETECTED
+}
+
+enum ChangePriority {
+  LOW
+  MEDIUM
+  HIGH
+  CRITICAL
+}
+
+enum ChangeRisk {
+  LOW
+  MEDIUM
+  HIGH
+}
+
+enum ChangeStatus {
+  DRAFT
+  UNDER_REVIEW
+  APPROVED
+  DEPLOYED
+  REJECTED
+  ROLLED_BACK
+}
+
+model ChangeComment {
+  id         String         @id @default(uuid())
+  proposalId String
+  proposal   ChangeProposal @relation("ChangeCommentProposal", fields: [proposalId], references: [id], onDelete: Cascade)
+  userId     String
+  user       User           @relation("ChangeCommentUser", fields: [userId], references: [id])
+  comment    String
+  isApproved Boolean?
+  createdAt  DateTime       @default(now())
+
+  @@index([proposalId, createdAt])
+  @@map("change_comments")
+}
+
+model ChangeVersion {
+  id               String         @id @default(uuid())
+  proposalId       String
+  proposal         ChangeProposal @relation("ChangeVersionProposal", fields: [proposalId], references: [id], onDelete: Cascade)
+  version          Int
+  configBefore     Json
+  configAfter      Json
+  filesModified    Json?
+  tested           Boolean        @default(false)
+  deployedAt       DateTime?
+  deployedBy       String?
+  deployedByUserId String?
+  deployedByUser   User?          @relation("ChangeVersionDeployedBy", fields: [deployedByUserId], references: [id])
+  createdAt        DateTime       @default(now())
+
+  @@index([proposalId, version])
+  @@map("change_versions")
+}
+
+// ─── System Log ───
+model SystemLog {
+  id        String    @id @default(uuid())
+  level     String
+  engine    String
+  trigger   String
+  data      Json?
+  reasoning String?
+  createdAt DateTime  @default(now())
+
+  @@index([level, createdAt])
+  @@index([engine, createdAt])
+  @@map("system_logs")
+}
+
+// ─── Settings (key-value) ───
+model Setting {
+  id                 String          @id @default(uuid())
+  key                String          @unique
+  value              String
+  category           String?
+  lastChangeProposalId String?
+  lastChangeProposal ChangeProposal? @relation("SettingChangeProposal", fields: [lastChangeProposalId], references: [id])
+  createdAt          DateTime        @default(now())
+  updatedAt          DateTime        @updatedAt
+
+  @@map("settings")
+}
+
+// ─── Audit Log ───
+model AuditLog {
+  id         String       @id @default(uuid())
+  userId     String?
+  user       User?        @relation("AuditLogUser", fields: [userId], references: [id])
+  action     String
+  entityType String?
+  entityId   String?
+  details    Json?
+  ipAddress  String?
+  createdAt  DateTime     @default(now())
+
+  @@index([action])
+  @@index([entityType, entityId])
+  @@index([createdAt])
+  @@map("audit_logs")
+}
+
+// ─── Hugging Face Downloads ───
+model HFDownload {
+  id             String         @id @default(uuid())
+  systemId       String
+  system         RemoteSystem   @relation("HFDownloadSystem", fields: [systemId], references: [id], onDelete: Cascade)
+  modelId        String
+  fileName       String
+  status         HFDownloadStatus
+  progress       Float?
+  speedMBps      Float?
+  sizeTotal      Float?
+  sizeDownloaded Float?
+  startedAt      DateTime?
+  completedAt    DateTime?
+  error          String?
+  createdAt      DateTime       @default(now())
+
+  @@index([status, systemId])
+  @@map("hf_downloads")
+}
+
+enum HFDownloadStatus {
+  QUEUED
+  DOWNLOADING
+  COMPLETED
+  FAILED
+}
+
+// ─── Encryption Key Management ───
+model EncryptionKey {
+  id              String    @id @default(uuid())
+  keyVersion      Int       @unique
+  keyType         KeyType   @default(MASTER)
+  source          KeySource @default(ENV)
+  keyHint         String?
+  importedCert    String?
+  importedCertFingerprint String?
+  isActive        Boolean   @default(true)
+  isPrimary       Boolean   @default(false)
+  createdAt       DateTime  @default(now())
+  expiresAt       DateTime?
+  revokedAt       DateTime?
+
+  @@index([isActive])
+  @@map("encryption_keys")
+}
+
+enum KeyType {
+  MASTER
+  DEK
+}
+
+enum KeySource {
+  ENV
+  AWS_KMS
+  GCP_KMS
+  VAULT
+  IMPORTED
+}

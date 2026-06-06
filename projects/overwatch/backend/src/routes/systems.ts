@@ -39,12 +39,6 @@ const addSystemSchema = z.object({
  * GET /api/systems
  * List all remote systems
  */
-
-
-/**
- * GET /api/systems
- * List all remote systems
- */
 router.get('/', authenticate, auditLog('LIST_SYSTEMS'), async (req: AuthRequest, res): Promise<any> => {
   try {
     const systems = await prisma.remoteSystem.findMany({
@@ -72,12 +66,6 @@ router.get('/', authenticate, auditLog('LIST_SYSTEMS'), async (req: AuthRequest,
     res.status(500).json({ error: 'Failed to list systems' });
   }
 });
-
-/**
- * GET /api/systems/:id
- * Get a single system by ID
- */
-
 
 /**
  * POST /api/systems
@@ -149,12 +137,6 @@ router.post('/', authenticate, auditLog('ADD_SYSTEM'), async (req: AuthRequest, 
  * POST /api/systems/:id/models/scan
  * Scan a remote system directory for GGUF files
  */
-
-
-/**
- * POST /api/systems/:id/models/scan
- * Scan a remote system directory for GGUF files
- */
 router.post('/:id/models/scan', authenticate, auditLog('SCAN_SYSTEM_MODELS'), async (req: AuthRequest, res): Promise<any> => {
   try {
     const { id: systemId } = req.params as Record<string, string>;
@@ -217,12 +199,6 @@ router.post('/:id/models/scan', authenticate, auditLog('SCAN_SYSTEM_MODELS'), as
  * POST /api/systems/:id/models/scan-tree
  * Recursive filesystem browser on remote system
  */
-
-
-/**
- * POST /api/systems/:id/models/scan-tree
- * Recursive filesystem browser on remote system
- */
 router.post('/:id/models/scan-tree', authenticate, auditLog('SCAN_FILESYSTEM_TREE'), async (req: AuthRequest, res): Promise<any> => {
   try {
     const { id: systemId } = req.params as Record<string, string>;
@@ -279,12 +255,6 @@ router.post('/:id/models/scan-tree', authenticate, auditLog('SCAN_FILESYSTEM_TRE
     });
   }
 });
-
-/**
- * PUT /api/systems/:id
- * Update a system
- */
-
 
 /**
  * POST /api/systems/:id/test-connection
@@ -351,12 +321,6 @@ router.post('/:id/test-connection', authenticate, auditLog('TEST_SYSTEM_CONNECTI
  * POST /api/systems/:id/health-check
  * Run health check on a system
  */
-
-
-/**
- * POST /api/systems/:id/health-check
- * Run health check on a system
- */
 router.post('/:id/health-check', authenticate, auditLog('SYSTEM_HEALTH_CHECK'), async (req: AuthRequest, res): Promise<any> => {
   try {
     const { id } = req.params as Record<string, string>;
@@ -415,12 +379,6 @@ router.post('/:id/health-check', authenticate, auditLog('SYSTEM_HEALTH_CHECK'), 
     res.status(500).json({ error: 'Failed to run health check' });
   }
 });
-
-/**
- * POST /api/systems/:id/run-whatllm
- * Run WhichLLM CLI on a remote system
- */
-
 
 /**
  * POST /api/systems/:id/run-whatllm
@@ -518,12 +476,6 @@ router.post('/:id/run-whatllm', authenticate, auditLog('RUN_WHATLLM'), async (re
  * GET /api/systems/:id/hardware
  * Get hardware info for a system
  */
-
-
-/**
- * GET /api/systems/:id/hardware
- * Get hardware info for a system
- */
 router.get('/:id/hardware', authenticate, auditLog('GET_HARDWARE_INFO'), async (req: AuthRequest, res): Promise<any> => {
   try {
     const { id } = req.params as Record<string, string>;
@@ -592,12 +544,6 @@ router.get('/:id', authenticate, auditLog('GET_SYSTEM'), async (req: AuthRequest
     res.status(500).json({ error: 'Failed to get system' });
   }
 });
-
-/**
- * POST /api/systems
- * Add a new remote system
- */
-
 
 /**
  * PUT /api/systems/:id
@@ -699,8 +645,6 @@ router.delete('/:id', authenticate, auditLog('DELETE_SYSTEM'), async (req: AuthR
     res.status(500).json({ error: 'Failed to delete system' });
   }
 });
-
-// Helper functions
 
 async function testSSHConnection(
   hostname: string,

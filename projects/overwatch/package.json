@@ -1,0 +1,24 @@
+{
+  "name": "overwatch",
+  "version": "0.1.0",
+  "private": true,
+  "description": "AI inference harness management and agent orchestration platform",
+  "scripts": {
+    "dev": "concurrently \"pnpm dev:backend\" \"pnpm dev:frontend\"",
+    "dev:backend": "pnpm --filter overwatch-backend dev",
+    "dev:frontend": "pnpm --filter overwatch-frontend dev",
+    "build": "pnpm build:backend && pnpm build:frontend",
+    "build:backend": "pnpm --filter overwatch-backend build",
+    "build:frontend": "pnpm --filter overwatch-frontend build",
+    "lint": "pnpm lint:backend && pnpm lint:frontend",
+    "lint:backend": "pnpm --filter overwatch-backend lint",
+    "lint:frontend": "pnpm --filter overwatch-frontend lint"
+  },
+  "devDependencies": {
+    "concurrently": "^9.1.2"
+  },
+  "engines": {
+    "node": ">=20.0.0",
+    "pnpm": ">=9.0.0"
+  }
+}
