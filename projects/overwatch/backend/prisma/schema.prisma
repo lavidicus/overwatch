@@ -191,6 +191,8 @@ model ChatSession {
   modelId         String?
   agentProviderId String?
   isAgentChat     Boolean          @default(false)
+  isGroupChat     Boolean          @default(false)
+  groupId         String?
   allowedToolIds  Json?
   systemPrompt    String?
   temperature     Float?
@@ -205,8 +207,10 @@ model ChatSession {
   model           ProviderModel?   @relation("ChatSessionModel", fields: [modelId], references: [id])
   provider        Provider?        @relation("ChatSessionProvider", fields: [providerId], references: [id])
   user            User             @relation("ChatSessionUser", fields: [userId], references: [id], onDelete: Cascade)
+  group           ChatGroup?       @relation("ChatSessionGroup", fields: [groupId], references: [id])
 
   @@index([userId, isActive])
+  @@index([groupId])
   @@map("chat_sessions")
 }
 
@@ -285,18 +289,75 @@ model ChatMessage {
 }
 
 model ChatGroup {
-  id          String            @id @default(uuid())
-  name        String
-  description String?
-  ownerId     String
-  isActive    Boolean           @default(true)
-  createdAt   DateTime          @default(now())
-  updatedAt   DateTime          @updatedAt
-  members     ChatGroupMember[] @relation("ChatGroupMembers")
-  owner       User              @relation("ChatGroupOwner", fields: [ownerId], references: [id])
-  messages    ChatMessage[]     @relation("ChatMessageGroup")
+  id              String             @id @default(uuid())
+  name            String
+  description     String?
+  ownerId         String
+  isActive        Boolean            @default(true)
+  maxRounds       Int                @default(5)
+  judgeProviderId String?
+  judgeModelId    String?
+  createdAt       DateTime           @default(now())
+  updatedAt       DateTime           @updatedAt
+  members         ChatGroupMember[]  @relation("ChatGroupMembers")
+  owner           User               @relation("ChatGroupOwner", fields: [ownerId], references: [id])
+  messages        ChatMessage[]      @relation("ChatMessageGroup")
+  agents          AgentParticipant[] @relation("AgentParticipantGroup")
+  rounds          ConsensusRound[]   @relation("ConsensusRoundGroup")
+  sessions        ChatSession[]      @relation("ChatSessionGroup")
 
   @@map("chat_groups")
+}
+
+model AgentParticipant {
+  id           String    @id @default(uuid())
+  groupId      String
+  agentName    String
+  providerId   String?
+  modelId      String?
+  role         String    @default("advisor")
+  systemPrompt String?
+  position     Int       @default(0)
+  isActive     Boolean   @default(true)
+  createdAt    DateTime  @default(now())
+  group        ChatGroup @relation("AgentParticipantGroup", fields: [groupId], references: [id], onDelete: Cascade)
+
+  @@unique([groupId, agentName])
+  @@index([groupId])
+  @@map("agent_participants")
+}
+
+model ConsensusRound {
+  id             String             @id @default(uuid())
+  groupId        String
+  sessionId      String?
+  roundNumber    Int
+  topic          String
+  status         String             @default("IN_PROGRESS")
+  finalConsensus String?
+  judgeAnalysis  String?
+  createdAt      DateTime           @default(now())
+  endedAt        DateTime?
+  group          ChatGroup          @relation("ConsensusRoundGroup", fields: [groupId], references: [id], onDelete: Cascade)
+  messages       ConsensusMessage[] @relation("ConsensusMessageRound")
+
+  @@unique([groupId, roundNumber])
+  @@index([groupId, createdAt])
+  @@map("consensus_rounds")
+}
+
+model ConsensusMessage {
+  id        String         @id @default(uuid())
+  roundId   String
+  agentName String
+  message   String
+  role      String
+  position  Int            @default(0)
+  createdAt DateTime       @default(now())
+  round     ConsensusRound @relation("ConsensusMessageRound", fields: [roundId], references: [id], onDelete: Cascade)
+
+  @@index([roundId, position])
+  @@map("consensus_messages")
 }
 
 model ChatGroupMember {

@@ -19,6 +19,7 @@ import systemsRoutes from './routes/systems.js';
 import whatllmRoutes from './routes/whatllm.js';
 import aiProxyRoutes from './routes/ai-proxy.js';
 import chatRoutes from './routes/chat.js';
+import groupChatRoutes from './routes/group-chat.js';
 import benchmarkRoutes from './routes/benchmark.js';
 import huggingfaceRoutes from './routes/huggingface.js';
 import toolsRoutes from './routes/tools.js';
@@ -95,6 +96,7 @@ app.use('/api/whatllm', authenticate, whatllmRoutes);
 // Phase 3: Chat, AI Proxy, Benchmark, HuggingFace
 app.use('/api/ai', aiProxyRoutes);
 app.use('/api/chat', authenticate, chatRoutes);
+app.use('/api/chat', authenticate, groupChatRoutes);
 app.use('/api/benchmarks', authenticate, benchmarkRoutes);
 app.use('/api/hf', authenticate, huggingfaceRoutes);
 
@@ -147,6 +149,23 @@ io.on('connection', (socket) => {
     const room = `chat:${sessionId}`;
     socket.leave(room);
     logger.info(`Socket ${socket.id} left chat room ${room}`);
+  });
+
+  // Join group chat room
+  socket.on('group:join', (groupId: string) => {
+    const room = `group:${groupId}`;
+    if (socket.data.userId) {
+      socket.join(room);
+      logger.info(`Socket ${socket.id} joined group room ${room}`);
+      socket.emit('group:joined', { groupId, room });
+    }
+  });
+
+  // Leave group chat room
+  socket.on('group:leave', (groupId: string) => {
+    const room = `group:${groupId}`;
+    socket.leave(room);
+    logger.info(`Socket ${socket.id} left group room ${room}`);
   });
 
   // Join installation log room

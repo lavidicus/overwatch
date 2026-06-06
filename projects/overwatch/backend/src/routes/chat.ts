@@ -21,6 +21,8 @@ const createSessionSchema = z.object({
   temperature: z.number().min(0).max(2).optional(),
   maxTokens: z.number().positive().optional(),
   isAgentChat: z.boolean().optional(),
+  isGroupChat: z.boolean().optional(),
+  groupId: z.string().uuid().optional(),
   allowedToolIds: z.array(z.string().uuid()).optional(),
 });
 
@@ -60,6 +62,8 @@ router.get('/sessions', authenticate, auditLog('LIST_CHAT_SESSIONS'), async (req
         providerId: s.providerId,
         providerName: s.provider?.name,
         model: s.modelId,
+        isGroupChat: s.isGroupChat,
+        groupId: s.groupId,
         messageCount: s._count.messages,
         updatedAt: s.updatedAt,
         createdAt: s.createdAt,
@@ -100,6 +104,8 @@ router.post('/sessions', authenticate, auditLog('CREATE_CHAT_SESSION'), async (r
         temperature: body.temperature || null,
         maxTokens: body.maxTokens || null,
         isAgentChat: body.isAgentChat ?? false,
+        isGroupChat: body.isGroupChat ?? Boolean(body.groupId),
+        groupId: body.groupId ?? null,
         allowedToolIds: (body.allowedToolIds ?? null) as any,
       },
       include: {
@@ -116,6 +122,8 @@ router.post('/sessions', authenticate, auditLog('CREATE_CHAT_SESSION'), async (r
       providerName: session.provider?.name,
       model: session.model?.name || body.model,
       isAgentChat: session.isAgentChat,
+      isGroupChat: session.isGroupChat,
+      groupId: session.groupId,
       allowedToolIds: session.allowedToolIds as string[] | null,
       messageCount: session._count.messages,
     });
@@ -170,6 +178,8 @@ router.get('/sessions/:id', authenticate, auditLog('GET_CHAT_SESSION'), async (r
       temperature: session.temperature,
       maxTokens: session.maxTokens,
       isAgentChat: session.isAgentChat,
+      isGroupChat: session.isGroupChat,
+      groupId: session.groupId,
       allowedToolIds: session.allowedToolIds as string[] | null,
       messageCount: session._count.messages,
       messages,

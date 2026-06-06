@@ -7,6 +7,7 @@ import ModelsPage from './pages/ModelsPage';
 import SystemsPage from './pages/SystemsPage';
 import HardwarePage from './pages/HardwarePage';
 import ChatPage from './pages/ChatPage';
+import GroupChatPage from './pages/GroupChatPage';
 import BenchmarkPage from './pages/BenchmarkPage';
 import ToolsPage from './pages/ToolsPage';
 import ToolPermissionsPage from './pages/ToolPermissionsPage';
@@ -64,6 +65,7 @@ function App() {
         <Route path="systems" element={<SystemsPage />} />
         <Route path="hardware" element={<HardwarePage />} />
         <Route path="chat" element={<ChatPage />} />
+        <Route path="panels" element={<GroupChatPage />} />
         <Route path="benchmark" element={<BenchmarkPage />} />
         <Route path="tools" element={<ToolsPage />} />
         <Route path="tool-permissions" element={<ToolPermissionsPage />} />

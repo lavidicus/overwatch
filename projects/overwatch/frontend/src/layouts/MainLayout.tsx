@@ -22,6 +22,7 @@ import {
 } from '@mui/material';
 import {
   Chat as ChatIcon,
+  Groups as GroupsIcon,
   Settings as SettingsIcon,
   AdminPanelSettings as AdminIcon,
   Menu as MenuIcon,
@@ -49,6 +50,7 @@ const DRAWER_WIDTH = 260;
 
 const topNavItems = [
   { path: '/chat', label: 'Chat', icon: <ChatIcon /> },
+  { path: '/panels', label: 'AI Panels', icon: <GroupsIcon /> },
 ];
 
 const systemSettingsItems = [
