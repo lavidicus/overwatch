@@ -1,0 +1,9 @@
+{
+  "timestamp": "2026-05-02T05:36Z",
+  "source": "node2",
+  "gpus": [
+    {"index": 0, "temp_c": 51, "power_w": 66.84, "power_limit_w": 250, "utilization_pct": 0, "memory_used_mb": 21399, "memory_total_mb": 24576},
+    {"index": 1, "temp_c": 44, "power_w": 64.29, "power_limit_w": 250, "utilization_pct": 0, "memory_used_mb": 22603, "memory_total_mb": 24576}
+  ],
+  "notes": "Both GPUs idle, ~21-22GB VRAM used (likely CUDA/cuda-graphs or display buffers). Temps normal."
+}

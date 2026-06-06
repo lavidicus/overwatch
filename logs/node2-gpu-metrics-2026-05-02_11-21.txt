@@ -1,0 +1,11 @@
+=== Node2 GPU Metrics ===
+Timestamp: 2026-05-02 11:21 UTC
+Host: node2 (2x Quadro P6000)
+
+GPU 0: Quadro P6000
+  Temp: 62°C | Power: 70.33W / 250W | VRAM: 21551MB / 24576MB (87.7%) | Util: 0%
+
+GPU 1: Quadro P6000
+  Temp: 55°C | Power: 66.84W / 250W | VRAM: 22755MB / 24576MB (92.6%) | Util: 0%
+
+Notes: Both GPUs idle (0% compute) but holding ~44GB VRAM total — likely stale allocations from prior workloads.

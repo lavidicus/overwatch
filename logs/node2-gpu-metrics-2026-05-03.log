@@ -1,0 +1,11 @@
+# Node2 GPU Metrics - 2026-05-03 23:29 UTC
+
+## nvidia-smi
+index, name, temperature.gpu, utilization.gpu [%], memory.used [MiB], memory.total [MiB], power.draw [W], power.limit [W]
+0, Quadro P6000, 60, 0 %, 21627 MiB, 24576 MiB, 69.78 W, 250.00 W
+1, Quadro P6000, 54, 0 %, 22831 MiB, 24576 MiB, 66.06 W, 250.00 W
+
+## Summary
+- GPU 0: 60°C | 0% util | 21.1 GiB / 24 GiB used | 69.8W / 250W
+- GPU 1: 54°C | 0% util | 21.8 GiB / 24 GiB used | 66.1W / 250W
+- Both GPUs idle (0% utilization), temps normal, ~88% VRAM occupied on both

@@ -8,6 +8,7 @@ import {
 import PlayArrowIcon from '@mui/icons-material/PlayArrow';
 import DeleteIcon from '@mui/icons-material/Delete';
 import { listBenchmarks, createBenchmark, deleteBenchmark } from '../api/benchmark';
+import { getAuthToken } from '../utils/auth';
 
 interface Provider { id: string; name: string; type: string; model: string; }
 interface Model { id: string; name: string; quantization?: string; }
@@ -40,7 +41,7 @@ export default function BenchmarkPage() {
       const [benchData, provData] = await Promise.all([
         listBenchmarks(1, 20),
         fetch('/api/providers', {
-          headers: { Authorization: `Bearer ${localStorage.getItem('auth_token') || ''}` },
+          headers: { Authorization: `Bearer ${getAuthToken() || ''}` },
         }).then(r => r.json()),
       ]);
       setBenchmarks(benchData.runs || []);
@@ -57,7 +58,7 @@ export default function BenchmarkPage() {
     setSelectedProvider(providerId);
     try {
       const res = await fetch(`/api/providers/${providerId}/models`, {
-        headers: { Authorization: `Bearer ${localStorage.getItem('auth_token') || ''}` },
+        headers: { Authorization: `Bearer ${getAuthToken() || ''}` },
       });
       const data = await res.json();
       setModels(data.models || []);

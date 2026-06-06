@@ -1,0 +1,161 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="utf-8">
+<title>VM111 Systems Status Report</title>
+<style>
+  body { font-family: 'Segoe UI', Arial, sans-serif; margin: 40px; color: #1a1a1a; background: #fafafa; }
+  h1 { color: #1a1a2e; border-bottom: 3px solid #e94560; padding-bottom: 10px; font-size: 28px; }
+  h2 { color: #16213e; font-size: 18px; margin-top: 30px; border-left: 4px solid #e94560; padding-left: 12px; }
+  .meta { color: #666; font-size: 13px; margin-bottom: 30px; }
+  table { border-collapse: collapse; width: 100%; margin: 12px 0; font-size: 14px; }
+  th, td { padding: 8px 12px; text-align: left; border-bottom: 1px solid #ddd; }
+  th { background: #16213e; color: white; font-weight: 600; }
+  tr:nth-child(even) { background: #f0f0f0; }
+  .ok { color: #0a8754; font-weight: bold; }
+  .warn { color: #e67e22; font-weight: bold; }
+  .bad { color: #e94560; font-weight: bold; }
+  .section { background: white; border-radius: 8px; padding: 20px; margin: 20px 0; box-shadow: 0 1px 3px rgba(0,0,0,0.1); }
+  .footer { margin-top: 40px; font-size: 12px; color: #999; border-top: 1px solid #ddd; padding-top: 15px; }
+  .process-table td:first-child { font-family: monospace; }
+  .gpu-card { display: inline-block; width: 45%; vertical-align: top; margin-right: 2%; background: #f8f9fa; padding: 12px; border-radius: 6px; border: 1px solid #dee2e6; }
+</style>
+</head>
+<body>
+
+<h1>🖥️ VM111 Systems Status Report</h1>
+<div class="meta">Generated: 2026-04-27 16:47 UTC | Host: vm111 (user1@vm111) | Report by: Sam</div>
+
+<div class="section">
+<h2>System Overview</h2>
+<table>
+<tr><th>Parameter</th><th>Value</th></tr>
+<tr><td>OS</td><td>Linux 6.8.0-110-generic (Ubuntu) — x86_64</td></tr>
+<tr><td>Uptime</td><td>1h 52m</td></tr>
+<tr><td>Load Average</td><td>0.36 / 0.21 / 0.28 (16 cores — <span class="ok">healthy</span>)</td></tr>
+<tr><td>Users logged in</td><td>5</td></tr>
+</table>
+</div>
+
+<div class="section">
+<h2>CPU</h2>
+<table>
+<tr><th>Parameter</th><th>Value</th></tr>
+<tr><td>Model</td><td>Intel Xeon E5-2680 v4 @ 2.40GHz</td></tr>
+<tr><td>Sockets</td><td>2</td></tr>
+<tr><td>Cores per socket</td><td>8</td></tr>
+<tr><td>Threads per core</td><td>1 (no HT)</td></tr>
+<tr><td>Total logical CPUs</td><td>16</td></tr>
+</table>
+</div>
+
+<div class="section">
+<h2>Memory</h2>
+<table>
+<tr><th>Type</th><th>Total</th><th>Used</th><th>Free</th><th>Available</th><th>Status</th></tr>
+<tr><td>RAM</td><td>62 GiB</td><td>6.8 GiB (11%)</td><td>28 GiB</td><td>55 GiB</td><td class="ok">OK</td></tr>
+<tr><td>Swap</td><td>8 GiB</td><td>2.2 MiB</td><td>8 GiB</td><td>—</td><td class="ok">OK</td></tr>
+</table>
+</div>
+
+<div class="section">
+<h2>Disk</h2>
+<table>
+<tr><th>Filesystem</th><th>Type</th><th>Size</th><th>Used</th><th>Available</th><th>Use%</th><th>Status</th></tr>
+<tr><td>/dev/mapper/ubuntu--vg-ubuntu--lv</td><td>ext4</td><td>492G</td><td>116G</td><td>351G</td><td>25%</td><td class="ok">OK</td></tr>
+</table>
+</div>
+
+<div class="section">
+<h2>GPU — 2× NVIDIA GeForce RTX 3090</h2>
+<table>
+<tr><th>Parameter</th><th>GPU 0</th><th>GPU 1</th></tr>
+<tr><td>Driver</td><td colspan="2">580.126.20 (CUDA 13.0)</td></tr>
+<tr><td>Temp</td><td>45°C</td><td>55°C</td></tr>
+<tr><td>Power</td><td>151W / 350W</td><td>163W / 350W</td></tr>
+<tr><td>VRAM Used</td><td>22,012 MiB / 24,576 MiB (89.6%)</td><td>22,930 MiB / 24,576 MiB (93.3%)</td></tr>
+<tr><td>GPU Util</td><td>0%</td><td>0%</td></tr>
+<tr><td>Fan</td><td>33%</td><td>33%</td></tr>
+<tr><td>Process</td><td colspan="2">llama-server (PID 1683) — model loaded across both GPUs (ts 10,12)</td></tr>
+</table>
+<p><strong>Status:</strong> <span class="warn">VRAM heavily allocated (~45 GiB / 48 GiB), but GPU utilization at 0% — model loaded, idle between requests.</span></p>
+</div>
+
+<div class="section">
+<h2>Network</h2>
+<table>
+<tr><th>Interface</th><th>State</th><th>Address</th></tr>
+<tr><td>lo</td><td>UNKNOWN</td><td>127.0.0.1/8</td></tr>
+<tr><td>enp6s18</td><td>UP</td><td>192.168.68.111/22</td></tr>
+<tr><td>tailscale0</td><td>UNKNOWN</td><td>100.123.212.45/32</td></tr>
+</table>
+</div>
+
+<div class="section">
+<h2>Services (Running)</h2>
+<table>
+<tr><th>Service</th><th>Status</th><th>Description</th></tr>
+<tr><td>llama-server.service</td><td class="ok">active</td><td>llama.cpp Server (CUDA - 2x RTX 3090)</td></tr>
+<tr><td>sshd.service</td><td class="ok">active</td><td>OpenSSH Server</td></tr>
+<tr><td>tailscaled.service</td><td class="ok">active</td><td>Tailscale node agent</td></tr>
+<tr><td>nvidia-persistenced.service</td><td class="ok">active</td><td>NVIDIA Persistence Daemon</td></tr>
+<tr><td>systemd-networkd.service</td><td class="ok">active</td><td>Network Configuration</td></tr>
+<tr><td>systemd-resolved.service</td><td class="ok">active</td><td>Network Name Resolution</td></tr>
+<tr><td>systemd-timesyncd.service</td><td class="ok">active</td><td>Time Synchronization</td></tr>
+<tr><td>dbus.service</td><td class="ok">active</td><td>D-Bus System Message Bus</td></tr>
+<tr><td>multipathd.service</td><td class="ok">active</td><td>Device-Mapper Multipath</td></tr>
+</table>
+</div>
+
+<div class="section">
+<h2>Top Processes by CPU</h2>
+<table class="process-table">
+<tr><th>PID</th><th>User</th><th>%CPU</th><th>%MEM</th><th>RSS</th><th>Command</th></tr>
+<tr><td>1683</td><td>llamacpp</td><td>33.0</td><td>10.7</td><td>6.8 GB</td><td>llama-server (model: llamacpp.gguf + mmproj)</td></tr>
+<tr><td>1750</td><td>user1</td><td>2.2</td><td>0.0</td><td>24 MB</td><td>nvtop</td></tr>
+<tr><td>1752</td><td>root</td><td>1.2</td><td>0.0</td><td>10 MB</td><td>sshd (current session)</td></tr>
+<tr><td>864</td><td>root</td><td>0.7</td><td>0.0</td><td>45 MB</td><td>tailscaled</td></tr>
+</table>
+</div>
+
+<div class="section">
+<h2>llama-server Configuration</h2>
+<table>
+<tr><th>Parameter</th><th>Value</th></tr>
+<tr><td>Model</td><td>/opt/models/gguf/llamacpp.gguf</td></tr>
+<tr><td>Multi-modal projector</td><td>/opt/models/gguf/mmproj.gguf</td></tr>
+<tr><td>Listen</td><td>0.0.0.0:11434</td></tr>
+<tr><td>Context size</td><td>262,144 tokens</td></tr>
+<tr><td>GPU layers</td><td>all (offloaded)</td></tr>
+<tr><td>Batch size</td><td>2024 (ub: 1024)</td></tr>
+<tr><td>Threads</td><td>12 (batch: 12)</td></tr>
+<tr><td>GPU split</td><td>ts 10,12 (layers per GPU)</td></tr>
+<tr><td>Parallel</td><td><span class="warn">-np 1</span> (single slot — bottleneck)</td></tr>
+<tr><td>Flash attention</td><td>enabled</td></tr>
+<tr><td>KV cache</td><td>q8_0 (K+V), 16 GB RAM fallback</td></tr>
+<tr><td>Temp / Top-P / Top-K / Min-P</td><td>0.6 / 0.95 / 20 / 0.00</td></tr>
+</table>
+</div>
+
+<div class="section">
+<h2>Summary &amp; Observations</h2>
+<table>
+<tr><th>Area</th><th>Status</th><th>Notes</th></tr>
+<tr><td>CPU / Load</td><td class="ok">✅ Healthy</td><td>0.36 load on 16 cores. Plenty of headroom.</td></tr>
+<tr><td>Memory</td><td class="ok">✅ Healthy</td><td>11% RAM used (6.8/62 GB). 55 GB available.</td></tr>
+<tr><td>Disk</td><td class="ok">✅ Healthy</td><td>25% used (116/492 GB). No concern.</td></tr>
+<tr><td>GPU VRAM</td><td class="warn">⚠️ High</td><td>89-93% VRAM on both GPUs. Model loaded, idle. Expected for current config.</td></tr>
+<tr><td>GPU Temp</td><td class="ok">✅ Normal</td><td>45°C and 55°C — well within limits.</td></tr>
+<tr><td>Network</td><td class="ok">✅ Healthy</td><td>LAN (192.168.68.111) + Tailscale (100.123.212.45) both up.</td></tr>
+<tr><td>Services</td><td class="ok">✅ All Running</td><td>16 services active, no failures.</td></tr>
+<tr><td>llama-server</td><td class="warn">⚠️ -np 1</td><td>Still single-slot. Only one concurrent inference stream. Consider -np 2 for dual sessions.</td></tr>
+</table>
+</div>
+
+<div class="footer">
+Generated by Sam (OpenClaw) — 2026-04-27 16:47 UTC<br>
+Source: ssh user1@vm111 — live system telemetry
+</div>
+
+</body>
+</html>

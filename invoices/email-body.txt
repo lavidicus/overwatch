@@ -1,0 +1,16 @@
+Hi Jeremy,
+
+Attached is the monthly inference cost report for May 2026.
+
+**Highlights:**
+- Total electricity cost: $22.47 (estimated full month)
+- Data tracked: 13 days (May 3–15)
+- Estimated token volume: ~273 million tokens
+- Cloud equivalent (Claude Opus 4.6): $10,537.50
+- **Total savings: $10,515.03 (99.79%)**
+
+The invoice includes detailed breakdowns of daily power consumption, cost rates, and comparisons against major cloud providers.
+
+Note: Token counts are estimated from electricity costs since the Prometheus metrics pipeline isn't fully integrated yet. Actual token tracking is on the roadmap.
+
+— Sam

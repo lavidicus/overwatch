@@ -1,0 +1,39 @@
+{
+  "timestamp": "2026-05-01T07:42:52Z",
+  "source": "node2 (ssh localadmin@node2)",
+  "script_exists": true,
+  "script_output": "(script ran but produced no stdout)",
+  "gpu_stats": [
+    {
+      "index": 0,
+      "name": "Quadro P6000",
+      "temperature": "43°C",
+      "gpu_utilization": "0%",
+      "memory_utilization": "0%",
+      "power_draw": "65.84 W",
+      "power_limit": "250.00 W",
+      "memory_used": "21579 MiB",
+      "memory_total": "24576 MiB"
+    },
+    {
+      "index": 1,
+      "name": "Quadro P6000",
+      "temperature": "37°C",
+      "gpu_utilization": "0%",
+      "memory_utilization": "0%",
+      "power_draw": "64.27 W",
+      "power_limit": "250.00 W",
+      "memory_used": "22783 MiB",
+      "memory_total": "24576 MiB"
+    }
+  ],
+  "processes": [
+    {
+      "pid": 1019,
+      "process": "llama-server",
+      "gpu0_mem": "21570 MiB",
+      "gpu1_mem": "22774 MiB"
+    }
+  ],
+  "notes": "Script /home/localadmin/scripts/node1-metrics-scraper.sh exists on node2 but does not update the log file. Raw nvidia-smi queried directly. Both GPUs idle (0% util), ~65W each, both running llama-server at ~22GB VRAM. Log file nvidia-smi.log last updated 06:53 UTC."
+}

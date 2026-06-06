@@ -1,7 +1,9 @@
+import { getAuthToken } from '../utils/auth';
+
 const API_BASE = '/api';
 
 function getAuthHeaders(): Record<string, string> {
-  const token = localStorage.getItem('auth_token');
+  const token = getAuthToken();
   return token ? { Authorization: `Bearer ${token}`, 'Content-Type': 'application/json' } : { 'Content-Type': 'application/json' };
 }
 
@@ -78,7 +80,7 @@ export function sendMessageStreaming(
   onError: (error: string) => void
 ): AbortController {
   const controller = new AbortController();
-  const token = localStorage.getItem('auth_token');
+  const token = getAuthToken();
   const headers: Record<string, string> = { 'Content-Type': 'application/json' };
   if (token) headers.Authorization = `Bearer ${token}`;
 

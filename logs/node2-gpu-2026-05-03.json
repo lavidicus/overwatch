@@ -1,0 +1,26 @@
+{
+  "timestamp": "2026-05-03T22:45:30Z",
+  "gpu": [
+    {
+      "index": 0,
+      "name": "Quadro P6000",
+      "temperature": "69°C",
+      "power_draw": "73.04W",
+      "power_limit": "250W",
+      "utilization": "0%",
+      "memory_used": "21627 MB",
+      "memory_total": "24576 MB"
+    },
+    {
+      "index": 1,
+      "name": "Quadro P6000",
+      "temperature": "66°C",
+      "power_draw": "69.42W",
+      "power_limit": "250W",
+      "utilization": "0%",
+      "memory_used": "22831 MB",
+      "memory_total": "24576 MB"
+    }
+  ],
+  "notes": "Both GPUs idle, ~97% VRAM occupied (stable). Temps rising slightly (69°C/66°C) from earlier readings (~55-58°C)."
+}

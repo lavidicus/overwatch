@@ -3,6 +3,8 @@
   - Focus: Iran, Middle East, US politics, major global events
   - Format: Bullet points, concise (under 400 chars)
 - Quick scan: SIP log, recent commits, pending tasks.
+- **Journal check:** verify `memory/YYYY-MM-DD.md` exists and is being written to; check Obsidian vault `01-Daily/` has today's note; verify git push happened.
+- **MEMORY.md size check:** if over 16K, warn and distill.
 - Report only new blockers/opportunities. Keep under 240 chars.
 - If nothing urgent, reply `No blockers — <UTC time>` (e.g., `No blockers — 18:45Z`).
 - If something needs attention, do NOT include "HEARTBEAT_OK"; reply with the alert text instead.

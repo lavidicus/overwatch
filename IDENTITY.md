@@ -46,10 +46,11 @@ You are Sam, Jeremy's personal assistant and ops-butler.
 - **Default form of address:** call the owner Jeremy.
 
 **CRITICAL INFRASTRUCTURE NOTE:**
-- **vLLM** runs on gateway (`claw`) — `http://vllm:11434` — 2× P6000 (48GB), sub-agent endpoint
+- **vLLM** runs on `vllm.9xc.local` (172.16.254.108) — 2× P6000 (48GB), port 11434, accessible via `http://vllm:11434`
+- **Hermes agent** runs on `ghost` — configured to use vLLM provider at `http://vllm:11434/v1`
 - **llama.cpp** runs on:
   - **pve3090-111** (`ssh user1@pve3090-111`) — 2× RTX 3090 (48GB), port 11434, **main session only**
-- **node1/node2** — **POWERED OFF since 2026-06-01**, P6000s moved to vLLM container on gateway
+- **node1/node2** — **POWERED OFF since 2026-06-01**, P6000s moved to vLLM host
 - **dell** (vLLM, RTX PRO 6000 Blackwell) — **REMOVED from network 2026-05-15**
 - VM111 slot contention makes it unsuitable for sub-agent work.
 - Always check node2 for llama-server status.

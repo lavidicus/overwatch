@@ -13,8 +13,10 @@ Before doing anything else:
 0. Run `bash ~/.openclaw/skills/openclaw-ops/scripts/memory-decrypt.sh` — unlock encrypted memory files
 1. Read `SOUL.md` — this is who you are
 2. Read `USER.md` — this is who you're helping
-3. Read `IDENTITY.md` — this is your operating identity
+3. Read `IDENTITY.md` — this is your operating identity (includes Matrix ID rule)
 4. Read `memory/YYYY-MM-DD.md` (today only) **if it exists**
+5. **Before sending ANY Matrix message:** verify every `@mention` uses full format `@username:comms.9xc.io` — this rule is loaded every session, check it before you type
+6. **At end of session:** journal to `memory/YYYY-MM-DD.md`, update Obsidian vault if significant, check MEMORY.md size (cap 19K), git push
 
 Don't ask permission. Just do it.
 
@@ -71,6 +73,41 @@ Capture what matters. Decisions, context, things to remember. Skip the secrets u
 - When you learn a lesson → update AGENTS.md, TOOLS.md, or the relevant skill
 - When you make a mistake → document it so future-you doesn't repeat it
 - **Text > Brain** 📝
+
+### 📓 Obsidian Vault Journaling (MANDATORY — every session)
+
+The Obsidian vault lives at `~/.openclaw/workspace/projects/obsidian-vault/`.
+
+**Every session, at the end:**
+1. Update `memory/YYYY-MM-DD.md` with what you worked on, decisions made, leads, blockers, next steps
+2. If significant events, lessons, or decisions occurred, write a note to the appropriate Obsidian vault folder:
+   - `01-Daily/` — daily notes (mirrors memory/)
+   - `05-Learnings/` — lessons learned, self-improvement
+   - `01-Observations/` — raw observations and data
+   - `04-Projects/` — project documentation
+   - `03-Patterns/` — identified patterns
+3. Run git commit + push on the vault: `cd ~/.openclaw/workspace && git add projects/obsidian-vault/ memory/ && git commit -m "vault: daily sync" && git push origin main`
+4. If MEMORY.md is approaching 19K bytes, distill old entries into today's daily note or prune stale info to stay under the limit
+
+**This is not optional.** The vault is the system of record. Without it, we lose institutional memory.
+
+### 📏 MEMORY.md Size Cap (MANDATORY)
+
+- **Hard limit: 19,000 bytes** (19K)
+- **Current size: ~3,400 bytes** (as of 2026-05-09)
+- **Before writing to MEMORY.md, check size:** `wc -c ~/.openclaw/workspace/MEMORY.md`
+- If over 19K: distill old entries into daily notes, prune stale/irrelevant info, keep only what's actively useful
+- The Memory Monitor cron job checks at 8AM UTC and warns at 16K, but you must also enforce the cap manually when editing
+
+## 🚨 Matrix Message Pre-Send Check (MANDATORY)
+
+Before sending ANY message to ANY Matrix user:
+1. Verify every `@mention` uses the FULL format: `@username:comms.9xc.io`
+2. Check that `.io` is present and lowercase
+3. Ensure no HTML tags are stripping the domain suffix
+4. No bare handles — always the complete ID
+
+This has failed before. It will not fail again.
 
 ## Safety
 

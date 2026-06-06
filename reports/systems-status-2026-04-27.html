@@ -1,0 +1,614 @@
+<!DOCTYPE html>
+<html xmlns="http://www.w3.org/1999/xhtml" lang="" xml:lang="">
+<head>
+  <meta charset="utf-8" />
+  <meta name="generator" content="pandoc" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=yes" />
+  <title>Systems Status Report — 2026-04-27</title>
+  <style>
+    html {
+      color: #1a1a1a;
+      background-color: #fdfdfd;
+    }
+    body {
+      margin: 0 auto;
+      max-width: 36em;
+      padding-left: 50px;
+      padding-right: 50px;
+      padding-top: 50px;
+      padding-bottom: 50px;
+      hyphens: auto;
+      overflow-wrap: break-word;
+      text-rendering: optimizeLegibility;
+      font-kerning: normal;
+    }
+    @media (max-width: 600px) {
+      body {
+        font-size: 0.9em;
+        padding: 12px;
+      }
+      h1 {
+        font-size: 1.8em;
+      }
+    }
+    @media print {
+      html {
+        background-color: white;
+      }
+      body {
+        background-color: transparent;
+        color: black;
+        font-size: 12pt;
+      }
+      p, h2, h3 {
+        orphans: 3;
+        widows: 3;
+      }
+      h2, h3, h4 {
+        page-break-after: avoid;
+      }
+    }
+    p {
+      margin: 1em 0;
+    }
+    a {
+      color: #1a1a1a;
+    }
+    a:visited {
+      color: #1a1a1a;
+    }
+    img {
+      max-width: 100%;
+    }
+    h1, h2, h3, h4, h5, h6 {
+      margin-top: 1.4em;
+    }
+    h5, h6 {
+      font-size: 1em;
+      font-style: italic;
+    }
+    h6 {
+      font-weight: normal;
+    }
+    ol, ul {
+      padding-left: 1.7em;
+      margin-top: 1em;
+    }
+    li > ol, li > ul {
+      margin-top: 0;
+    }
+    blockquote {
+      margin: 1em 0 1em 1.7em;
+      padding-left: 1em;
+      border-left: 2px solid #e6e6e6;
+      color: #606060;
+    }
+    code {
+      font-family: Menlo, Monaco, Consolas, 'Lucida Console', monospace;
+      font-size: 85%;
+      margin: 0;
+      hyphens: manual;
+    }
+    pre {
+      margin: 1em 0;
+      overflow: auto;
+    }
+    pre code {
+      padding: 0;
+      overflow: visible;
+      overflow-wrap: normal;
+    }
+    .sourceCode {
+     background-color: transparent;
+     overflow: visible;
+    }
+    hr {
+      background-color: #1a1a1a;
+      border: none;
+      height: 1px;
+      margin: 1em 0;
+    }
+    table {
+      margin: 1em 0;
+      border-collapse: collapse;
+      width: 100%;
+      overflow-x: auto;
+      display: block;
+      font-variant-numeric: lining-nums tabular-nums;
+    }
+    table caption {
+      margin-bottom: 0.75em;
+    }
+    tbody {
+      margin-top: 0.5em;
+      border-top: 1px solid #1a1a1a;
+      border-bottom: 1px solid #1a1a1a;
+    }
+    th {
+      border-top: 1px solid #1a1a1a;
+      padding: 0.25em 0.5em 0.25em 0.5em;
+    }
+    td {
+      padding: 0.125em 0.5em 0.25em 0.5em;
+    }
+    header {
+      margin-bottom: 4em;
+      text-align: center;
+    }
+    #TOC li {
+      list-style: none;
+    }
+    #TOC ul {
+      padding-left: 1.3em;
+    }
+    #TOC > ul {
+      padding-left: 0;
+    }
+    #TOC a:not(:hover) {
+      text-decoration: none;
+    }
+    code{white-space: pre-wrap;}
+    span.smallcaps{font-variant: small-caps;}
+    div.columns{display: flex; gap: min(4vw, 1.5em);}
+    div.column{flex: auto; overflow-x: auto;}
+    div.hanging-indent{margin-left: 1.5em; text-indent: -1.5em;}
+    /* The extra [class] is a hack that increases specificity enough to
+       override a similar rule in reveal.js */
+    ul.task-list[class]{list-style: none;}
+    ul.task-list li input[type="checkbox"] {
+      font-size: inherit;
+      width: 0.8em;
+      margin: 0 0.8em 0.2em -1.6em;
+      vertical-align: middle;
+    }
+    .display.math{display: block; text-align: center; margin: 0.5rem auto;}
+  </style>
+</head>
+<body>
+<header id="title-block-header">
+<h1 class="title">Systems Status Report — 2026-04-27</h1>
+</header>
+<h1 id="systems-status-report">Systems Status Report</h1>
+<p><strong>Generated:</strong> Monday, April 27, 2026 — 15:18 UTC<br />
+<strong>Prepared by:</strong> Sam (🧑‍💼)<br />
+<strong>Scope:</strong> All managed infrastructure — Gateway host,
+Node2, TS (Proxmox), and services</p>
+<hr />
+<h2 id="gateway-host-claw-10.50.15.226">1. Gateway Host (claw) —
+10.50.15.226</h2>
+<table>
+<thead>
+<tr class="header">
+<th>Metric</th>
+<th>Value</th>
+</tr>
+</thead>
+<tbody>
+<tr class="odd">
+<td><strong>Uptime</strong></td>
+<td>5 days, 14 hours</td>
+</tr>
+<tr class="even">
+<td><strong>Kernel</strong></td>
+<td>6.8.0-110-generic</td>
+</tr>
+<tr class="odd">
+<td><strong>CPU</strong></td>
+<td>Intel Xeon E5-2680 v4 @ 2.40GHz (8 cores / 8 threads)</td>
+</tr>
+<tr class="even">
+<td><strong>RAM</strong></td>
+<td>4.2 GiB used / 7.8 GiB total (54%)</td>
+</tr>
+<tr class="odd">
+<td><strong>Swap</strong></td>
+<td>768 MiB used / 4.0 GiB total</td>
+</tr>
+<tr class="even">
+<td><strong>Root Disk</strong></td>
+<td>35 GiB used / 124 GiB (29%)</td>
+</tr>
+<tr class="odd">
+<td><strong>Load Average</strong></td>
+<td>1.16 / 0.84 / 0.76</td>
+</tr>
+<tr class="even">
+<td><strong>Network</strong></td>
+<td>ens18: 10.50.15.226, Tailscale: 100.107.29.33</td>
+</tr>
+<tr class="odd">
+<td><strong>Gateway</strong></td>
+<td>Running (PID 3256056), port 18789, loopback-only</td>
+</tr>
+<tr class="even">
+<td><strong>Sessions</strong></td>
+<td>94 active</td>
+</tr>
+<tr class="odd">
+<td><strong>Tasks</strong></td>
+<td>1 running, 27 issues, 2407 total background tasks</td>
+</tr>
+</tbody>
+</table>
+<h3 id="openclaw-status">OpenClaw Status</h3>
+<ul>
+<li><strong>Heartbeat:</strong> 30 min (main)</li>
+<li><strong>Default model:</strong> ollama/qwen3.5:cloud (262k ctx)</li>
+<li><strong>Runtime model:</strong> node2/llamacpp</li>
+<li><strong>Cache:</strong> On (1215 entries)</li>
+</ul>
+<h3 id="recent-errors-last-6-hours">Recent Errors (last 6 hours)</h3>
+<ul>
+<li>⚠️ <strong>LLM timeout</strong> — node2/llamacpp timed out at 14:55
+UTC (125s), fell back to claude-opus-4.6</li>
+<li>⚠️ <strong>Copilot auth failure</strong> — HTTP 403 token exchange
+at 14:55 UTC</li>
+<li>⚠️ <strong>503 Loading model</strong> — node2/llamacpp returned 503
+at 15:07 UTC (model loading)</li>
+<li>⚠️ <strong>Memory sync failed</strong> — CredentialsProviderError at
+15:10 UTC</li>
+</ul>
+<h3 id="security-audit-3-critical">Security Audit (3 CRITICAL)</h3>
+<ol type="1">
+<li><strong>CRITICAL:</strong> Exec security=full is configured for main
+agent — should use allowlist</li>
+<li><strong>CRITICAL:</strong> Open channels can reach exec-enabled
+agents (matrix groupPolicy=open)</li>
+<li><strong>CRITICAL:</strong> Open groupPolicy with elevated tools
+enabled — prompt injection risk</li>
+</ol>
+<hr />
+<h2 id="node2-gpu-server-172.16.254.101">2. Node2 (GPU Server) —
+172.16.254.101</h2>
+<table>
+<thead>
+<tr class="header">
+<th>Metric</th>
+<th>Value</th>
+</tr>
+</thead>
+<tbody>
+<tr class="odd">
+<td><strong>Uptime</strong></td>
+<td>4 days, 12 hours</td>
+</tr>
+<tr class="even">
+<td><strong>RAM</strong></td>
+<td>5.9 GiB used / 62 GiB total (10%)</td>
+</tr>
+<tr class="odd">
+<td><strong>Swap</strong></td>
+<td>1.8 MiB used / 8.0 GiB total</td>
+</tr>
+<tr class="even">
+<td><strong>Root Disk</strong></td>
+<td>174 GiB used / 249 GiB (74%)</td>
+</tr>
+<tr class="odd">
+<td><strong>Load Average</strong></td>
+<td>0.51 / 1.65 / 3.13</td>
+</tr>
+<tr class="even">
+<td><strong>Tailscale</strong></td>
+<td>100.91.255.3</td>
+</tr>
+</tbody>
+</table>
+<h3 id="gpu-status-2-nvidia-quadro-p6000-24-gb-each">GPU Status — 2×
+NVIDIA Quadro P6000 (24 GB each)</h3>
+<table>
+<colgroup>
+<col style="width: 8%" />
+<col style="width: 9%" />
+<col style="width: 11%" />
+<col style="width: 11%" />
+<col style="width: 11%" />
+<col style="width: 17%" />
+<col style="width: 17%" />
+<col style="width: 12%" />
+</colgroup>
+<thead>
+<tr class="header">
+<th>GPU</th>
+<th>Temp</th>
+<th>Power</th>
+<th>Limit</th>
+<th>Util%</th>
+<th>VRAM Used</th>
+<th>VRAM Free</th>
+<th>Driver</th>
+</tr>
+</thead>
+<tbody>
+<tr class="odd">
+<td>0</td>
+<td>54°C</td>
+<td>69.2 W</td>
+<td>250 W</td>
+<td>0%</td>
+<td>21,361 MiB (87%)</td>
+<td>3,077 MiB (13%)</td>
+<td>580.126.20</td>
+</tr>
+<tr class="even">
+<td>1</td>
+<td>45°C</td>
+<td>65.3 W</td>
+<td>250 W</td>
+<td>0%</td>
+<td>21,865 MiB (89%)</td>
+<td>2,573 MiB (11%)</td>
+<td>580.126.20</td>
+</tr>
+</tbody>
+</table>
+<p><strong>Power state:</strong> D0 (active) on both GPUs<br />
+<strong>CUDA:</strong> 13.0<br />
+<strong>Avg power draw:</strong> ~66.8 W (over 2.37s window)</p>
+<h3 id="llama-server.service">llama-server.service</h3>
+<ul>
+<li><strong>Status:</strong> ✅ Active (running since 15:07 UTC)</li>
+<li><strong>PID:</strong> 3388390</li>
+<li><strong>Model:</strong> llamacpp.gguf (103 GiB model directory)</li>
+<li><strong>Port:</strong> 11434</li>
+<li><strong>GPU layers:</strong> all (both GPUs)</li>
+<li><strong>Threads:</strong> 12 / 12 batch</li>
+<li><strong>Context:</strong> 262,144 tokens</li>
+<li><strong>Concurrency:</strong> <code>-np 1</code> (single-slot —
+bottleneck confirmed)</li>
+<li><strong>Memory:</strong> 5.2 GiB RSS</li>
+<li><strong>Recent activity:</strong> Processing requests normally (task
+2432 at 15:15 UTC)</li>
+</ul>
+<h3 id="disk-breakdown-largest">Disk Breakdown (largest)</h3>
+<ul>
+<li><code>/opt/models/gguf</code> — 103 GiB</li>
+<li><code>/home/localadmin/projects</code> — 4.6 GiB</li>
+<li><code>/home/localadmin/logs</code> — 73 MiB</li>
+<li><code>/home/localadmin/tmp</code> — 43 MiB</li>
+</ul>
+<hr />
+<h2 id="ts-proxmox-esxi-172.16.254.5">3. TS (Proxmox ESXi) —
+172.16.254.5</h2>
+<table>
+<colgroup>
+<col style="width: 53%" />
+<col style="width: 46%" />
+</colgroup>
+<thead>
+<tr class="header">
+<th>Metric</th>
+<th>Value</th>
+</tr>
+</thead>
+<tbody>
+<tr class="odd">
+<td><strong>Uptime</strong></td>
+<td>9 days, 11 hours</td>
+</tr>
+<tr class="even">
+<td><strong>RAM</strong></td>
+<td>90 GiB used / 251 GiB total (36%)</td>
+</tr>
+<tr class="odd">
+<td><strong>Swap</strong></td>
+<td>None</td>
+</tr>
+<tr class="even">
+<td><strong>Root Disk</strong></td>
+<td>3.5 GiB used / 897 GiB (1%)</td>
+</tr>
+<tr class="odd">
+<td><strong>Load Average</strong></td>
+<td>0.57 / 1.60 / 3.27</td>
+</tr>
+<tr class="even">
+<td><strong>Storage Pools</strong></td>
+<td>SAS: 17.5T used / 7.37T free; Fast-store: 724G used / 1.84T
+free</td>
+</tr>
+</tbody>
+</table>
+<h3 id="vm-status">VM Status</h3>
+<table>
+<thead>
+<tr class="header">
+<th>VMID</th>
+<th>Name</th>
+<th>Status</th>
+<th>RAM</th>
+<th>Bootdisk</th>
+</tr>
+</thead>
+<tbody>
+<tr class="odd">
+<td>100</td>
+<td>NODE1</td>
+<td>⛔ <strong>STOPPED</strong></td>
+<td>65 GB</td>
+<td>128 GB</td>
+</tr>
+<tr class="even">
+<td>101</td>
+<td>NODE2</td>
+<td>✅ Running</td>
+<td>65 GB</td>
+<td>256 GB</td>
+</tr>
+<tr class="odd">
+<td>200</td>
+<td>fs.9xc.local</td>
+<td>✅ Running</td>
+<td>4 GB</td>
+<td>32 GB</td>
+</tr>
+</tbody>
+</table>
+<hr />
+<h2 id="services-status">4. Services Status</h2>
+<table>
+<colgroup>
+<col style="width: 37%" />
+<col style="width: 33%" />
+<col style="width: 29%" />
+</colgroup>
+<thead>
+<tr class="header">
+<th>Service</th>
+<th>Status</th>
+<th>Notes</th>
+</tr>
+</thead>
+<tbody>
+<tr class="odd">
+<td><strong>OpenClaw Gateway</strong></td>
+<td>✅ Running</td>
+<td>PID 3256056, port 18789</td>
+</tr>
+<tr class="even">
+<td><strong>llama-server (node2)</strong></td>
+<td>✅ Running</td>
+<td>Port 11434, processing requests</td>
+</tr>
+<tr class="odd">
+<td><strong>n8n</strong></td>
+<td>❌ <strong>DOWN</strong></td>
+<td>No systemd unit, no binary (only config at ~/.n8n/)</td>
+</tr>
+<tr class="even">
+<td><strong>gog-bridge</strong></td>
+<td>❌ <strong>DOWN</strong></td>
+<td>No service file, no binary</td>
+</tr>
+<tr class="odd">
+<td><strong>Matrix (openclaw-matrix)</strong></td>
+<td>❌ <strong>DOWN</strong></td>
+<td>Service unit not found</td>
+</tr>
+</tbody>
+</table>
+<hr />
+<h2 id="cron-jobs-10-total">5. Cron Jobs (10 total)</h2>
+<table>
+<thead>
+<tr class="header">
+<th>Name</th>
+<th>Schedule</th>
+<th>Status</th>
+<th>Last Run</th>
+</tr>
+</thead>
+<tbody>
+<tr class="odd">
+<td>node2-metrics-scraper</td>
+<td>Every 5 min</td>
+<td>✅ OK</td>
+<td>3 min ago</td>
+</tr>
+<tr class="even">
+<td>node2-p6000-monitor</td>
+<td>Every 4h</td>
+<td>✅ OK</td>
+<td>1h ago</td>
+</tr>
+<tr class="odd">
+<td>Daily Systems Status</td>
+<td>Weekdays 18:00 UTC</td>
+<td>✅ OK</td>
+<td>3 days ago</td>
+</tr>
+<tr class="even">
+<td>daily-systems-status (main)</td>
+<td>Every 1d</td>
+<td>✅ OK</td>
+<td>9h ago</td>
+</tr>
+<tr class="odd">
+<td>Memory Monitor</td>
+<td>Daily 08:00 UTC</td>
+<td>✅ OK</td>
+<td>7h ago</td>
+</tr>
+<tr class="even">
+<td>Daily Node2 Cost Report</td>
+<td>Daily 12:00 UTC</td>
+<td>✅ OK</td>
+<td>3h ago</td>
+</tr>
+<tr class="odd">
+<td>6AM CST Morning News</td>
+<td>Daily 12:00 UTC</td>
+<td>✅ OK</td>
+<td>3h ago</td>
+</tr>
+<tr class="even">
+<td>node2-metrics-aggregator</td>
+<td>Every 1d</td>
+<td>✅ OK</td>
+<td>2h ago</td>
+</tr>
+<tr class="odd">
+<td><strong>Daily Self-Improvement</strong></td>
+<td>Daily 14:00 UTC</td>
+<td>❌ <strong>ERROR</strong></td>
+<td>1h ago</td>
+</tr>
+<tr class="even">
+<td>Monthly Invoice - Ollama</td>
+<td>1st of month 09:00 UTC</td>
+<td>⏸️ Idle</td>
+<td>—</td>
+</tr>
+</tbody>
+</table>
+<p><strong>Health:</strong> 8/10 OK, 1 ERROR, 1 IDLE</p>
+<hr />
+<h2 id="outstanding-issues">6. Outstanding Issues</h2>
+<h3 id="critical">🔴 Critical</h3>
+<ol type="1">
+<li><strong>Security: Exec full trust + open groupPolicy</strong> — 3
+critical security findings in <code>openclaw status</code>. Recommend
+tightening to allowlist with ask prompts.</li>
+<li><strong>Daily Self-Improvement cron</strong> — Failed at 14:00 UTC
+today.</li>
+</ol>
+<h3 id="medium">🟡 Medium</h3>
+<ol start="3" type="1">
+<li><strong>n8n + gog-bridge dead</strong> — No binaries or service
+files. Config/DB still intact at <code>~/.n8n/</code>. Needs full
+reinstall.</li>
+<li><strong>Matrix service</strong> — Unit file missing.</li>
+<li><strong>node2 root disk at 74%</strong> — 174/249 GiB used. Model
+directory (103 GiB) is the largest consumer.</li>
+<li><strong>llama-server <code>-np 1</code></strong> — Still single-slot
+(11 days unresolved). ~700 MiB free per GPU available for a 2nd
+slot.</li>
+</ol>
+<h3 id="low">🟢 Low</h3>
+<ol start="7" type="1">
+<li><strong>NODE1 VM stopped</strong> on Proxmox — intentional?</li>
+<li><strong>Copilot auth (HTTP 403)</strong> — intermittent auth
+failures in gateway logs.</li>
+<li><strong>Model loading 503s</strong> — node2/llamacpp occasionally
+returns 503 during model load.</li>
+</ol>
+<hr />
+<h2 id="summary">7. Summary</h2>
+<p><strong>Overall status: ⚠️ DEGRADED</strong></p>
+<ul>
+<li>3 of 4 hosts are operational and stable</li>
+<li>Gateway host running normally with 3 critical security findings to
+address</li>
+<li>Node2 GPU server healthy — both GPUs idle but VRAM-pinned,
+llama-server processing</li>
+<li>TS Proxmox stable — 2/3 VMs running</li>
+<li><strong>n8n and gog-bridge are down</strong> — automation pipeline
+broken</li>
+<li>Self-Improvement cron job errored today</li>
+<li>Security posture needs tightening (full exec trust + open
+groupPolicy)</li>
+</ul>
+<hr />
+<p><em>Report generated by Sam 🧑‍💼 — OpenClaw Personal Assistant</em></p>
+</body>
+</html>

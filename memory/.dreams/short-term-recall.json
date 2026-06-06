@@ -1,6 +1,6 @@
 {
   "version": 1,
-  "updatedAt": "2026-05-15T21:13:22.191Z",
+  "updatedAt": "2026-06-05T16:26:30.307Z",
   "entries": {
     "memory:memory/2026-03-04.md:92:150": {
       "key": "memory:memory/2026-03-04.md:92:150",
@@ -260,18 +260,20 @@
       "endLine": 62,
       "source": "memory",
       "snippet": "3. **Code-level guard** (pending): - Prompt builder should check before sending: `if (tokens > ctx_size * 0.9) trigger_compaction()` - Requires OpenClaw source modification ### Files Created/Updated - `ITIL/ITIL-ISSUE-CONTEXT-WINDOW-ROLLOVER.md` - Issue tracking - `llama-server.service` - Updated server config - `DEPLOY-LLAMA-SERVER.md` - Deployment instructions - `update-compaction-settings.sh` - Config update script - `memory/2026-03-01.md` - This file ### Next Steps 1. Deploy updated llama-server.service to olla (manual sudo required) 2. Test with long-running conversation 3. Monitor logs for any context errors 4. Submit code-level fix to OpenClaw repository ### Notes - Server",
-      "recallCount": 1,
+      "recallCount": 2,
       "dailyCount": 0,
       "groundedCount": 0,
-      "totalScore": 0.6576417745220751,
-      "maxScore": 0.6576417745220751,
+      "totalScore": 1.657641774522075,
+      "maxScore": 1,
       "firstRecalledAt": "2026-04-12T23:22:01.430Z",
-      "lastRecalledAt": "2026-04-12T23:22:01.430Z",
+      "lastRecalledAt": "2026-06-03T21:50:22.225Z",
       "queryHashes": [
-        "a40fcbfb4195"
+        "a40fcbfb4195",
+        "4fc6b4b28b2b"
       ],
       "recallDays": [
-        "2026-04-12"
+        "2026-04-12",
+        "2026-06-03"
       ],
       "conceptTags": [
         "code-level",
@@ -632,18 +634,21 @@
       "endLine": 119,
       "source": "memory",
       "snippet": "- OCG `/etc/hosts` updated: `10.50.15.226 hermes.9xc.io hermes` so `ssh localadmin@hermes` works from OCG. - hermes LXC `/etc/hosts` updated with Ollama host entry (e.g., `172.16.254.100 olla`) so Hermes can resolve and reach Ollama. - Provider / LLM config: - Ollama (llamacpp) made available to OpenClaw as provider `olla` (base URL `http://olla:11434/v1`, apiKey `local`). - Hermes gateway expects a `custom` provider to talk to the self-hosted /v1-compatible endpoint; configured `CUSTOM_API_KEY=local`, `provider: custom`, `base_url: http://olla:11434/v1`, model set to `llamacpp`. - Updated Hermes config structure (model.default, model.provider, model.base_url) and environment vari",
-      "recallCount": 1,
+      "recallCount": 3,
       "dailyCount": 0,
       "groundedCount": 0,
-      "totalScore": 0.3654805153608322,
-      "maxScore": 0.3654805153608322,
+      "totalScore": 2.365480515360832,
+      "maxScore": 1,
       "firstRecalledAt": "2026-04-22T13:17:53.458Z",
-      "lastRecalledAt": "2026-04-22T13:17:53.458Z",
+      "lastRecalledAt": "2026-05-24T23:17:46.174Z",
       "queryHashes": [
-        "2d3e4f29feb5"
+        "2d3e4f29feb5",
+        "538f6635b149",
+        "38199b237dc6"
       ],
       "recallDays": [
-        "2026-04-22"
+        "2026-04-22",
+        "2026-05-24"
       ],
       "conceptTags": [
         "gateway",
@@ -1245,6 +1250,352 @@
         "default-timeout",
         "node2/llamacpp",
         "qwen3.5-35b-a3b-q4-k-m"
+      ]
+    },
+    "memory:memory/2026-04-02.md:153:190": {
+      "key": "memory:memory/2026-04-02.md:153:190",
+      "path": "memory/2026-04-02.md",
+      "startLine": 153,
+      "endLine": 190,
+      "source": "memory",
+      "snippet": "- **Fingerprint:** `hermes-deploy@comms.9xc.io` - **Action needed:** Add public key to `https://github.com/lavidicus/hermes-agent` → Settings → Deploy keys - **Public key to paste:** ``` ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAIJJ9OmcYVKMNU8vpjLP3uNNR5uwbkwM7bAGgKNE2qxKI hermes-deploy@comms.9xc.io ``` ### Next Steps 1. **Add deploy key** to GitHub repo (recommended) OR use PAT token fallback 2. **Push local changes** (run-hermes-daemon.sh script) to GitHub 3. **Verify E2EE** by sending a fresh DM and checking decryption 4. **Monitor logs:** `journalctl -u hermes-daemon.service -f` ### Troubleshooting Commands ```bash # Check service status ssh localadmin@hermes \"systemctl status hermes-d",
+      "recallCount": 2,
+      "dailyCount": 0,
+      "groundedCount": 0,
+      "totalScore": 2,
+      "maxScore": 1,
+      "firstRecalledAt": "2026-05-24T23:17:39.197Z",
+      "lastRecalledAt": "2026-05-24T23:17:46.174Z",
+      "queryHashes": [
+        "538f6635b149",
+        "38199b237dc6"
+      ],
+      "recallDays": [
+        "2026-05-24"
+      ],
+      "conceptTags": [
+        "hermes-deploy",
+        "comms.9xc.io",
+        "ssh-ed25519",
+        "run-hermes-daemon.sh",
+        "hermes-daemon.service",
+        "hermes-d",
+        "fingerprint",
+        "hermes"
+      ]
+    },
+    "memory:memory/2026-04-02.md:90:109": {
+      "key": "memory:memory/2026-04-02.md:90:109",
+      "path": "memory/2026-04-02.md",
+      "startLine": 90,
+      "endLine": 109,
+      "source": "memory",
+      "snippet": "- Network: vmbr1, tag=2, gateway 10.50.15.254 - Rootfs and config fixed after initial corrupted template; container rebuilt and started. - Agent & service setup: - Hermes agent v0.6.0 installed at /opt/hermes-agent inside the container. - Python venv created; dependencies installed (git, python3, pip, build-essential, etc.). - Systemd service created (`hermes-daemon.service`) and wrapper `/opt/hermes-agent/run-hermes-daemon.sh` implemented to run Hermes in gateway/daemon mode. - Service configured to auto-restart and run as root for reliability; environment and config files placed under /opt/hermes-agent and ~/.hermes as required. - Accounts & access: - localadmin user presen",
+      "recallCount": 2,
+      "dailyCount": 0,
+      "groundedCount": 0,
+      "totalScore": 2,
+      "maxScore": 1,
+      "firstRecalledAt": "2026-05-24T23:17:39.197Z",
+      "lastRecalledAt": "2026-05-24T23:17:46.174Z",
+      "queryHashes": [
+        "538f6635b149",
+        "38199b237dc6"
+      ],
+      "recallDays": [
+        "2026-05-24"
+      ],
+      "conceptTags": [
+        "gateway",
+        "network",
+        "10.50.15.254",
+        "v0.6.0",
+        "opt/hermes-agent",
+        "build-essential",
+        "hermes-daemon.service",
+        "gateway/daemon"
+      ]
+    },
+    "memory:memory/2026-04-02.md:131:160": {
+      "key": "memory:memory/2026-04-02.md:131:160",
+      "path": "memory/2026-04-02.md",
+      "startLine": 131,
+      "endLine": 160,
+      "source": "memory",
+      "snippet": "*Captured by agent during session work on Hermes LXC build & Hermes gateway integration.* ## HermeS Agent LXC on `mas` (VMID 226) — Final Status (2026-04-02) ### Current State - **Host:** `mas.9xc.local` - **Container:** VMID 226, hostname `hermes`, IP `10.50.15.226`, VLAN 2 on `vmbr1` - **Service:** `hermes-daemon.service` running as `localadmin` (PID 32520) - **Matrix:** Connected to `!TsgdHElVGjkuuBatEC:comms.9xc.io` with E2EE; user `@herms:comms.9xc.io` - **Model:** Self-hosted via Ollama (`http://olla:11434/v1`), provider `custom`, model `llamacpp` - **Status:** ✅ Active and processing Matrix messages ### Critical Fixes Applied 1. **Venv recreated** after git reset cleared dependencie",
+      "recallCount": 2,
+      "dailyCount": 0,
+      "groundedCount": 0,
+      "totalScore": 2,
+      "maxScore": 1,
+      "firstRecalledAt": "2026-05-24T23:17:39.197Z",
+      "lastRecalledAt": "2026-05-24T23:17:46.174Z",
+      "queryHashes": [
+        "538f6635b149",
+        "38199b237dc6"
+      ],
+      "recallDays": [
+        "2026-05-24"
+      ],
+      "conceptTags": [
+        "gateway",
+        "vlan",
+        "mas.9xc.local",
+        "10.50.15.226",
+        "hermes-daemon.service",
+        "comms.9xc.io",
+        "self-hosted",
+        "11434/v1"
+      ]
+    },
+    "memory:memory/2026-04-02.md:116:137": {
+      "key": "memory:memory/2026-04-02.md:116:137",
+      "path": "memory/2026-04-02.md",
+      "startLine": 116,
+      "endLine": 137,
+      "source": "memory",
+      "snippet": "- E2EE enabled; Hermes now supports encrypted rooms after enabling MATRIX_ENCRYPTION and verifying/trusting devices as needed. Old encrypted messages cannot be decrypted, but new messages are processed. - Runtime state (as of 2026-04-02 14:48 UTC): - hermes-daemon.service: active (running); Hermes gateway connected to Matrix and listening for messages. - Hermes joined invited room(s) but may require invites for additional rooms; auto-join may warn if not invited. - Ollama model accessible and being used for inference via the configured custom/OpenAI-compatible endpoint. - Playbook & docs updated: - `ITIL/playbooks/lxc-build-hermes-226.md` updated with steps, credentials (local ad",
+      "recallCount": 2,
+      "dailyCount": 0,
+      "groundedCount": 0,
+      "totalScore": 2,
+      "maxScore": 1,
+      "firstRecalledAt": "2026-05-24T23:17:39.197Z",
+      "lastRecalledAt": "2026-05-24T23:17:46.174Z",
+      "queryHashes": [
+        "538f6635b149",
+        "38199b237dc6"
+      ],
+      "recallDays": [
+        "2026-05-24"
+      ],
+      "conceptTags": [
+        "gateway",
+        "openai",
+        "matrix-encryption",
+        "verifying/trusting",
+        "hermes-daemon.service",
+        "auto-join",
+        "custom/openai-compatible",
+        "e2ee"
+      ]
+    },
+    "memory:memory/2026-04-02.md:1:39": {
+      "key": "memory:memory/2026-04-02.md:1:39",
+      "path": "memory/2026-04-02.md",
+      "startLine": 1,
+      "endLine": 39,
+      "source": "memory",
+      "snippet": "## 🔧 Hermes MCP Integration & llama.cpp Gemma 4 Rebuild (20:00-22:10 UTC) ### Hermes Bot Setup - Fixed E2EE failures by switching to unencrypted room `!CwXhZRrJARdIhqzdpf:comms.9xc.io` - Set `MATRIX_ENCRYPTION=false` in `/opt/hermes-agent/.env` - Fixed LLM config: changed `provider: ollama` → `provider: custom` with `base_url: http://olla:11434/v1` - Wiped crypto store and restarted `hermes-daemon.service` ### Hermes MCP Server Integration - Discovered Hermes MCP uses **stdio transport** (not HTTP on port 3001) - Updated `openclaw.json` MCP config from `url` to `command`/`args` format: ```json \"hermes\": { \"command\": \"python3\", \"args\": [\"/opt/hermes-agent/mcp_serve.py\"], \"",
+      "recallCount": 2,
+      "dailyCount": 0,
+      "groundedCount": 0,
+      "totalScore": 2,
+      "maxScore": 1,
+      "firstRecalledAt": "2026-05-24T23:17:39.197Z",
+      "lastRecalledAt": "2026-05-24T23:17:46.174Z",
+      "queryHashes": [
+        "538f6635b149",
+        "38199b237dc6"
+      ],
+      "recallDays": [
+        "2026-05-24"
+      ],
+      "conceptTags": [
+        "llama.cpp",
+        "00-22",
+        "comms.9xc.io",
+        "matrix-encryption",
+        "opt/hermes-agent",
+        "base-url",
+        "11434/v1",
+        "hermes-daemon.service"
+      ]
+    },
+    "memory:memory/2026-03-01.md:1:41": {
+      "key": "memory:memory/2026-03-01.md:1:41",
+      "path": "memory/2026-03-01.md",
+      "startLine": 1,
+      "endLine": 41,
+      "source": "memory",
+      "snippet": "# 2026-03-01 - Session Notes ## Issue Discovered: Context Window Roll Over Failure **Time:** ~15:24 UTC **Severity:** P2 (High) ### What Happened During session startup, discovered that llama-server on host `olla` was rejecting prompts exceeding 65536 tokens, even though SWA (sliding window attention) with `--context-shift` was enabled. Server logs showed: ``` error: request (65801 tokens) exceeds the available context size (65536 tokens) ``` ### Root Cause **Client-side context accumulation**, not server-side. OpenClaw was building prompts to 66k+ tokens before sending to server, exceeding the server's configured `--ctx-size 65535`. SWA checkpoints were cycling fine (1→8→1), but t",
+      "recallCount": 1,
+      "dailyCount": 0,
+      "groundedCount": 0,
+      "totalScore": 1,
+      "maxScore": 1,
+      "firstRecalledAt": "2026-06-03T21:50:22.225Z",
+      "lastRecalledAt": "2026-06-03T21:50:22.225Z",
+      "queryHashes": [
+        "4fc6b4b28b2b"
+      ],
+      "recallDays": [
+        "2026-06-03"
+      ],
+      "conceptTags": [
+        "llama-server",
+        "context-shift",
+        "client-side",
+        "server-side",
+        "ctx-size",
+        "issue",
+        "discovered",
+        "context"
+      ]
+    },
+    "memory:memory/2026-03-14.md:101:139": {
+      "key": "memory:memory/2026-03-14.md:101:139",
+      "path": "memory/2026-03-14.md",
+      "startLine": 101,
+      "endLine": 139,
+      "source": "memory",
+      "snippet": "5. **skills/cognee-integration.py** - Knowledge graph for skill relationships **Analysis & Testing:** 6. **scripts/analyze-skill-performance.py** - Pattern detection, health reports 7. **scripts/run-auto-improvement.py** - Complete improvement cycle runner 8. **scripts/generate-sample-data.py** - Test data generation 9. **scripts/test-phase4.py** - Phase 4 test script ✅ WORKING **OpenClaw Integration:** 10. **skills/openclaw-skill-logger.py** - Automatic invocation tracking 11. **skills/skill-invocation-tracker.py** - Decorator for individual skills 12. **skills/production-skill-logger.py** - Production-grade logger 13. **skills/INTEGRATION_GUIDE.md** - Complete integration documentation",
+      "recallCount": 1,
+      "dailyCount": 0,
+      "groundedCount": 0,
+      "totalScore": 1,
+      "maxScore": 1,
+      "firstRecalledAt": "2026-06-05T16:26:26.273Z",
+      "lastRecalledAt": "2026-06-05T16:26:26.273Z",
+      "queryHashes": [
+        "5aee46137014"
+      ],
+      "recallDays": [
+        "2026-06-05"
+      ],
+      "conceptTags": [
+        "skills/cognee-integration.py",
+        "scripts/run-auto-improvement.py",
+        "scripts/generate-sample-data.py",
+        "scripts/test-phase4.py",
+        "skills/openclaw-skill-logger.py",
+        "production-grade",
+        "skills/integration-guide.md",
+        "skills"
+      ]
+    },
+    "memory:memory/2026-03-14.md:69:106": {
+      "key": "memory:memory/2026-03-14.md:69:106",
+      "path": "memory/2026-03-14.md",
+      "startLine": 69,
+      "endLine": 106,
+      "source": "memory",
+      "snippet": "🔥 Top Stories: - Iran-Israel conflict: 5th day of war, U.S. and Israel hit Tehran with airstrikes - 4 U.S. service members killed in Kuwait operation - Primary elections in Texas, North Carolina, Arkansas 🌍 International: - Israeli tanks maneuver near Lebanon border - Iran threatens 'complete destruction' of region's military 🇺🇸 Domestic: - NYC announces free 2-K child care expansion - Cardinal Dolan named NYPD chief chaplain Full briefing compiled from AP, Reuters, BBC. ## 🤖 Self-Improving Skills System (14:04-16:10 UTC) **Project:** Build complete self-improving skills framework inspired by cognee-skills **Problem:** Skills are static while environments change → silent failures,",
+      "recallCount": 1,
+      "dailyCount": 0,
+      "groundedCount": 0,
+      "totalScore": 1,
+      "maxScore": 1,
+      "firstRecalledAt": "2026-06-05T16:26:26.273Z",
+      "lastRecalledAt": "2026-06-05T16:26:26.273Z",
+      "queryHashes": [
+        "5aee46137014"
+      ],
+      "recallDays": [
+        "2026-06-05"
+      ],
+      "conceptTags": [
+        "iran-israel",
+        "u.s",
+        "2-k",
+        "self-improving",
+        "04-16",
+        "cognee-skills",
+        "top",
+        "stories"
+      ]
+    },
+    "memory:memory/2026-04-01.md:92:92": {
+      "key": "memory:memory/2026-04-01.md:92:92",
+      "path": "memory/2026-04-01.md",
+      "startLine": 92,
+      "endLine": 92,
+      "source": "memory",
+      "snippet": "djustment. (#57691) Thanks @jacobtomlinson.\\n\\n### Changes\\n\\n- ACP/plugins: add an explicit default-off ACPX plugin-tools MCP bridge config, document the trust boundary, and harden the built-in bridge packaging/logging path so global installs and stdio MCP sessions work reliably. (#56867) Thanks @joe2643.\\n- Agents/LLM: add a configurable idle-stream timeout for embedded runner requests so stalled model streams abort cleanly instead of hanging until the broader run timeout fires. (#55072) Thanks @liuy.\\n- Agents/MCP: materialize bundle MCP tools with provider-safe names (`serverName__toolName`), support optional `streamable-http` transport selection plus per-server connection timeouts, and",
+      "recallCount": 1,
+      "dailyCount": 0,
+      "groundedCount": 0,
+      "totalScore": 1,
+      "maxScore": 1,
+      "firstRecalledAt": "2026-06-05T16:26:26.273Z",
+      "lastRecalledAt": "2026-06-05T16:26:26.273Z",
+      "queryHashes": [
+        "5aee46137014"
+      ],
+      "recallDays": [
+        "2026-06-05"
+      ],
+      "conceptTags": [
+        "acp/plugins",
+        "default-off",
+        "plugin-tools",
+        "built-in",
+        "packaging/logging",
+        "agents/llm",
+        "idle-stream",
+        "agents/mcp"
+      ]
+    },
+    "memory:memory/2026-04-18.md:51:81": {
+      "key": "memory:memory/2026-04-18.md:51:81",
+      "path": "memory/2026-04-18.md",
+      "startLine": 51,
+      "endLine": 81,
+      "source": "memory",
+      "snippet": "- `-np 1` (pipeline parallelism disabled, tensor split handles the work) - `--ctx-size 262144` (reduced from 524288/512K) - `-b 2048` (reduced from 4096 for faster prefill) - `-ub 512` (reduced from 1024 for tighter KV cache) - `--threads 28 --threads-batch 28` (added batch-threads) - `--parallel 2` (continuous batching, keep at 2) - **00:06 UTC:** Jeremy asked if changes were applied on node2 - **00:09 UTC:** Async exec failed (health check failed), need to apply on node2 directly - **00:12 UTC:** Applying changes on node2 via SSH — backing up service, writing new config, restarting ## OpenClaw Timeout Analysis - LLM HTTP request timeout ~120 seconds (logs showed 125545ms and 1",
+      "recallCount": 1,
+      "dailyCount": 0,
+      "groundedCount": 0,
+      "totalScore": 1,
+      "maxScore": 1,
+      "firstRecalledAt": "2026-06-05T16:26:26.273Z",
+      "lastRecalledAt": "2026-06-05T16:26:26.273Z",
+      "queryHashes": [
+        "5aee46137014"
+      ],
+      "recallDays": [
+        "2026-06-05"
+      ],
+      "conceptTags": [
+        "ctx-size",
+        "524288/512k",
+        "threads-batch",
+        "batch-threads",
+        "pipeline",
+        "parallelism",
+        "disabled",
+        "tensor"
+      ]
+    },
+    "memory:memory/2026-03-21.md:1:26": {
+      "key": "memory:memory/2026-03-21.md:1:26",
+      "path": "memory/2026-03-21.md",
+      "startLine": 1,
+      "endLine": 26,
+      "source": "memory",
+      "snippet": "# 2026-03-21 Daily Log ## Morning News Briefing (12:00 UTC / 6AM CST) ### Top Stories - **Iran War Day 21** — Israel struck Tehran on Nowruz. Trump considering \"winding down\" war but USS Boxer deployed to Persian Gulf. Netanyahu halted energy site strikes after Trump anger. Treasury lifted some Iranian oil sanctions. Strategic reserves released. - **Iran threats** — Threatened world tourism sites, still building missiles, Supreme Leader defiant - **Trump vs NATO** — Lashed out at allies over Strait of Hormuz security - **Qatar LNG disruptions** — 20% of global LNG supply at risk, force majeure likely - **Sen. Mullin DHS confirmation** — Contentious hearing - **Eid al-Fitr** — Ramadan endin",
+      "recallCount": 1,
+      "dailyCount": 0,
+      "groundedCount": 0,
+      "totalScore": 1,
+      "maxScore": 1,
+      "firstRecalledAt": "2026-06-05T16:26:30.307Z",
+      "lastRecalledAt": "2026-06-05T16:26:30.307Z",
+      "queryHashes": [
+        "b70191abe85f"
+      ],
+      "recallDays": [
+        "2026-06-05"
+      ],
+      "conceptTags": [
+        "al-fitr",
+        "log",
+        "morning",
+        "news",
+        "briefing",
+        "utc",
+        "6am",
+        "cst"
       ]
     }
   }

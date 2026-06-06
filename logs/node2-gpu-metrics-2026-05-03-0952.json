@@ -1,0 +1,31 @@
+{
+  "timestamp": "2026-05-03T09:52:51Z",
+  "source": "node2 (ssh localadmin@node2)",
+  "driver": "580.126.20",
+  "cuda": "13.0",
+  "gpu": [
+    {
+      "index": 0,
+      "name": "Quadro P6000",
+      "temperature_c": 59,
+      "power_draw_w": 69.44,
+      "power_limit_w": 250,
+      "utilization_pct": 0,
+      "memory_used_mb": 21627,
+      "memory_total_mb": 24576,
+      "process": "llama-server (PID 1015)"
+    },
+    {
+      "index": 1,
+      "name": "Quadro P6000",
+      "temperature_c": 52,
+      "power_draw_w": 65.75,
+      "power_limit_w": 250,
+      "utilization_pct": 0,
+      "memory_used_mb": 22831,
+      "memory_total_mb": 24576,
+      "process": "llama-server (PID 1015)"
+    }
+  ],
+  "notes": "Both GPUs idle (0% util), ~21-23GB VRAM used each by llama-server. Temps normal (52-59C). Script /home/localadmin/scripts/node1-metrics-scraper.sh exists and runs successfully on node2."
+}

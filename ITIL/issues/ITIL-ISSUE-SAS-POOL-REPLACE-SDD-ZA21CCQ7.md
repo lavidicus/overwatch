@@ -18,7 +18,10 @@ Replace failing 10TB HDD in TS Proxmox SAS ZFS pool. Drive /dev/sdd (Serial: ZA2
 ## Timeline
 - **Detected**: 2026-04-18 04:49 UTC — routine systems health check
 - **Acknowledged**: 2026-04-18 04:57 UTC
-- **Current Stage**: Replacement Ordered — Awaiting Delivery
+- **Replacement Ordered**: 2026-04-19
+- **Replacement Completed**: 2026-04-27 — new drive installed (Serial: ZA23VZQB, Seagate ST10000NM0086)
+- **Resilver Completed**: 2026-04-28 05:33 UTC — 5.04T resilvered in 10h 26m with 0 errors
+- **Current Stage**: Resolved — pool healthy, all checks passed
 
 ## Investigation
 SMART health check via `smartctl` on 2026-04-18 04:49 UTC revealed:
@@ -48,26 +51,26 @@ SMART health check via `smartctl` on 2026-04-18 04:49 UTC revealed:
 No I/O errors or timeout messages in kernel journal. ZFS has been handling the drive's bad sectors transparently.
 
 ## Resolution
-**Action Required:**
-1. ✅ Replacement 10TB enterprise HDD **ordered today (2026-04-19)** — $270
-2. Schedule maintenance window for replacement (pending drive arrival)
-3. Run `zpool offline SAS /dev/sdd` (or by serial)
-3. Run `zpool offline SAS /dev/sdd` (or by serial)
-4. Physically replace drive on TS
-5. Run `zpool replace SAS <old-device> <new-device>`
-6. Monitor scrub progress (expect ~8 hours for full rebuild)
-7. Verify pool health: `zpool status SAS`
+**Actions Completed:**
+1. ✅ Replacement 10TB enterprise HDD ordered (2026-04-19) — $270
+2. ✅ Drive received and installed (2026-04-27)
+3. ✅ `zpool offline SAS /dev/sdd` executed
+4. ✅ Physically replaced failing drive (Serial: ZA21CCQ7) with new drive (Serial: ZA23VZQB, Seagate ST10000NM0086)
+5. ✅ `zpool replace SAS` executed — resilver started
+6. ✅ Resilver completed: 5.04T in 10h 26m (2026-04-28 05:33 UTC) with **0 errors**
+7. ✅ Pool verification: `zpool status SAS` — state ONLINE, all devices ONLINE, 0 read/write/cksum errors
+8. ✅ SMART check on new drive — all critical attributes clean (Reallocated_Sector_Ct: 0, Current_Pending_Sector: 0, UDMA_CRC: 0)
 
 ## Follow-up
-- **Root Cause**: Natural drive media degradation / wear
+- **Root Cause**: Natural drive media degradation / wear (36,704 reallocated sectors on old drive)
 - **Prevention**: Schedule quarterly SMART health checks on all pool members. Consider adding hot spare to SAS pool.
-- **Known Workaround**: None — ZFS parity currently masking drive faults. Drive could fail at any time.
-- **Next Step**: Monitor for drive delivery, then schedule replacement maintenance window.
+- **Next Step**: Close ticket.
 
 ## SLA Tracking
 - **Target Response**: Immediate (acknowledged)
 - **Target Resolution**: Within 7 days (awaiting drive procurement)
-- **Status**: In Progress — replacement ordered, awaiting delivery
+- **Actual Resolution**: 9 calendar days (drive procurement delay)
+- **Status**: ✅ **Resolved** — pool healthy, resilver complete, 0 errors
 
 ## Procurement Notes
 - **Required**: 10TB Enterprise HDD (SATA 6Gb/s, 3.5")

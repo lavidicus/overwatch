@@ -167,8 +167,15 @@ Skills define _how_ tools work. This file is for _your_ specifics — the stuff 
 ### Active Providers
 | Provider | Host | GPU | Model | tok/s | Port |
 |---|---|---|---|---|---|
-| **vllm** | 100.126.36.12 (vllm host) | 2× P6000 (48GB) | Qwen3.6-35B Q4_K_M | ~53 gen / ~200 prompt | 11434 |
+| **vllm** | 172.16.254.108 (vllm.9xc.local) | 2× P6000 (48GB) | Qwen3.6-35B Q4_K_M | ~53 gen / ~200 prompt | 11434 |
 | **pve3090-111** | 100.79.29.13 (vm111) | 2× RTX 3090 (48GB) | Qwen3.6-35B-A3B Q8_K_XL | ~102 gen (clean) | 11434 |
+
+### Hermes Agent on Ghost
+- **Config:** `~/.hermes/config.yaml` on ghost
+- **Provider:** vllm
+- **Base URL:** `http://vllm:11434/v1`
+- **Hosts entry:** `172.16.254.108 vllm.9xc.local vllm` in `/etc/hosts`
+- **Status:** Active and accessible from ghost
 
 ### Decommissioned
 - **node1/node2** — powered off since 2026-06-01, P6000s moved to vLLM container on gateway

@@ -1,0 +1,25 @@
+# Node2 GPU Metrics Snapshot
+# Timestamp: 2026-04-26 20:40 UTC
+# Driver: 580.126.20 | CUDA: 13.0
+
+GPU 0 — Quadro P6000
+  Temperature:  41-45 °C
+  Power:        65.8-66.4 W  (limit: 250 W)
+  Utilization:  0% (GPU) / 0% (Memory)
+  VRAM Used:    23,883 MiB / 24,576 MiB (97.2%)
+  Fan:          60%
+  Perf State:   P0
+
+GPU 1 — Quadro P6000
+  Temperature:  36-39 °C
+  Power:        64.0-64.3 W  (limit: 250 W)
+  Utilization:  0% (GPU) / 0% (Memory)
+  VRAM Used:    23,523 MiB / 24,576 MiB (95.7%)
+  Fan:          60%
+  Perf State:   P0
+
+Summary:
+- Both GPUs idle at ~65W each (power draw in idle/idle-boost)
+- Temps moderate: 41°C and 36°C
+- VRAM nearly full on both (~97%) — likely occupied by llama.cpp inference sessions
+- PCIe Gen3 x16, NVML driver 580.126.20

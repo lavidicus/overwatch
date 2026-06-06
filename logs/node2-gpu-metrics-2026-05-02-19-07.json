@@ -1,0 +1,24 @@
+{
+  "timestamp": "2026-05-02T19:07Z",
+  "source": "node2 (ssh localadmin@node2)",
+  "gpu": [
+    {
+      "index": 0,
+      "temperature_c": 56,
+      "power_draw_w": 68.51,
+      "power_limit_w": 250,
+      "utilization_pct": 0,
+      "memory_used_mb": 21551,
+      "memory_total_mb": 24576
+    },
+    {
+      "index": 1,
+      "temperature_c": 50,
+      "power_draw_w": 65.18,
+      "power_limit_w": 250,
+      "utilization_pct": 0,
+      "memory_used_mb": 22755,
+      "memory_total_mb": 24576
+    }
+  ]
+}

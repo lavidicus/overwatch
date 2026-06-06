@@ -1,0 +1,7 @@
+=== Node2 GPU Metrics ===
+Timestamp: 2026-04-25T11:55:52Z
+
+GPU 0 (QuadroP6000): util=0% temp=40°C power=65.73W/250.00W mem=23861MiB/24576MiB
+GPU 1 (QuadroP6000): util=0% temp=35°C power=64.06W/250.00W mem=23501MiB/24576MiB
+
+---

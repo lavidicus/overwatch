@@ -4,6 +4,7 @@ import {
   Button, FormControl, FormLabel, RadioGroup, Radio, FormControlLabel, Typography,
   Box, CircularProgress,
 } from '@mui/material';
+import { getAuthToken } from '../utils/auth';
 
 interface Provider {
   id: string;
@@ -36,7 +37,7 @@ export default function ProviderConfigDialog({ open, onClose, onSelect, initialP
   const fetchProviders = async () => {
     setLoading(true);
     try {
-      const token = localStorage.getItem('auth_token');
+      const token = getAuthToken();
       const res = await fetch('/api/providers', {
         headers: token ? { Authorization: `Bearer ${token}` } : {},
       });

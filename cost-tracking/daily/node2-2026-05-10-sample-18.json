@@ -1,0 +1,27 @@
+{
+  "date": "2026-05-10",
+  "hour": "18",
+  "timestamp": "2026-05-10T00:00:06Z",
+  "hardware": {
+    "cpu": "Intel(R) Xeon(R) CPU E5-2680 v4 @ 2.40GHz",
+    "cpu_cores": 28,
+    "ram_total_gb": 64276,
+    "ram_used_gb": 23500,
+    "gpus": [
+      {"name": "Quadro P6000", "index": 0, "temp_c": 44, "mem_used_mb": 22641, "power_w": 66.21, "util_pct": 0, "clock_mhz": 1657},
+      {"name": "Quadro P6000", "index": 1, "temp_c": 37, "mem_used_mb": 23805, "power_w": 64.33, "util_pct": 0, "clock_mhz": 1657}
+    ],
+    "disk_total": "501G",
+    "disk_used": "331G",
+    "disk_usage_pct": "70%",
+    "uptime_hours": 94,
+    "persistence_mode": "Enabled"
+  },
+  "power": {
+    "gpu0_w": 66.21,
+    "gpu1_w": 64.33,
+    "total_gpu_w": 130.54,
+    "system_w": 100,
+    "total_system_w": 230.54
+  }
+}

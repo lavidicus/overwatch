@@ -1,0 +1,13 @@
+{
+  "date": "2026-05-04",
+  "timestamp": "2026-05-04T18:00:30Z",
+  "samples_collected": 4,
+  "new_samples": 0,
+  "sample_interval_hours": 6,
+  "average_power_w": 243.66,
+  "estimated_daily_kwh": 5.848,
+  "costs": {
+    "electricity_daily": 0.9064,
+    "total_daily": 0.9064
+  }
+}

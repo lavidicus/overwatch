@@ -1,0 +1,14 @@
+{
+  "name": "gog-bridge",
+  "version": "1.0.0",
+  "description": "HTTP bridge for gog CLI — lets n8n workflows call Gmail/Calendar/etc",
+  "main": "server.js",
+  "type": "module",
+  "scripts": {
+    "start": "node server.js"
+  },
+  "dependencies": {
+    "cors": "^2.8.5",
+    "express": "^4.21.0"
+  }
+}

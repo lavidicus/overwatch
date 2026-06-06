@@ -1,0 +1,5 @@
+
+--- 2026-04-25 06:54 UTC (cron) ---
+GPU 0: Quadro P6000 | util=0% | temp=39°C | power=65.4W/250W | mem=23861/24576 MiB
+GPU 1: Quadro P6000 | util=0% | temp=33°C | power=63.9W/250W | mem=23501/24576 MiB
+Both GPUs idle, temps low, ~97% VRAM occupied on both.

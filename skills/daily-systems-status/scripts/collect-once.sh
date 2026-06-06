@@ -1,11 +1,13 @@
 #!/bin/bash
 # Collect system metrics ONCE and print a single JSON line, then exit.
+# Hardware: TS (Proxmox host), Node1 (1x P6000 + llama.cpp), Node2 (1x P6000 + llama.cpp)
 set -euo pipefail
 
 # Get parent directory (where this script lives is scripts/)
 SCRIPT_DIR="$(cd "$(dirname "$(readlink -f "${BASH_SOURCE[0]}")")/.." && pwd)"
 
-NODE_HOST="node2"
+NODE1_HOST="node1"
+NODE2_HOST="node2"
 
 # ---- TS (Proxmox) ----
 sensors=$(ssh -o ConnectTimeout=5 root@ts.9xc.local 'ipmitool sensor' 2>/dev/null || echo "")
@@ -33,63 +35,96 @@ td0=$(norm "$td0"); td1=$(norm "$td1"); td2=$(norm "$td2"); td3=$(norm "$td3")
 nvme_vals=$(ssh -o ConnectTimeout=5 root@ts.9xc.local '/usr/local/bin/ts-nvme-temps.py' 2>/dev/null || echo "N/A N/A N/A N/A")
 read -r nv0 nv1 nv2 nv3 <<< "$nvme_vals"
 
-# ---- Node2 (single SSH call for efficiency) ----
-NODE2_DATA=$(ssh -o ConnectTimeout=5 localadmin@${NODE_HOST} '
-  echo "MEM_START"
-  free -h | grep Mem | awk "{print \$3,\$7}"
-  echo "MEM_END"
-  echo "LLAMA_START"
-  systemctl is-active llama-server.service 2>/dev/null || echo "unknown"
-  systemctl show llama-server.service --property=MemoryCurrent 2>/dev/null | cut -d= -f2
-  echo "LLAMA_END"
-  echo "GPU_START"
-  nvidia-smi --query-gpu=temperature.gpu,memory.used,memory.total,power.draw,power.limit --format=csv,noheader,nounits 2>/dev/null || echo "N/A"
-  echo "GPU_END"
-  echo "ROOT_START"
-  df -h / | tail -1 | awk "{print \$5,\$3,\$2}"
-  echo "ROOT_END"
-' 2>/dev/null || echo "ERR")
+# ---- Helper: collect one node's data ----
+collect_node() {
+    local host=$1
+    local label=$2
 
-if [ "$NODE2_DATA" = "ERR" ] || ! echo "$NODE2_DATA" | grep -q "MEM_START"; then
-    ram_used="N/A"; ram_avail="N/A"; llama_status="unknown"; llama_mem="N/A"
-    gpu0_temp="N/A"; gpu1_temp="N/A"; gpu0_mem="N/A"; gpu1_mem="N/A"
-    gpu0_total=24576; gpu1_total=24576; gpu0_power="N/A"; gpu1_power="N/A"
-    root_pct="N/A"; root_used="N/A"; root_total="N/A"
-else
+    local data=$(ssh -o ConnectTimeout=5 localadmin@${host} '
+        echo "MEM_START"
+        free -h | grep Mem | awk "{print \$3,\$7}"
+        echo "MEM_END"
+        echo "LLAMA_START"
+        systemctl is-active llama-server.service 2>/dev/null || echo "unknown"
+        systemctl show llama-server.service --property=MemoryCurrent 2>/dev/null | cut -d= -f2
+        echo "LLAMA_END"
+        echo "GPU_START"
+        nvidia-smi --query-gpu=temperature.gpu,memory.used,memory.total,power.draw,power.limit,utilization.gpu --format=csv,noheader,nounits 2>/dev/null || echo "N/A"
+        echo "GPU_END"
+        echo "ROOT_START"
+        df -h / | tail -1 | awk "{print \$5,\$3,\$2}"
+        echo "ROOT_END"
+    ' 2>/dev/null || echo "ERR")
+
+    if [ "$data" = "ERR" ] || ! echo "$data" | grep -q "MEM_START"; then
+        echo "{\"${label}\":{\"ram_used\":\"N/A\",\"ram_avail\":\"N/A\",\"llama_status\":\"unknown\",\"llama_mem\":\"N/A\",\"gpu_temp\":\"N/A\",\"gpu_mem\":\"N/A\",\"gpu_total\":24576,\"gpu_power\":\"N/A\",\"gpu_util\":\"null\",\"root_pct\":\"N/A\",\"root_used\":\"N/A\",\"root_total\":\"N/A\",\"llama_input_tps\":0,\"llama_output_tps\":0,\"llama_requests\":0}}"
+        return
+    fi
+
     # Parse memory
-    ram_line=$(echo "$NODE2_DATA" | sed -n '/^MEM_START$/,/^MEM_END$/p' | grep -v '_START\|_END' | head -1)
-    ram_used=$(echo "$ram_line" | awk '{print $1}')
-    ram_avail=$(echo "$ram_line" | awk '{print $2}')
+    local ram_line=$(echo "$data" | sed -n '/^MEM_START$/,/^MEM_END$/p' | grep -v '_START\|_END' | head -1)
+    local ram_used=$(echo "$ram_line" | awk '{print $1}')
+    local ram_avail=$(echo "$ram_line" | awk '{print $2}')
 
     # Parse llama
-    llama_line=$(echo "$NODE2_DATA" | sed -n '/^LLAMA_START$/,/^LLAMA_END$/p' | grep -v '_START\|_END' | head -1)
-    llama_status="$llama_line"
-    llama_mem_raw=$(echo "$NODE2_DATA" | sed -n '/^LLAMA_START$/,/^LLAMA_END$/p' | grep -v '_START\|_END' | tail -1)
-    llama_mem="N/A"
+    local llama_line=$(echo "$data" | sed -n '/^LLAMA_START$/,/^LLAMA_END$/p' | grep -v '_START\|_END' | head -1)
+    local llama_status="$llama_line"
+    local llama_mem_raw=$(echo "$data" | sed -n '/^LLAMA_START$/,/^LLAMA_END$/p' | grep -v '_START\|_END' | tail -1)
+    local llama_mem="N/A"
     if [ -n "$llama_mem_raw" ] && [ "$llama_mem_raw" != "[not set]" ] && echo "$llama_mem_raw" | grep -qE '^[0-9]+$'; then
         if [ "$llama_mem_raw" -gt 0 ] 2>/dev/null; then
             llama_mem=$(awk "BEGIN {printf \"%.1f\", $llama_mem_raw/1024/1024/1024}")
         fi
     fi
 
-    # Parse GPU
-    gpu_block=$(echo "$NODE2_DATA" | sed -n '/^GPU_START$/,/^GPU_END$/p' | grep -v '_START\|_END' || echo "")
-    gpu_val() { echo "$gpu_block" | sed -n "${1}p" | cut -d',' -f"$2" | tr -d ' '; }
-    gpu0_temp=$(gpu_val 1 1);  gpu1_temp=$(gpu_val 2 1)
-    gpu0_mem=$(gpu_val 1 2);   gpu1_mem=$(gpu_val 2 2)
-    gpu0_total=$(gpu_val 1 3); gpu1_total=$(gpu_val 2 3)
-    gpu0_power=$(gpu_val 1 4); gpu1_power=$(gpu_val 2 4)
+    # Parse GPU (single GPU per node)
+    local gpu_line=$(echo "$data" | sed -n '/^GPU_START$/,/^GPU_END$/p' | grep -v '_START\|_END' | head -1)
+    local gpu_temp=$(echo "$gpu_line" | cut -d',' -f1 | tr -d ' ')
+    local gpu_mem=$(echo "$gpu_line" | cut -d',' -f2 | tr -d ' ')
+    local gpu_total=$(echo "$gpu_line" | cut -d',' -f3 | tr -d ' ')
+    local gpu_power=$(echo "$gpu_line" | cut -d',' -f4 | tr -d ' ')
+    local gpu_util_raw=$(echo "$gpu_line" | cut -d',' -f6 | tr -d ' ')
+
+    # Validate gpu_util
+    local gpu_util="null"
+    if [ -n "$gpu_util_raw" ] && [ "$gpu_util_raw" != "N/A" ]; then
+        echo "$gpu_util_raw" | grep -qE '^[0-9]+$' && gpu_util="$gpu_util_raw"
+    fi
 
     # Parse root
-    root_line=$(echo "$NODE2_DATA" | sed -n '/^ROOT_START$/,/^ROOT_END$/p' | grep -v '_START\|_END' | head -1)
-    root_pct=$(echo "$root_line" | awk '{print $1}' | tr -d '%')
-    root_used=$(echo "$root_line" | awk '{print $2}')
-    root_total=$(echo "$root_line" | awk '{print $3}')
-fi
+    local root_line=$(echo "$data" | sed -n '/^ROOT_START$/,/^ROOT_END$/p' | grep -v '_START\|_END' | head -1)
+    local root_pct=$(echo "$root_line" | awk '{print $1}' | tr -d '%')
+    local root_used=$(echo "$root_line" | awk '{print $2}')
+    local root_total=$(echo "$root_line" | awk '{print $3}')
 
+    # Llama tok/s metrics (best-effort)
+    local llama_input_tps=0
+    local llama_output_tps=0
+    local llama_requests=0
+    local toks_file="/home/localadmin/scripts/${label}-toks-per-sec.sh"
+    local _toks=$(ssh -o ConnectTimeout=5 localadmin@${host} "bash ${toks_file}" 2>/dev/null || echo '{}')
+    if [ -n "$_toks" ] && echo "$_toks" | grep -q '"input_tps"'; then
+        llama_input_tps=$(echo "$_toks" | grep -oP '"input_tps":\K[0-9.]+')
+        llama_output_tps=$(echo "$_toks" | grep -oP '"output_tps":\K[0-9.]+')
+        llama_requests=$(echo "$_toks" | grep -oP '"requests":\K[0-9]+')
+    fi
+    llama_input_tps=${llama_input_tps:-0}
+    llama_output_tps=${llama_output_tps:-0}
+    llama_requests=${llama_requests:-0}
+
+    echo "{\"${label}\":{\"ram_used\":\"${ram_used:-N/A}\",\"ram_avail\":\"${ram_avail:-N/A}\",\"llama_status\":\"${llama_status}\",\"llama_mem\":\"${llama_mem}\",\"gpu_temp\":\"${gpu_temp:-N/A}\",\"gpu_mem\":\"${gpu_mem:-N/A}\",\"gpu_total\":\"${gpu_total:-24576}\",\"gpu_power\":\"${gpu_power:-N/A}\",\"gpu_util\":${gpu_util},\"root_pct\":\"${root_pct:-N/A}\",\"root_used\":\"${root_used:-N/A}\",\"root_total\":\"${root_total:-N/A}\",\"llama_input_tps\":${llama_input_tps},\"llama_output_tps\":${llama_output_tps},\"llama_requests\":${llama_requests}}}"
+}
+
+# Collect both nodes in parallel
+N1_JSON=$(collect_node "$NODE1_HOST" "node1")
+N2_JSON=$(collect_node "$NODE2_HOST" "node2")
+
+# Extract power for energy tracking (sum of both nodes)
+N1_POWER=$(echo "$N1_JSON" | grep -oP '"gpu_power":"\K[0-9.]+' || echo "0")
+N2_POWER=$(echo "$N2_JSON" | grep -oP '"gpu_power":"\K[0-9.]+' || echo "0")
 total_power="N/A"
-if [ -n "$gpu0_power" ] && [ -n "$gpu1_power" ]; then
-    total_power=$(awk "BEGIN {printf \"%.1f\", ${gpu0_power:-0} + ${gpu1_power:-0}}")
+if [ -n "$N1_POWER" ] && [ "$N1_POWER" != "N/A" ] && [ -n "$N2_POWER" ] && [ "$N2_POWER" != "N/A" ]; then
+    total_power=$(awk "BEGIN {printf \"%.1f\", ${N1_POWER} + ${N2_POWER}}")
 fi
 
 # ---- Accumulate daily energy usage ----
@@ -124,34 +159,68 @@ echo "${DATE},${TOTAL_WH},${CURRENT_TS},${total_power}" > "$USAGE_FILE"
 daily_kwh=$(awk "BEGIN {printf \"%.3f\", $TOTAL_WH / 1000}")
 daily_cost=$(awk "BEGIN {printf \"%.2f\", $TOTAL_WH * 0.155 / 1000}")
 
-# ---- Llama tok/s metrics (best-effort, non-fatal) ----
-LLAMA_INPUT_TPS="0"
-LLAMA_OUTPUT_TPS="0"
-LLAMA_REQUESTS="0"
-_toks=$(ssh -o ConnectTimeout=5 localadmin@${NODE_HOST} 'bash /home/localadmin/scripts/node2-toks-per-sec.sh' 2>/dev/null || echo '{}')
-if [ -n "$_toks" ] && echo "$_toks" | grep -q '"input_tps"'; then
-    LLAMA_INPUT_TPS=$(echo "$_toks" | grep -oP '"input_tps":\K[0-9.]+')
-    LLAMA_OUTPUT_TPS=$(echo "$_toks" | grep -oP '"output_tps":\K[0-9.]+')
-    LLAMA_REQUESTS=$(echo "$_toks" | grep -oP '"requests":\K[0-9]+')
-fi
-LLAMA_INPUT_TPS=${LLAMA_INPUT_TPS:-0}
-LLAMA_OUTPUT_TPS=${LLAMA_OUTPUT_TPS:-0}
-LLAMA_REQUESTS=${LLAMA_REQUESTS:-0}
+# ---- GPU utilization history (combined from both nodes, last 60 readings each) ----
+GPU_UTIL_FILE_N1="$SCRIPT_DIR/gpu-util-history-node1.jsonl"
+GPU_UTIL_FILE_N2="$SCRIPT_DIR/gpu-util-history-node2.jsonl"
 
-# ---- GPU utilization history (last 60 readings) ----
-GPU_UTIL_FILE="$SCRIPT_DIR/gpu-util-history.jsonl"
-GPU_UTIL_HISTORY="[]"
-if [ -f "$GPU_UTIL_FILE" ] && [ -s "$GPU_UTIL_FILE" ]; then
-    GPU_UTIL_HISTORY=$(tail -n 60 "$GPU_UTIL_FILE" | jq -s '.' 2>/dev/null || echo '[]')
-fi
-# Extract current latest util values
-_GPU0=$(tail -1 "$GPU_UTIL_FILE" 2>/dev/null | jq -r '.gpu0_util // "N/A"' 2>/dev/null || echo "N/A")
-_GPU1=$(tail -1 "$GPU_UTIL_FILE" 2>/dev/null | jq -r '.gpu1_util // "N/A"' 2>/dev/null || echo "N/A")
-GPU0_UTIL="null"; [ "$_GPU0" != "N/A" ] && echo "$_GPU0" | grep -qE '^[0-9]+(\.[0-9]+)?$' && GPU0_UTIL="$_GPU0" || GPU0_UTIL="null"
-GPU1_UTIL="null"; [ "$_GPU1" != "N/A" ] && echo "$_GPU1" | grep -qE '^[0-9]+(\.[0-9]+)?$' && GPU1_UTIL="$_GPU1" || GPU1_UTIL="null"
+GPU_UTIL_HISTORY_N1="[]"
+GPU_UTIL_HISTORY_N2="[]"
 
+if [ -f "$GPU_UTIL_FILE_N1" ] && [ -s "$GPU_UTIL_FILE_N1" ]; then
+    GPU_UTIL_HISTORY_N1=$(tail -n 60 "$GPU_UTIL_FILE_N1" | jq -s '.' 2>/dev/null || echo '[]')
+fi
+if [ -f "$GPU_UTIL_FILE_N2" ] && [ -s "$GPU_UTIL_FILE_N2" ]; then
+    GPU_UTIL_HISTORY_N2=$(tail -n 60 "$GPU_UTIL_FILE_N2" | jq -s '.' 2>/dev/null || echo '[]')
+fi
+
+# Extract current util from history files as fallback
+N1_UTIL_FALLBACK=$(tail -1 "$GPU_UTIL_FILE_N1" 2>/dev/null | jq -r '.gpu_util // "N/A"' 2>/dev/null || echo "N/A")
+N2_UTIL_FALLBACK=$(tail -1 "$GPU_UTIL_FILE_N2" 2>/dev/null | jq -r '.gpu_util // "N/A"' 2>/dev/null || echo "N/A")
+
+# Inject history into node JSONs (merge with jq)
+N1_JSON=$(echo "$N1_JSON" | jq --argjson h "$GPU_UTIL_HISTORY_N1" '.node1.gpu_util_history = $h')
+N2_JSON=$(echo "$N2_JSON" | jq --argjson h "$GPU_UTIL_HISTORY_N2" '.node2.gpu_util_history = $h')
+
+# Merge everything
 ts=$(date -u '+%Y-%m-%dT%H:%M:%SZ')
 
-cat <<EOF
-{"timestamp":"${ts}","ts":{"cpu1":"${cpu1:-N/A}","cpu2":"${cpu2:-N/A}","sys":"${sys:-N/A}","pch":"${pch:-N/A}","perip":"${perip:-N/A}","fan1":"${fan1:-N/A}","fan2":"${fan2:-N/A}","fan5":"${fan5:-N/A}","drive0_temp":"${td0}","drive1_temp":"${td1}","drive2_temp":"${td2}","drive3_temp":"${td3}","nvme0_temp":"${nv0:-N/A}","nvme1_temp":"${nv1:-N/A}","nvme2_temp":"${nv2:-N/A}","nvme3_temp":"${nv3:-N/A}"},"node2":{"ram_used":"${ram_used:-N/A}","ram_avail":"${ram_avail:-N/A}","llama_status":"${llama_status}","llama_mem":"${llama_mem}","gpu0_temp":"${gpu0_temp:-N/A}","gpu1_temp":"${gpu1_temp:-N/A}","gpu0_mem":"${gpu0_mem:-N/A}","gpu1_mem":"${gpu1_mem:-N/A}","gpu0_total":"${gpu0_total:-24576}","gpu1_total":"${gpu1_total:-24576}","gpu0_power":"${gpu0_power:-N/A}","gpu1_power":"${gpu1_power:-N/A}","total_power":"${total_power}","daily_kwh":"${daily_kwh}","daily_cost":"${daily_cost}","root_pct":"${root_pct:-N/A}","root_used":"${root_used:-N/A}","root_total":"${root_total:-N/A}","llama_input_tps":"${LLAMA_INPUT_TPS}","llama_output_tps":"${LLAMA_OUTPUT_TPS}","llama_requests":${LLAMA_REQUESTS},"gpu0_util":${GPU0_UTIL},"gpu1_util":${GPU1_UTIL},"gpu_util_history":${GPU_UTIL_HISTORY}}}
-EOF
+# Build the full JSON with jq for correctness
+jq -n \
+  --arg ts "$ts" \
+  --arg cpu1 "${cpu1:-N/A}" \
+  --arg cpu2 "${cpu2:-N/A}" \
+  --arg sys "${sys:-N/A}" \
+  --arg pch "${pch:-N/A}" \
+  --arg perip "${perip:-N/A}" \
+  --arg fan1 "${fan1:-N/A}" \
+  --arg fan2 "${fan2:-N/A}" \
+  --arg fan5 "${fan5:-N/A}" \
+  --arg td0 "$td0" \
+  --arg td1 "$td1" \
+  --arg td2 "$td2" \
+  --arg td3 "$td3" \
+  --arg nv0 "${nv0:-N/A}" \
+  --arg nv1 "${nv1:-N/A}" \
+  --arg nv2 "${nv2:-N/A}" \
+  --arg nv3 "${nv3:-N/A}" \
+  --arg total_power "$total_power" \
+  --arg daily_kwh "$daily_kwh" \
+  --arg daily_cost "$daily_cost" \
+  --argjson n1 "$N1_JSON" \
+  --argjson n2 "$N2_JSON" \
+  '{
+    timestamp: $ts,
+    ts: {
+      cpu1: $cpu1, cpu2: $cpu2, sys: $sys, pch: $pch, perip: $perip,
+      fan1: $fan1, fan2: $fan2, fan5: $fan5,
+      drive0_temp: $td0, drive1_temp: $td1, drive2_temp: $td2, drive3_temp: $td3,
+      nvme0_temp: $nv0, nvme1_temp: $nv1, nvme2_temp: $nv2, nvme3_temp: $nv3
+    },
+    energy: {
+      total_power: $total_power,
+      daily_kwh: $daily_kwh,
+      daily_cost: $daily_cost
+    },
+    node1: $n1.node1,
+    node2: $n2.node2
+  }'

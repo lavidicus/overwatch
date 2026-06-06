@@ -1,0 +1,6 @@
+--- [2026-04-25 14:06 UTC] ---
+GPU 0: Quadro P6000 | Temp: 54°C | Power: 69.14W/250W | Util: 0% | Mem: 23861/24576 MiB
+GPU 1: Quadro P6000 | Temp: 42°C | Power: 64.81W/250W | Util: 0% | Mem: 23501/24576 MiB
+Compute: PID 659442 (llama-server) using ~23848 MiB on GPU 0, ~23488 MiB on GPU 1
+Status: llama-server running, both GPUs near capacity, idle (no active compute)
+---

@@ -1,5 +1,6 @@
 import { useEffect, useRef, useState, useCallback } from 'react';
 import { io, Socket } from 'socket.io-client';
+import { getAuthToken } from '../utils/auth';
 
 let _socket: Socket | null = null;
 
@@ -11,7 +12,7 @@ export function initSocket(): Socket | null {
   if (_socket && _socket.connected) return _socket;
   if (_socket) return _socket;
 
-  const token = localStorage.getItem('auth_token');
+  const token = getAuthToken();
   if (!token) return null;
 
   _socket = io(window.location.origin, {

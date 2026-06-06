@@ -1,0 +1,8 @@
+=== Node2 GPU Metrics ===
+2026-05-04 13:01 UTC
+
+GPU 0: Quadro P6000 | Temp: 55°C | Power: 68.20W/250W | Util: 0% | VRAM: 21627/24576 MB
+GPU 1: Quadro P6000 | Temp: 48°C | Power: 64.87W/250W | Util: 0% | VRAM: 22831/24576 MB
+
+Notes: Both GPUs idle (0% util), temps stable. VRAM ~88-93% used on both (llama.cpp workload).
+Scraper running every 5min, logging to /home/localadmin/logs/node2-gpu-metrics.log on node2.

@@ -1,0 +1,14 @@
+=== Node2 GPU Metrics Scraped ===
+Timestamp: 2026-04-24 21:57 UTC
+Script /home/localadmin/scripts/node1-metrics-scraper.sh: NOT FOUND on node2
+
+--- nvidia-smi CSV output (index, temp°C, power_W, power_limit_W, util%, mem_used_MB, mem_total_MB, fan%, name) ---
+GPU 0: ~40°C | ~61W avg (spiked to 209W/98% util) | 23861/24576 MB VRAM used | Fan 60% | Quadro P6000
+GPU 1: ~34°C | ~63W avg (spiked to 217W/100% util) | 23501/24576 MB VRAM used | Fan 60% | Quadro P6000
+
+Summary:
+- Both GPUs heavily loaded (VRAM ~97% used on each)
+- GPU 0 peaked at 209W/98% util, GPU 1 peaked at 217W/100% util
+- Rest of the time was idle/light (~60-66W, 0% util) — bursts then cooldown
+- Temperatures nominal (33-49°C, never exceeded safe range)
+- Scripts not installed; raw nvidia-smi only

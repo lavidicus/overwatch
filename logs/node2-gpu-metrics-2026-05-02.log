@@ -1,0 +1,4 @@
+2026-05-02 08:41 UTC - Node2 GPU Metrics (cron scrape)
+GPU 0: Quadro P6000 | Temp: 59°C | Power: 69.44W/250W | Util: 0% | VRAM: 21521/24576 MB
+GPU 1: Quadro P6000 | Temp: 51°C | Power: 65.56W/250W | Util: 0% | VRAM: 22725/24576 MB
+Note: Script ran at 08:42, log updated on-node.

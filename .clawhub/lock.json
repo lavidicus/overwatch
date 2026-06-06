@@ -16,6 +16,14 @@
     "self-improving": {
       "version": "1.2.16",
       "installedAt": 1773349784852
+    },
+    "n8n-workflow-automation": {
+      "version": "1.0.0",
+      "installedAt": 1777322944225
+    },
+    "n8n-monitor": {
+      "version": "1.0.1",
+      "installedAt": 1777323294957
     }
   }
 }
