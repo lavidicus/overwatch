@@ -11,6 +11,8 @@ import BenchmarkPage from './pages/BenchmarkPage';
 import ToolsPage from './pages/ToolsPage';
 import ToolPermissionsPage from './pages/ToolPermissionsPage';
 import RoutingPage from './pages/RoutingPage';
+import MemoryPage from './pages/MemoryPage';
+import ImprovementPage from './pages/ImprovementPage';
 
 // Placeholder pages - will be implemented in subsequent phases
 const DashboardPage = () => <div>Dashboard</div>;
@@ -66,6 +68,8 @@ function App() {
         <Route path="tools" element={<ToolsPage />} />
         <Route path="tool-permissions" element={<ToolPermissionsPage />} />
         <Route path="routing" element={<RoutingPage />} />
+        <Route path="memory" element={<MemoryPage />} />
+        <Route path="improvement" element={<ImprovementPage />} />
         <Route path="settings" element={<SettingsPage />} />
         <Route path="admin" element={<AdminPage />} />
       </Route>

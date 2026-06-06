@@ -38,6 +38,8 @@ import {
   Build as ToolsIcon,
   Lock as ToolPermissionsIcon,
   AltRoute as RoutingIcon,
+  Psychology as MemoryRagIcon,
+  AutoFixHigh as ImprovementIcon,
 } from '@mui/icons-material';
 import { useAuthStore } from '../stores/authStore';
 import { authApi } from '../services/api';
@@ -59,6 +61,8 @@ const systemSettingsItems = [
   { path: '/tools', label: 'Tools', icon: <ToolsIcon /> },
   { path: '/tool-permissions', label: 'Tool Permissions', icon: <ToolPermissionsIcon /> },
   { path: '/routing', label: 'Routing', icon: <RoutingIcon /> },
+  { path: '/memory', label: 'Memory (RAG)', icon: <MemoryRagIcon /> },
+  { path: '/improvement', label: 'Self-Improvement', icon: <ImprovementIcon /> },
   { path: '/settings', label: 'Settings', icon: <SettingsIcon /> },
 ];
 

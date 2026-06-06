@@ -8,6 +8,7 @@ import { getIO } from '../index.js';
 import { ChatMessage } from '../services/providers/types.js';
 import { runAgentLoop } from '../services/tools/agent-loop.js';
 import { pickRoute } from '../services/routing/engine.js';
+import { buildMemoryContext } from '../services/memory/service.js';
 
 const router = Router();
 const prisma = new PrismaClient();
@@ -334,9 +335,19 @@ router.post('/sessions/:id/messages', authenticate, auditLog('CHAT_SEND_MESSAGE'
       select: { role: true, content: true },
     });
 
+    // Phase 5: RAG memory injection (non-fatal).
+    let memoryContextText = '';
+    try {
+      const memCtx = await buildMemoryContext(userId, content, 5);
+      memoryContextText = memCtx.contextText;
+    } catch (memErr) {
+      console.warn('Memory context build failed:', (memErr as Error).message);
+    }
+
     // allMessages already contains the user message we just inserted; do not duplicate it.
     const chatMessages: ChatMessage[] = [
       ...(session.systemPrompt ? [{ role: 'system' as const, content: session.systemPrompt }] : []),
+      ...(memoryContextText ? [{ role: 'system' as const, content: memoryContextText }] : []),
       ...allMessages.map(m => ({ role: toProviderRole(m.role), content: m.content })),
     ];
 
@@ -582,8 +593,23 @@ router.post('/sessions/:id/agent-message', authenticate, auditLog('CHAT_AGENT_ME
       orderBy: { createdAt: 'asc' },
       select: { role: true, content: true },
     });
+
+    // Phase 5: RAG memory injection. Fetch relevant memories for the current
+    // user message and prepend them as a system context block. Failures here
+    // are non-fatal — agent should still respond if memory lookup fails.
+    let memoryContextText = '';
+    let memoryHitCount = 0;
+    try {
+      const memCtx = await buildMemoryContext(userId, body.content, 5);
+      memoryContextText = memCtx.contextText;
+      memoryHitCount = memCtx.hits.length;
+    } catch (memErr) {
+      console.warn('Memory context build failed:', (memErr as Error).message);
+    }
+
     const chatMessages: ChatMessage[] = [
       ...(session.systemPrompt ? [{ role: 'system' as const, content: session.systemPrompt }] : []),
+      ...(memoryContextText ? [{ role: 'system' as const, content: memoryContextText }] : []),
       ...allMessages.map((m) => ({ role: toProviderRole(m.role), content: m.content })),
     ];
 
@@ -626,6 +652,9 @@ router.post('/sessions/:id/agent-message', authenticate, auditLog('CHAT_AGENT_ME
     res.json({
       userMessage: userMsg,
       assistantMessage: assistantMsg,
+      memory: {
+        injected: memoryHitCount,
+      },
       agent: {
         iterations: loopResult.iterations,
         pending: loopResult.pending,

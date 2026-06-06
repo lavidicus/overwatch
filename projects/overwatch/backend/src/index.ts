@@ -25,8 +25,11 @@ import toolsRoutes from './routes/tools.js';
 import toolGrantsRoutes from './routes/tool-grants.js';
 import routingRoutes from './routes/routing.js';
 import queueRoutes from './routes/queue.js';
+import memoryRoutes from './routes/memory.js';
+import improvementRoutes, { proposalsRouter } from './routes/improvement.js';
 import { syncBuiltinTools } from './services/tools/index.js';
 import { initQueues } from './services/queue/index.js';
+import { initMemorySubsystem } from './services/memory/service.js';
 
 // Import middleware
 import { apiLimiter, authLimiter } from './middleware/rateLimiter.js';
@@ -100,6 +103,11 @@ app.use('/api/tools', authenticate, toolsRoutes);
 app.use('/api/tool-grants', authenticate, toolGrantsRoutes);
 app.use('/api/routing', authenticate, routingRoutes);
 app.use('/api/queue', authenticate, queueRoutes);
+
+// Phase 5: Memory (RAG) + Self-improvement engine
+app.use('/api/memory', authenticate, memoryRoutes);
+app.use('/api/improvement', authenticate, improvementRoutes);
+app.use('/api/change-proposals', authenticate, proposalsRouter);
 
 // Health check
 app.get('/health', (req, res) => {
@@ -196,6 +204,12 @@ httpServer.listen(PORT, async () => {
     logger.info('Queue system initialized');
   } catch (err) {
     logger.error('Failed to init queue', err);
+  }
+  try {
+    await initMemorySubsystem();
+    logger.info('Memory subsystem initialized');
+  } catch (err) {
+    logger.error('Failed to init memory subsystem', err);
   }
 });
 
