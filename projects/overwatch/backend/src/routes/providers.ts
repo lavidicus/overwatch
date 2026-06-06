@@ -407,7 +407,6 @@ router.put('/:id', authenticate, auditLog('UPDATE_PROVIDER'), async (req: AuthRe
       } else {
         updateData.apiKey = null;
       }
-      delete updateData.apiKey;
     }
 
     const updatedProvider = await prisma.provider.update({
