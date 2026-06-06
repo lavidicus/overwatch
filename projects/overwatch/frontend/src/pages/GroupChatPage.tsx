@@ -44,6 +44,7 @@ import {
 } from '../api/group-chat';
 import { initSocket } from '../hooks/useSocket';
 import CreateGroupDialog from '../components/CreateGroupDialog';
+import { approveInvocation, rejectInvocation } from '../api/tools';
 
 const DRAWER_WIDTH = 300;
 
@@ -75,6 +76,21 @@ function initialsFor(name: string): string {
     .join('');
 }
 
+// ────────────────────────── Tool event types ──────────────────────────
+
+interface ToolEvent {
+  kind: 'call' | 'result';
+  agentName: string;
+  toolName: string;
+  args?: Record<string, unknown>;
+  result?: unknown;
+  ok?: boolean;
+  error?: string;
+  invocationId?: string;
+  status?: string;
+  requiresApproval?: boolean;
+}
+
 interface LiveAgentUpdate {
   agentName: string;
   role: string;
@@ -91,7 +107,75 @@ interface LiveRound {
   reachedConsensus: boolean | null;
   finalConsensus: string | null;
   inProgress: boolean;
+  toolEvents: ToolEvent[];
 }
+
+interface AugmentedRoundTranscript extends RoundTranscript {
+  toolEvents: ToolEvent[];
+}
+
+// ────────────────────────── Helpers ──────────────────────────
+
+function parseToolMessage(raw: string): Record<string, unknown> | null {
+  try {
+    const o = JSON.parse(raw);
+    return typeof o === 'object' && o !== null ? (o as Record<string, unknown>) : null;
+  } catch {
+    return null;
+  }
+}
+
+function toolEventFromPayload(
+  payload: Record<string, unknown>,
+  kind: 'call' | 'result',
+  agentName: string,
+): ToolEvent {
+  return {
+    kind,
+    agentName,
+    toolName: (payload.name as string) || 'tool',
+    args: payload.arguments as Record<string, unknown> | undefined,
+    result: payload.result,
+    ok: payload.ok as boolean | undefined,
+    error: payload.error as string | undefined,
+    invocationId: payload.invocationId as string | undefined,
+    status: payload.status as string | undefined,
+    requiresApproval: payload.requiresApproval as boolean | undefined,
+  };
+}
+
+function transformRounds(
+  rounds: Awaited<ReturnType<typeof getGroupHistory>>['rounds'],
+): AugmentedRoundTranscript[] {
+  return rounds.map(r => {
+    const turns = r.messages
+      .filter(m => m.role === 'response')
+      .map(m => ({
+        agentName: m.agentName,
+        role: m.role,
+        message: m.message,
+        durationMs: 0,
+      }));
+    const toolEvents: ToolEvent[] = [];
+    for (const m of r.messages) {
+      if (m.role === 'tool_call' || m.role === 'tool_result') {
+        const data = parseToolMessage(m.message) ?? {};
+        toolEvents.push(toolEventFromPayload(data, m.role === 'tool_call' ? 'call' : 'result', m.agentName));
+      }
+    }
+    return {
+      roundId: r.id,
+      roundNumber: r.roundNumber,
+      turns,
+      judgeAnalysis: r.judgeAnalysis,
+      reachedConsensus: r.status === 'REACHED_CONSENSUS',
+      finalConsensus: r.finalConsensus,
+      toolEvents,
+    };
+  });
+}
+
+// ────────────────────────── Component ──────────────────────────
 
 export default function GroupChatPage() {
   const theme = useTheme();
@@ -108,6 +192,7 @@ export default function GroupChatPage() {
   const [showCreate, setShowCreate] = useState(false);
   const [drawerOpen, setDrawerOpen] = useState(!isMobile);
   const [expandedRounds, setExpandedRounds] = useState<Record<string, boolean>>({});
+  const [pendingApprovals, setPendingApprovals] = useState<Record<string, ToolEvent>>({});
   const messagesEndRef = useRef<HTMLDivElement>(null);
 
   // Track joined group room for cleanup.
@@ -128,10 +213,10 @@ export default function GroupChatPage() {
   const loadGroup = useCallback(async (groupId: string) => {
     setError(null);
     setLiveRound(null);
+    setPendingApprovals({});
     try {
       const [g, h] = await Promise.all([getGroup(groupId), getGroupHistory(groupId)]);
       setCurrentGroup(g.group);
-      // Transform persisted history into the same RoundTranscript shape.
       const transcript: RoundTranscript[] = h.rounds.map(r => ({
         roundId: r.id,
         roundNumber: r.roundNumber,
@@ -155,7 +240,6 @@ export default function GroupChatPage() {
   useEffect(() => {
     const socket = initSocket();
     if (!socket) return;
-
     if (!currentGroup) return;
 
     if (joinedRef.current && joinedRef.current !== currentGroup.id) {
@@ -170,7 +254,6 @@ export default function GroupChatPage() {
       agents: { name: string; role: string }[];
     }) => {
       if (payload.groupId !== currentGroup.id) return;
-      // Seed live round with all agents pending.
       setLiveRound({
         roundId: 'pending',
         roundNumber: 0,
@@ -184,6 +267,7 @@ export default function GroupChatPage() {
         reachedConsensus: null,
         finalConsensus: null,
         inProgress: true,
+        toolEvents: [],
       });
     };
 
@@ -204,6 +288,7 @@ export default function GroupChatPage() {
               reachedConsensus: null,
               finalConsensus: null,
               inProgress: true,
+              toolEvents: [],
             }
           : prev,
       );
@@ -271,8 +356,72 @@ export default function GroupChatPage() {
 
     const onAllComplete = (payload: { groupId: string }) => {
       if (payload.groupId !== currentGroup.id) return;
-      // Persisted state will be reloaded by the consensus call resolving.
       setLiveRound(null);
+    };
+
+    // ── Tool call events ──────────────────────────────────
+    const onToolCall = (payload: {
+      groupId: string;
+      sessionId?: string | null;
+      roundId?: string;
+      agentName: string;
+      name: string;
+      args: Record<string, unknown>;
+      invocationId?: string;
+      status?: string;
+      reason?: string;
+      requiresApproval?: boolean;
+    }) => {
+      if (payload.groupId !== currentGroup.id) return;
+      const event = toolEventFromPayload(payload, 'call', payload.agentName);
+
+      // If pending approval, show approval UI.
+      if (payload.status === 'pending-approval' && payload.invocationId) {
+        setPendingApprovals(prev => ({
+          ...prev,
+          [payload.invocationId!]: event,
+        }));
+      }
+
+      // Add to live round tool events.
+      setLiveRound(prev => {
+        if (!prev) return prev;
+        return {
+          ...prev,
+          toolEvents: [...prev.toolEvents, event],
+        };
+      });
+    };
+
+    const onToolResult = (payload: {
+      groupId: string;
+      agentName: string;
+      name: string;
+      invocationId?: string;
+      ok?: boolean;
+      error?: string;
+      durationMs?: number;
+      result?: unknown;
+    }) => {
+      if (payload.groupId !== currentGroup.id) return;
+      const event = toolEventFromPayload(payload, 'result', payload.agentName);
+
+      // If this resolved an approval, remove from pending.
+      if (payload.invocationId) {
+        setPendingApprovals(prev => {
+          const next = { ...prev };
+          delete next[payload.invocationId!];
+          return next;
+        });
+      }
+
+      setLiveRound(prev => {
+        if (!prev) return prev;
+        return {
+          ...prev,
+          toolEvents: [...prev.toolEvents, event],
+        };
+      });
     };
 
     socket.on('group:consensus:start', onStart);
@@ -281,6 +430,8 @@ export default function GroupChatPage() {
     socket.on('group:round:agent:complete', onAgentComplete);
     socket.on('group:round:complete', onRoundComplete);
     socket.on('group:consensus:complete', onAllComplete);
+    socket.on('group:round:agent:tool_call', onToolCall);
+    socket.on('group:round:agent:tool_result', onToolResult);
 
     return () => {
       socket.off('group:consensus:start', onStart);
@@ -289,10 +440,11 @@ export default function GroupChatPage() {
       socket.off('group:round:agent:complete', onAgentComplete);
       socket.off('group:round:complete', onRoundComplete);
       socket.off('group:consensus:complete', onAllComplete);
+      socket.off('group:round:agent:tool_call', onToolCall);
+      socket.off('group:round:agent:tool_result', onToolResult);
     };
   }, [currentGroup]);
 
-  // On unmount, leave the room.
   useEffect(() => {
     return () => {
       const socket = initSocket();
@@ -307,7 +459,7 @@ export default function GroupChatPage() {
 
   useEffect(() => {
     messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
-  }, [history, liveRound]);
+  }, [history, liveRound, pendingApprovals]);
 
   const handleCreated = async (groupId: string) => {
     setShowCreate(false);
@@ -333,36 +485,87 @@ export default function GroupChatPage() {
     if (!currentGroup || !topic.trim() || running) return;
     setRunning(true);
     setError(null);
+    setPendingApprovals({});
     try {
+      // Start live round for streaming.
+      setLiveRound({
+        roundId: 'pending',
+        roundNumber: 0,
+        agents: (currentGroup.agents ?? []).map(a => ({
+          agentName: a.agentName,
+          role: a.role,
+          message: '',
+          status: 'thinking' as const,
+        })),
+        judgeAnalysis: null,
+        reachedConsensus: null,
+        finalConsensus: null,
+        inProgress: true,
+        toolEvents: [],
+      });
+
       const result = await runConsensus(currentGroup.id, topic.trim());
       // Reload history once the run finishes.
       const h = await getGroupHistory(currentGroup.id);
-      const transcript: RoundTranscript[] = h.rounds.map(r => ({
-        roundId: r.id,
-        roundNumber: r.roundNumber,
-        turns: r.messages.map(m => ({
-          agentName: m.agentName,
-          role: m.role,
-          message: m.message,
-          durationMs: 0,
-        })),
-        judgeAnalysis: r.judgeAnalysis,
-        reachedConsensus: r.status === 'REACHED_CONSENSUS',
-        finalConsensus: r.finalConsensus,
-      }));
+      const transcript = transformRounds(h.rounds);
       setHistory(transcript);
       setLiveRound(null);
       setTopic('');
-      // Use result for any unconsumed fields if needed
       if (result.status === 'FAILED' && !result.finalConsensus) {
         setError(`No consensus after ${result.totalRounds} rounds.`);
       }
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Run failed');
+      setLiveRound(null);
     } finally {
       setRunning(false);
     }
   };
+
+  const handleApprove = useCallback(async (invocationId: string, event: ToolEvent) => {
+    try {
+      await approveInvocation(invocationId);
+      setPendingApprovals(prev => {
+        const next = { ...prev };
+        delete next[invocationId];
+        return next;
+      });
+      // Emit tool result via socket so orchestrator picks it up.
+      const socket = initSocket();
+      if (socket && currentGroup) {
+        socket.emit('group:tool:approve', {
+          groupId: currentGroup.id,
+          invocationId,
+          toolName: event.toolName,
+          ok: true,
+        });
+      }
+    } catch (err) {
+      setError(err instanceof Error ? err.message : 'Approval failed');
+    }
+  }, [currentGroup]);
+
+  const handleReject = useCallback(async (invocationId: string, event: ToolEvent) => {
+    try {
+      await rejectInvocation(invocationId);
+      setPendingApprovals(prev => {
+        const next = { ...prev };
+        delete next[invocationId];
+        return next;
+      });
+      const socket = initSocket();
+      if (socket && currentGroup) {
+        socket.emit('group:tool:reject', {
+          groupId: currentGroup.id,
+          invocationId,
+          toolName: event.toolName,
+          error: 'rejected',
+        });
+      }
+    } catch (err) {
+      setError(err instanceof Error ? err.message : 'Rejection failed');
+    }
+  }, [currentGroup]);
 
   const toggleExpand = (roundId: string) =>
     setExpandedRounds(prev => ({ ...prev, [roundId]: !prev[roundId] }));
@@ -496,6 +699,38 @@ export default function GroupChatPage() {
             </Alert>
           )}
 
+          {/* Pending approvals banner */}
+          {Object.keys(pendingApprovals).length > 0 && (
+            <Stack spacing={1} sx={{ mb: 2 }}>
+              {Object.entries(pendingApprovals).map(([invId, event]) => (
+                <Card key={invId} variant="outlined" sx={{ borderLeft: 3, borderColor: 'warning.main' }}>
+                  <CardContent sx={{ p: 1.5 }}>
+                    <Stack direction="row" alignItems="center" spacing={1} sx={{ mb: 0.5 }}>
+                      <Chip label="⏳ Tool Call Pending" color="warning" size="small" />
+                      <Typography variant="subtitle2" color="text.primary">
+                        {event.toolName}
+                      </Typography>
+                      <Typography variant="caption" color="text.secondary">
+                        by {event.agentName}
+                      </Typography>
+                    </Stack>
+                    <Typography variant="body2" sx={{ mb: 1, fontFamily: 'monospace', fontSize: 12, wordBreak: 'break-all' }}>
+                      {JSON.stringify(event.args)}
+                    </Typography>
+                    <Stack direction="row" spacing={1}>
+                      <Button size="small" variant="contained" color="success" onClick={() => handleApprove(invId, event)}>
+                        Approve
+                      </Button>
+                      <Button size="small" variant="outlined" color="error" onClick={() => handleReject(invId, event)}>
+                        Reject
+                      </Button>
+                    </Stack>
+                  </CardContent>
+                </Card>
+              ))}
+            </Stack>
+          )}
+
           {!currentGroup && !loadingGroups && (
             <Box
               sx={{
@@ -532,7 +767,7 @@ export default function GroupChatPage() {
               ))}
 
               {liveRound && (
-                <LiveRoundCard round={liveRound} />
+                <LiveRoundCard round={liveRound} onToolApprove={handleApprove} onToolReject={handleReject} />
               )}
 
               <div ref={messagesEndRef} />
@@ -581,6 +816,8 @@ export default function GroupChatPage() {
     </Box>
   );
 }
+
+// ────────────────────────── Sub-components ──────────────────────────
 
 function AgentMessage({
   agentName,
@@ -631,6 +868,82 @@ function AgentMessage({
   );
 }
 
+function ToolEventCard({
+  event,
+  onApprove,
+  onReject,
+}: {
+  event: ToolEvent;
+  onApprove?: (invocationId: string, event: ToolEvent) => void;
+  onReject?: (invocationId: string, event: ToolEvent) => void;
+}) {
+  const color = colorFor(event.agentName);
+
+  return (
+    <Box sx={{ pl: 6, mt: 0.5, mb: 0.5 }}>
+      <Card
+        variant="outlined"
+        sx={{
+          borderLeft: 3,
+          borderColor: event.kind === 'call' ? 'info.main' : event.ok === false ? 'error.main' : 'success.main',
+          bgcolor: event.kind === 'call' ? 'info.50' : event.ok === false ? 'error.50' : 'success.50',
+        }}
+      >
+        <CardContent sx={{ p: 1 }}>
+          <Stack direction="row" alignItems="center" spacing={1} sx={{ mb: 0.5 }}>
+            <Typography variant="subtitle2" sx={{ color, fontWeight: 600, fontSize: 13 }}>
+              {event.agentName}
+            </Typography>
+            <Chip
+              label={event.kind === 'call' ? '🔧 Tool Call' : event.ok === false ? '❌ Failed' : '✅ Success'}
+              size="small"
+              color={event.kind === 'call' ? 'info' : event.ok === false ? 'error' : 'success'}
+            />
+            <Typography variant="body2" fontWeight={600} fontSize={13}>
+              {event.toolName}
+            </Typography>
+          </Stack>
+
+          <Typography
+            variant="caption"
+            sx={{ fontFamily: 'monospace', fontSize: 11, display: 'block', mb: 0.5 }}
+          >
+            {JSON.stringify(event.args)}
+          </Typography>
+
+          {event.kind === 'result' && event.error && (
+            <Typography variant="body2" color="error" fontSize={12}>
+              Error: {event.error}
+            </Typography>
+          )}
+
+          {event.kind === 'result' && event.ok && event.result ? (
+            <Typography
+              variant="body2"
+              color="success.main"
+              fontSize={12}
+              sx={{ whiteSpace: 'pre-wrap' }}
+            >
+              {(event.result as React.ReactNode)}
+            </Typography>
+          ) : null}
+
+          {event.kind === 'call' && event.invocationId && onApprove && onReject && (
+            <Stack direction="row" spacing={1} sx={{ mt: 0.5 }}>
+              <Button size="small" variant="contained" color="success" onClick={() => onApprove(event.invocationId!, event)}>
+                Approve
+              </Button>
+              <Button size="small" variant="outlined" color="error" onClick={() => onReject(event.invocationId!, event)}>
+                Reject
+              </Button>
+            </Stack>
+          )}
+        </CardContent>
+      </Card>
+    </Box>
+  );
+}
+
 function RoundCard({
   round,
   expanded,
@@ -640,6 +953,8 @@ function RoundCard({
   expanded: boolean;
   onToggle: () => void;
 }) {
+  const augmented = round as AugmentedRoundTranscript;
+  const toolEvents = augmented.toolEvents ?? [];
   return (
     <Card variant="outlined">
       <CardContent>
@@ -674,6 +989,9 @@ function RoundCard({
 
         <Collapse in={expanded}>
           <Stack spacing={1.5} sx={{ mt: 1 }}>
+            {toolEvents.map((te, i) => (
+              <ToolEventCard key={`tool-${i}`} event={te} />
+            ))}
             {round.turns.map((t, i) => (
               <AgentMessage
                 key={`${round.roundId}-${i}`}
@@ -697,7 +1015,15 @@ function RoundCard({
   );
 }
 
-function LiveRoundCard({ round }: { round: LiveRound }) {
+function LiveRoundCard({
+  round,
+  onToolApprove,
+  onToolReject,
+}: {
+  round: LiveRound;
+  onToolApprove?: (invocationId: string, event: ToolEvent) => void;
+  onToolReject?: (invocationId: string, event: ToolEvent) => void;
+}) {
   return (
     <Card variant="outlined" sx={{ borderColor: 'primary.main', borderWidth: 1 }}>
       <CardContent>
@@ -710,7 +1036,15 @@ function LiveRoundCard({ round }: { round: LiveRound }) {
           {round.inProgress && <LinearProgress sx={{ flex: 1 }} />}
         </Stack>
 
-        <Stack spacing={1.5}>
+        <Stack spacing={1}>
+          {round.toolEvents.map((te, i) => (
+            <ToolEventCard
+              key={`live-tool-${i}`}
+              event={te}
+              onApprove={onToolApprove}
+              onReject={onToolReject}
+            />
+          ))}
           {round.agents.map(a => (
             <AgentMessage
               key={a.agentName}

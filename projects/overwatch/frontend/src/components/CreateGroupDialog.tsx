@@ -17,6 +17,11 @@ import {
   Chip,
   Slider,
   Alert,
+  FormControlLabel,
+  Switch,
+  Checkbox,
+  ListItemText,
+  OutlinedInput,
 } from '@mui/material';
 import DeleteIcon from '@mui/icons-material/Delete';
 import AddIcon from '@mui/icons-material/Add';
@@ -27,6 +32,7 @@ import {
   listAvailableAgents,
   AgentRole,
 } from '../api/group-chat';
+import { listTools, Tool } from '../api/tools';
 
 const ROLES: { value: AgentRole; label: string; hint: string }[] = [
   { value: 'facilitator', label: 'Facilitator', hint: 'Keeps the discussion on track' },
@@ -63,6 +69,11 @@ export default function CreateGroupDialog({ open, onClose, onCreated }: Props) {
   const [submitting, setSubmitting] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [loadingModels, setLoadingModels] = useState(false);
+  const [allowToolCalls, setAllowToolCalls] = useState(true);
+  const [requireToolApproval, setRequireToolApproval] = useState(true);
+  const [tools, setTools] = useState<Tool[]>([]);
+  const [selectedToolIds, setSelectedToolIds] = useState<string[]>([]);
+  const [allToolsSelected, setAllToolsSelected] = useState(true);
 
   // Build unique provider list from available models
   const providers = useMemo<ProviderSummary[]>(() => {
@@ -91,6 +102,10 @@ export default function CreateGroupDialog({ open, onClose, onCreated }: Props) {
       .then(r => setAvailable(r.models))
       .catch(err => setError(err.message || 'Failed to load models'))
       .finally(() => setLoadingModels(false));
+    // Load tools catalogue in parallel; non-fatal.
+    listTools()
+      .then(r => setTools(r.tools.filter(t => t.enabled)))
+      .catch(() => setTools([]));
   }, [open]);
 
   useEffect(() => {
@@ -99,6 +114,10 @@ export default function CreateGroupDialog({ open, onClose, onCreated }: Props) {
       setDescription('');
       setMaxRounds(5);
       setAgents([]);
+      setAllowToolCalls(true);
+      setRequireToolApproval(true);
+      setSelectedToolIds([]);
+      setAllToolsSelected(true);
     }
   }, [open]);
 
@@ -156,7 +175,13 @@ export default function CreateGroupDialog({ open, onClose, onCreated }: Props) {
         name: name.trim(),
         description: description.trim() || undefined,
         maxRounds,
-        agents: agents.map(({ uiId, ...rest }, idx) => ({
+        allowToolCalls,
+        requireToolApproval,
+        allowedToolIds:
+          !allowToolCalls || allToolsSelected || selectedToolIds.length === 0
+            ? null
+            : selectedToolIds,
+        agents: agents.map(({ uiId: _uiId, ...rest }, idx) => ({
           ...rest,
           position: idx,
         })),
@@ -206,6 +231,89 @@ export default function CreateGroupDialog({ open, onClose, onCreated }: Props) {
               marks
               valueLabelDisplay="auto"
             />
+          </Box>
+
+          <Box
+            sx={{
+              border: 1,
+              borderColor: 'divider',
+              borderRadius: 1,
+              p: 1.5,
+            }}
+          >
+            <Typography variant="subtitle2" gutterBottom>
+              Tool calling
+            </Typography>
+            <Stack spacing={1}>
+              <FormControlLabel
+                control={
+                  <Switch
+                    checked={allowToolCalls}
+                    onChange={e => setAllowToolCalls(e.target.checked)}
+                  />
+                }
+                label="Enable tool calls for this panel"
+              />
+              <FormControlLabel
+                control={
+                  <Switch
+                    checked={requireToolApproval}
+                    onChange={e => setRequireToolApproval(e.target.checked)}
+                    disabled={!allowToolCalls}
+                  />
+                }
+                label="Require approval for tool calls (recommended)"
+              />
+              {allowToolCalls && (
+                <>
+                  <FormControlLabel
+                    control={
+                      <Switch
+                        checked={allToolsSelected}
+                        onChange={e => setAllToolsSelected(e.target.checked)}
+                      />
+                    }
+                    label="Allow all enabled tools"
+                  />
+                  {!allToolsSelected && (
+                    <FormControl size="small" fullWidth>
+                      <InputLabel>Allowed tools</InputLabel>
+                      <Select
+                        multiple
+                        value={selectedToolIds}
+                        input={<OutlinedInput label="Allowed tools" />}
+                        onChange={e => {
+                          const v = e.target.value;
+                          setSelectedToolIds(
+                            typeof v === 'string' ? v.split(',') : (v as string[]),
+                          );
+                        }}
+                        renderValue={selected =>
+                          tools
+                            .filter(t => (selected as string[]).includes(t.id))
+                            .map(t => t.name)
+                            .join(', ')
+                        }
+                      >
+                        {tools.map(t => (
+                          <MenuItem key={t.id} value={t.id}>
+                            <Checkbox checked={selectedToolIds.includes(t.id)} />
+                            <ListItemText
+                              primary={t.name}
+                              secondary={
+                                t.requiresApproval
+                                  ? `${t.category} — approval required`
+                                  : t.category
+                              }
+                            />
+                          </MenuItem>
+                        ))}
+                      </Select>
+                    </FormControl>
+                  )}
+                </>
+              )}
+            </Stack>
           </Box>
 
           <Box>
