@@ -262,16 +262,30 @@ export async function inspectGGUFFile(
       try {
         const dir = path.dirname(filePath);
         const baseName = path.basename(filePath, '.gguf');
+        const baseFilename = path.basename(filePath);
         const candidates = [
           `${baseName}.mmproj.gguf`,
           `mmproj-${baseName}.gguf`,
           'mmproj.gguf',
           `${baseName}-mmproj.gguf`,
         ];
+        // First check exact candidates
         const remoteMmprojCheck = runRemoteSSH(sshCredentials,
           `for f in ${candidates.join(' ')}; do [ -f "${dir}/$f" ] && echo "${dir}/$f"; done`
         );
         const mmprojPaths = remoteMmprojCheck.split('\n').filter(Boolean);
+        // If no exact match, do glob-style scan for any file containing 'mmproj' in the same directory
+        if (mmprojPaths.length === 0) {
+          try {
+            const globResult = runRemoteSSH(sshCredentials,
+              `ls -1 "${dir}" 2>/dev/null | grep -i mmproj | grep '\.gguf$'`
+            );
+            const globPaths = globResult.split('\n')
+              .filter(f => f.trim() && !f.includes(baseFilename))
+              .map(f => `${dir}/${f.trim()}`);
+            mmprojPaths.push(...globPaths);
+          } catch { /* glob scan failed */ }
+        }
         if (mmprojPaths.length > 0) {
           data.metadata._remote_mmproj_check = mmprojPaths;
         }
