@@ -22,6 +22,7 @@ import chatRoutes from './routes/chat.js';
 import benchmarkRoutes from './routes/benchmark.js';
 import huggingfaceRoutes from './routes/huggingface.js';
 import toolsRoutes from './routes/tools.js';
+import toolGrantsRoutes from './routes/tool-grants.js';
 import routingRoutes from './routes/routing.js';
 import queueRoutes from './routes/queue.js';
 import { syncBuiltinTools } from './services/tools/index.js';
@@ -96,6 +97,7 @@ app.use('/api/hf', authenticate, huggingfaceRoutes);
 
 // Phase 3/4: Tools, Routing, Queue
 app.use('/api/tools', authenticate, toolsRoutes);
+app.use('/api/tool-grants', authenticate, toolGrantsRoutes);
 app.use('/api/routing', authenticate, routingRoutes);
 app.use('/api/queue', authenticate, queueRoutes);
 

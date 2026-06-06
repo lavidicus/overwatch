@@ -630,6 +630,7 @@ router.post('/sessions/:id/agent-message', authenticate, auditLog('CHAT_AGENT_ME
         iterations: loopResult.iterations,
         pending: loopResult.pending,
         invocationIds: loopResult.invocationIds,
+        pendingCalls: loopResult.pendingCalls,
         toolCalls: loopResult.toolCalls.map((c) => ({
           name: c.name,
           args: c.args,

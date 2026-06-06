@@ -10,7 +10,7 @@ import AddIcon from '@mui/icons-material/Add';
 import DeleteIcon from '@mui/icons-material/Delete';
 import MenuIcon from '@mui/icons-material/Menu';
 import ArrowBackIcon from '@mui/icons-material/ArrowBack';
-import { listSessions, createSession, getSession, deleteSession, sendMessageStreaming, sendAgentMessage, ChatMessage, AgentToolCall } from '../api/chat';
+import { listSessions, createSession, getSession, deleteSession, sendMessageStreaming, sendAgentMessage, ChatMessage, AgentToolCall, AgentPendingCall } from '../api/chat';
 import { useChatEvents, initSocket, leaveChatSession } from '../hooks/useSocket';
 import ChatInput from '../components/ChatInput';
 import MessageBubble from '../components/MessageBubble';
@@ -36,7 +36,7 @@ export default function ChatPage() {
   const [error, setError] = useState<string | null>(null);
   // Most recent agent turn's tool calls keyed by message id. Rendered inline
   // beneath the assistant message so users see what the agent did.
-  const [agentToolsByMessageId, setAgentToolsByMessageId] = useState<Record<string, { calls: AgentToolCall[]; pendingIds: string[] }>>({});
+  const [agentToolsByMessageId, setAgentToolsByMessageId] = useState<Record<string, { calls: AgentToolCall[]; pendingCalls: AgentPendingCall[] }>>({});
   const [agentThinking, setAgentThinking] = useState(false);
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const abortRef = useRef<AbortController | null>(null);
@@ -164,7 +164,7 @@ export default function ChatPage() {
           ...prev,
           [resp.assistantMessage.id]: {
             calls: resp.agent.toolCalls || [],
-            pendingIds: resp.agent.pending || [],
+            pendingCalls: resp.agent.pendingCalls || [],
           },
         }));
         loadSessions();
@@ -347,16 +347,45 @@ export default function ChatPage() {
                       content={msg.content}
                       timestamp={msg.createdAt}
                     />
-                    {agentBlock && (agentBlock.calls.length > 0 || agentBlock.pendingIds.length > 0) && (
+                    {agentBlock && (agentBlock.calls.length > 0 || agentBlock.pendingCalls.length > 0) && (
                       <Box sx={{ ml: 1, mb: 1 }}>
                         {agentBlock.calls.map((call, idx) => (
                           <AgentToolCallCard key={`${msg.id}-${idx}`} call={call} />
                         ))}
-                        {agentBlock.pendingIds.length > 0 && (
-                          <Typography variant="caption" color="warning.main" sx={{ display: 'block', mx: 1, mb: 1 }}>
-                            {agentBlock.pendingIds.length} tool call(s) require approval. Open the Tools page to approve.
-                          </Typography>
-                        )}
+                        {agentBlock.pendingCalls.map((pc) => (
+                          <AgentToolCallCard
+                            key={`${msg.id}-pending-${pc.invocationId}`}
+                            call={{ name: pc.name, args: pc.args, ok: false }}
+                            pending
+                            invocationId={pc.invocationId}
+                            onResolved={(kind) => {
+                              // Remove from pending list once handled.
+                              setAgentToolsByMessageId((prev) => {
+                                const block = prev[msg.id];
+                                if (!block) return prev;
+                                const remaining = block.pendingCalls.filter((p) => p.invocationId !== pc.invocationId);
+                                return { ...prev, [msg.id]: { ...block, pendingCalls: remaining } };
+                              });
+                              // If approved, replay the agent turn so it can keep going.
+                              if (kind !== 'rejected' && currentSession) {
+                                setAgentThinking(true);
+                                sendAgentMessage(currentSession.id, '[continue]')
+                                  .then((resp) => {
+                                    setMessages((prev) => [...prev, resp.assistantMessage]);
+                                    setAgentToolsByMessageId((prev) => ({
+                                      ...prev,
+                                      [resp.assistantMessage.id]: {
+                                        calls: resp.agent.toolCalls || [],
+                                        pendingCalls: resp.agent.pendingCalls || [],
+                                      },
+                                    }));
+                                  })
+                                  .catch((e) => setError(e instanceof Error ? e.message : 'Agent continue failed'))
+                                  .finally(() => setAgentThinking(false));
+                              }
+                            }}
+                          />
+                        ))}
                       </Box>
                     )}
                   </Box>

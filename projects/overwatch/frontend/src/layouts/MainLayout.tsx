@@ -36,6 +36,7 @@ import {
   Memory as HardwareIcon,
   Speed as BenchmarkIcon,
   Build as ToolsIcon,
+  Lock as ToolPermissionsIcon,
   AltRoute as RoutingIcon,
 } from '@mui/icons-material';
 import { useAuthStore } from '../stores/authStore';
@@ -56,6 +57,7 @@ const systemSettingsItems = [
   { path: '/hardware', label: 'Hardware', icon: <HardwareIcon /> },
   { path: '/benchmark', label: 'Benchmark', icon: <BenchmarkIcon /> },
   { path: '/tools', label: 'Tools', icon: <ToolsIcon /> },
+  { path: '/tool-permissions', label: 'Tool Permissions', icon: <ToolPermissionsIcon /> },
   { path: '/routing', label: 'Routing', icon: <RoutingIcon /> },
   { path: '/settings', label: 'Settings', icon: <SettingsIcon /> },
 ];

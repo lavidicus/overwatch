@@ -30,10 +30,19 @@ export interface AgentToolCall {
   error?: string | null;
 }
 
+export interface AgentPendingCall {
+  invocationId: string;
+  name: string;
+  args: Record<string, unknown>;
+}
+
 export interface AgentResult {
   iterations: number;
-  pending?: string[];
+  /** True when the loop stopped because a tool needs human approval. */
+  pending: boolean;
   invocationIds?: string[];
+  /** Tool calls awaiting approval. */
+  pendingCalls?: AgentPendingCall[];
   toolCalls: AgentToolCall[];
 }
 

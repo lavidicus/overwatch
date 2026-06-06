@@ -35,6 +35,7 @@ model User {
   piCalls          PiCall[]          @relation("PiCallUser")
   queueTasks       QueueTask[]       @relation("QueueTaskUser")
   systemAccess     SystemAccess[]    @relation("SystemAccessUser")
+  toolGrants       UserToolGrant[]   @relation("UserToolGrantUser")
 
   @@map("users")
 }
@@ -220,9 +221,27 @@ model Tool {
   createdAt   DateTime         @default(now())
   updatedAt   DateTime         @updatedAt
   invocations ToolInvocation[] @relation("ToolInvocationTool")
+  userGrants  UserToolGrant[]  @relation("UserToolGrantTool")
 
   @@index([enabled, category])
   @@map("tools")
+}
+
+model UserToolGrant {
+  id        String    @id @default(uuid())
+  userId    String
+  toolId    String
+  scope     String    @default("ALL")
+  sessionId String?
+  argsMatch Json?
+  createdAt DateTime  @default(now())
+  revokedAt DateTime?
+  user      User      @relation("UserToolGrantUser", fields: [userId], references: [id], onDelete: Cascade)
+  tool      Tool      @relation("UserToolGrantTool", fields: [toolId], references: [id], onDelete: Cascade)
+
+  @@unique([userId, toolId, scope, sessionId])
+  @@index([userId, revokedAt])
+  @@map("user_tool_grants")
 }
 
 model ToolInvocation {

@@ -55,9 +55,60 @@ export async function listInvocations(sessionId?: string): Promise<{ invocations
   return r.json();
 }
 
-export async function approveInvocation(id: string): Promise<{ invocation: ToolInvocation }> {
-  const r = await fetch(`${API_BASE}/tools/invocations/${id}/approve`, { method: 'POST', headers: headers() });
+export interface ApproveOptions {
+  createGrant?: boolean;
+  scope?: 'ALL' | 'SESSION';
+}
+
+export async function approveInvocation(
+  id: string,
+  opts: ApproveOptions = {},
+): Promise<{ invocation: ToolInvocation; grant?: UserToolGrant | null }> {
+  const r = await fetch(`${API_BASE}/tools/invocations/${id}/approve`, {
+    method: 'POST',
+    headers: headers(),
+    body: JSON.stringify(opts),
+  });
   if (!r.ok) throw new Error('Failed to approve invocation');
+  return r.json();
+}
+
+export interface UserToolGrant {
+  id: string;
+  userId: string;
+  toolId: string;
+  scope: 'ALL' | 'SESSION';
+  sessionId: string | null;
+  argsMatch: Record<string, unknown> | null;
+  createdAt: string;
+  revokedAt: string | null;
+  tool?: { id: string; name: string; category: string; description: string };
+}
+
+export async function listToolGrants(): Promise<{ grants: UserToolGrant[] }> {
+  const r = await fetch(`${API_BASE}/tool-grants`, { headers: headers() });
+  if (!r.ok) throw new Error('Failed to list tool grants');
+  return r.json();
+}
+
+export async function createToolGrant(input: {
+  toolId: string;
+  scope?: 'ALL' | 'SESSION';
+  sessionId?: string;
+  argsMatch?: Record<string, unknown>;
+}): Promise<{ grant: UserToolGrant }> {
+  const r = await fetch(`${API_BASE}/tool-grants`, {
+    method: 'POST',
+    headers: headers(),
+    body: JSON.stringify(input),
+  });
+  if (!r.ok) throw new Error((await r.json().catch(() => ({}))).error ?? 'Failed to create grant');
+  return r.json();
+}
+
+export async function revokeToolGrant(id: string): Promise<{ grant: UserToolGrant }> {
+  const r = await fetch(`${API_BASE}/tool-grants/${id}`, { method: 'DELETE', headers: headers() });
+  if (!r.ok) throw new Error('Failed to revoke grant');
   return r.json();
 }
 

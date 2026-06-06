@@ -1,20 +1,35 @@
-import { Box, Chip, Typography, Paper } from '@mui/material';
+import { useState } from 'react';
+import { Box, Chip, Typography, Paper, Button, Stack, CircularProgress } from '@mui/material';
 import BuildIcon from '@mui/icons-material/Build';
 import CheckCircleIcon from '@mui/icons-material/CheckCircle';
 import ErrorIcon from '@mui/icons-material/Error';
 import HourglassEmptyIcon from '@mui/icons-material/HourglassEmpty';
 import type { AgentToolCall } from '../api/chat';
+import { approveInvocation, rejectInvocation } from '../api/tools';
 
 interface AgentToolCallCardProps {
   call: AgentToolCall;
   pending?: boolean;
+  /** Invocation id for pending calls — enables inline approval buttons. */
+  invocationId?: string;
+  /** Called after an approval or rejection completes so the parent can refresh. */
+  onResolved?: (kind: 'approved' | 'approved-grant-all' | 'approved-grant-session' | 'rejected') => void;
 }
 
 /**
  * Compact inline card showing one tool call made during an agent turn.
  * Used inside ChatPage to render the agent loop's tool invocations.
+ *
+ * When the call is pending approval and we have its invocation id, we render
+ * three approval actions:
+ *   - Approve once (existing behavior)
+ *   - Always allow this tool (creates a UserToolGrant with scope=ALL)
+ *   - Allow for this chat only (creates a UserToolGrant with scope=SESSION)
  */
-export default function AgentToolCallCard({ call, pending }: AgentToolCallCardProps) {
+export default function AgentToolCallCard({ call, pending, invocationId, onResolved }: AgentToolCallCardProps) {
+  const [busy, setBusy] = useState<null | 'once' | 'always' | 'session' | 'reject'>(null);
+  const [err, setErr] = useState<string | null>(null);
+
   const status = pending
     ? { color: 'warning' as const, label: 'approval required', icon: <HourglassEmptyIcon fontSize="small" /> }
     : call.ok
@@ -28,6 +43,42 @@ export default function AgentToolCallCard({ call, pending }: AgentToolCallCardPr
   } catch {
     argsPreview = String(call.args);
   }
+
+  const handleApprove = async (kind: 'once' | 'always' | 'session') => {
+    if (!invocationId) return;
+    setBusy(kind);
+    setErr(null);
+    try {
+      if (kind === 'once') {
+        await approveInvocation(invocationId);
+        onResolved?.('approved');
+      } else if (kind === 'always') {
+        await approveInvocation(invocationId, { createGrant: true, scope: 'ALL' });
+        onResolved?.('approved-grant-all');
+      } else {
+        await approveInvocation(invocationId, { createGrant: true, scope: 'SESSION' });
+        onResolved?.('approved-grant-session');
+      }
+    } catch (e) {
+      setErr(e instanceof Error ? e.message : 'Approval failed');
+    } finally {
+      setBusy(null);
+    }
+  };
+
+  const handleReject = async () => {
+    if (!invocationId) return;
+    setBusy('reject');
+    setErr(null);
+    try {
+      await rejectInvocation(invocationId);
+      onResolved?.('rejected');
+    } catch (e) {
+      setErr(e instanceof Error ? e.message : 'Reject failed');
+    } finally {
+      setBusy(null);
+    }
+  };
 
   return (
     <Paper
@@ -76,6 +127,60 @@ export default function AgentToolCallCard({ call, pending }: AgentToolCallCardPr
         <Typography variant="caption" color="error.main" sx={{ display: 'block', mt: 0.5 }}>
           {call.error}
         </Typography>
+      )}
+
+      {pending && invocationId && (
+        <Box sx={{ mt: 1 }}>
+          <Stack direction="row" spacing={1} useFlexGap flexWrap="wrap">
+            <Button
+              size="small"
+              variant="contained"
+              color="success"
+              disabled={busy !== null}
+              onClick={() => handleApprove('once')}
+              startIcon={busy === 'once' ? <CircularProgress size={14} color="inherit" /> : undefined}
+            >
+              Approve once
+            </Button>
+            <Button
+              size="small"
+              variant="outlined"
+              color="success"
+              disabled={busy !== null}
+              onClick={() => handleApprove('always')}
+              startIcon={busy === 'always' ? <CircularProgress size={14} color="inherit" /> : undefined}
+              title="Always allow this tool for any future chat"
+            >
+              Always allow this tool
+            </Button>
+            <Button
+              size="small"
+              variant="outlined"
+              color="info"
+              disabled={busy !== null}
+              onClick={() => handleApprove('session')}
+              startIcon={busy === 'session' ? <CircularProgress size={14} color="inherit" /> : undefined}
+              title="Always allow this tool inside the current chat session only"
+            >
+              Allow for this chat only
+            </Button>
+            <Button
+              size="small"
+              variant="text"
+              color="error"
+              disabled={busy !== null}
+              onClick={handleReject}
+              startIcon={busy === 'reject' ? <CircularProgress size={14} color="inherit" /> : undefined}
+            >
+              Reject
+            </Button>
+          </Stack>
+          {err && (
+            <Typography variant="caption" color="error.main" sx={{ display: 'block', mt: 0.5 }}>
+              {err}
+            </Typography>
+          )}
+        </Box>
       )}
     </Paper>
   );

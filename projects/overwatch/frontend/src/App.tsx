@@ -9,6 +9,7 @@ import HardwarePage from './pages/HardwarePage';
 import ChatPage from './pages/ChatPage';
 import BenchmarkPage from './pages/BenchmarkPage';
 import ToolsPage from './pages/ToolsPage';
+import ToolPermissionsPage from './pages/ToolPermissionsPage';
 import RoutingPage from './pages/RoutingPage';
 
 // Placeholder pages - will be implemented in subsequent phases
@@ -63,6 +64,7 @@ function App() {
         <Route path="chat" element={<ChatPage />} />
         <Route path="benchmark" element={<BenchmarkPage />} />
         <Route path="tools" element={<ToolsPage />} />
+        <Route path="tool-permissions" element={<ToolPermissionsPage />} />
         <Route path="routing" element={<RoutingPage />} />
         <Route path="settings" element={<SettingsPage />} />
         <Route path="admin" element={<AdminPage />} />

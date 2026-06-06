@@ -13,6 +13,7 @@ import { PrismaClient, ToolInvocationStatus } from '@prisma/client';
 import { getProviderClient } from '../providers/index.js';
 import { ChatMessage, ToolDefinition, ToolCallRequest } from '../providers/types.js';
 import { executeToolByName } from './index.js';
+import { findMatchingGrant } from './grants.js';
 
 const prisma = new PrismaClient();
 
@@ -41,6 +42,8 @@ export interface AgentLoopResult {
   invocationIds: string[];
   pending: boolean;
   toolCalls: Array<{ name: string; args: Record<string, unknown>; result: unknown; error?: string }>;
+  /** Tool calls that returned PENDING and need user approval. Empty if pending=false. */
+  pendingCalls: Array<{ invocationId: string; name: string; args: Record<string, unknown> }>;
 }
 
 export async function runAgentLoop(params: AgentLoopParams): Promise<AgentLoopResult> {
@@ -56,6 +59,7 @@ export async function runAgentLoop(params: AgentLoopParams): Promise<AgentLoopRe
   const conversation: ChatMessage[] = [...params.messages];
   const invocationIds: string[] = [];
   const toolCalls: AgentLoopResult['toolCalls'] = [];
+  const pendingCalls: AgentLoopResult['pendingCalls'] = [];
   let finalContent = '';
 
   for (let i = 1; i <= max; i++) {
@@ -75,7 +79,7 @@ export async function runAgentLoop(params: AgentLoopParams): Promise<AgentLoopRe
     // No tool calls → final answer
     if (!result.toolCalls || result.toolCalls.length === 0) {
       params.onIteration?.({ type: 'final', iteration: i, data: { content: result.content } });
-      return { finalContent: result.content, iterations: i, invocationIds, pending: false, toolCalls };
+      return { finalContent: result.content, iterations: i, invocationIds, pending: false, toolCalls, pendingCalls };
     }
 
     // Append assistant message (preserve content + tool requests as JSON for the next turn)
@@ -97,8 +101,22 @@ export async function runAgentLoop(params: AgentLoopParams): Promise<AgentLoopRe
         continue;
       }
 
-      // Pre-create the invocation row
-      const status: ToolInvocationStatus = toolMeta.requiresApproval ? 'PENDING' : 'APPROVED';
+      // Pre-create the invocation row.
+      // If the tool requires approval, check whether the user has already
+      // granted blanket permission (UserToolGrant) for this tool — if so we
+      // skip the PENDING gate.
+      let status: ToolInvocationStatus;
+      if (toolMeta.requiresApproval) {
+        const grantId = await findMatchingGrant({
+          userId: params.userId,
+          toolId: toolMeta.id,
+          sessionId: params.sessionId,
+          args: call.arguments,
+        });
+        status = grantId ? 'APPROVED' : 'PENDING';
+      } else {
+        status = 'APPROVED';
+      }
       const inv = await prisma.toolInvocation.create({
         data: {
           toolId: toolMeta.id,
@@ -117,6 +135,7 @@ export async function runAgentLoop(params: AgentLoopParams): Promise<AgentLoopRe
           iteration: i,
           data: { invocationId: inv.id, name: call.name, args: call.arguments },
         });
+        pendingCalls.push({ invocationId: inv.id, name: call.name, args: call.arguments });
         // Stop the loop. Caller resumes once user approves & re-invokes the endpoint.
         return {
           finalContent: finalContent || `Awaiting approval for tool: ${call.name}`,
@@ -124,6 +143,7 @@ export async function runAgentLoop(params: AgentLoopParams): Promise<AgentLoopRe
           invocationIds,
           pending: true,
           toolCalls,
+          pendingCalls,
         };
       }
 
@@ -164,6 +184,7 @@ export async function runAgentLoop(params: AgentLoopParams): Promise<AgentLoopRe
     invocationIds,
     pending: false,
     toolCalls,
+    pendingCalls,
   };
 }
 

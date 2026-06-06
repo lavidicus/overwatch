@@ -4,6 +4,7 @@ import { PrismaClient, ToolInvocationStatus } from '@prisma/client';
 import { authenticate, AuthRequest } from '../middleware/auth.js';
 import { auditLog } from '../middleware/audit.js';
 import { executeToolByName } from '../services/tools/index.js';
+import { findMatchingGrant } from '../services/tools/grants.js';
 
 const router = Router();
 const prisma = new PrismaClient();
@@ -116,7 +117,18 @@ router.post('/invocations', authenticate, auditLog('CREATE_TOOL_INVOCATION'), as
   if (!tool) return res.status(404).json({ error: 'Tool not found' });
   if (!tool.enabled) return res.status(403).json({ error: 'Tool disabled' });
 
-  const status: ToolInvocationStatus = tool.requiresApproval ? 'PENDING' : 'APPROVED';
+  let status: ToolInvocationStatus;
+  if (tool.requiresApproval) {
+    const grantId = await findMatchingGrant({
+      userId: req.user!.id,
+      toolId: tool.id,
+      sessionId: body.sessionId ?? null,
+      args: body.args as Record<string, unknown>,
+    });
+    status = grantId ? 'APPROVED' : 'PENDING';
+  } else {
+    status = 'APPROVED';
+  }
   const invocation = await prisma.toolInvocation.create({
     data: {
       toolId: body.toolId,
@@ -134,14 +146,60 @@ router.post('/invocations', authenticate, auditLog('CREATE_TOOL_INVOCATION'), as
  * POST /api/tools/invocations/:id/approve
  */
 router.post('/invocations/:id/approve', authenticate, auditLog('APPROVE_TOOL_INVOCATION'), async (req: AuthRequest, res): Promise<any> => {
+  const body = z.object({
+    createGrant: z.boolean().optional(),
+    scope: z.enum(['ALL', 'SESSION']).optional(),
+  }).safeParse(req.body ?? {});
+  const opts = body.success ? body.data : { createGrant: false };
+
   const invocation = await prisma.toolInvocation.findUnique({ where: { id: req.params.id as string } });
   if (!invocation) return res.status(404).json({ error: 'Invocation not found' });
   if (invocation.status !== 'PENDING') return res.status(400).json({ error: `Invocation already ${invocation.status}` });
+
   const updated = await prisma.toolInvocation.update({
     where: { id: invocation.id },
     data: { status: 'APPROVED', approvedAt: new Date() },
   });
-  res.json({ invocation: updated });
+
+  let grant = null;
+  if (opts.createGrant) {
+    const scope = opts.scope ?? 'ALL';
+    if (scope === 'SESSION' && !invocation.sessionId) {
+      // Can't create a session-scoped grant without a session. Skip silently
+      // rather than failing the approval.
+    } else {
+      try {
+        const grantSessionId = scope === 'SESSION' ? invocation.sessionId : null;
+        const existing = await prisma.userToolGrant.findFirst({
+          where: {
+            userId: req.user!.id,
+            toolId: invocation.toolId,
+            scope,
+            sessionId: grantSessionId,
+          },
+        });
+        if (existing) {
+          grant = await prisma.userToolGrant.update({
+            where: { id: existing.id },
+            data: { revokedAt: null },
+          });
+        } else {
+          grant = await prisma.userToolGrant.create({
+            data: {
+              userId: req.user!.id,
+              toolId: invocation.toolId,
+              scope,
+              sessionId: grantSessionId,
+            },
+          });
+        }
+      } catch (err) {
+        console.error('Failed to upsert tool grant during approve:', err);
+      }
+    }
+  }
+
+  res.json({ invocation: updated, grant });
 });
 
 /**
