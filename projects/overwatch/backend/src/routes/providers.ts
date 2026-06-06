@@ -13,7 +13,17 @@ const prisma = new PrismaClient();
 const providerSchema = z.object({
   name: z.string().min(1).max(100),
   type: z.enum(['VLLM', 'OLLAMA', 'LLAMACPP', 'OPENAI', 'ANTHROPIC', 'OPENCLAW', 'HERMES', 'CUSTOM']),
-  baseUrl: z.string().url(),
+  baseUrl: z.string().min(1).max(500).refine(
+    (val) => {
+      // Accept bare hostnames (localhost, 192.168.x.x) or full URLs
+      if (val.startsWith('http://') || val.startsWith('https://')) {
+        try { new URL(val); return true; } catch { return false; }
+      }
+      // Bare hostname or IP
+      return /^[a-zA-Z0-9._-]+$/.test(val);
+    },
+    { message: 'Must be a valid hostname, IP, or URL' }
+  ),
   port: z.number().int().positive().optional(),
   apiKey: z.string().optional(),
   model: z.string().min(1),
@@ -74,6 +84,9 @@ router.post('/', authenticate, auditLog('CREATE_PROVIDER'), async (req: AuthRequ
       return res.status(409).json({ error: 'Provider with this name and type already exists' });
     }
 
+    // Normalize baseUrl: strip protocol and trailing slashes, keep just host
+    let normalizedBaseUrl = body.baseUrl.replace(/^https?:\/\//, '').replace(/\/+$/, '');
+
     // Encrypt API key if provided
     let encryptedApiKey: string | null = null;
     let keyVersion = 1;
@@ -87,6 +100,7 @@ router.post('/', authenticate, auditLog('CREATE_PROVIDER'), async (req: AuthRequ
     const provider = await prisma.provider.create({
       data: {
         ...body,
+        baseUrl: normalizedBaseUrl,
         apiKey: encryptedApiKey,
         apiKeyVersion: keyVersion,
         status: 'DISCONNECTED',
@@ -459,7 +473,8 @@ async function testProviderConnection(
   const startTime = Date.now();
 
   try {
-    const url = new URL(provider.baseUrl);
+    const baseUrl = provider.baseUrl.replace(/^https?:\/\//, '');
+    const url = new URL(`http://${baseUrl}`);
     if (provider.port) {
       url.port = provider.port.toString();
     }
@@ -558,7 +573,8 @@ async function fetchProviderModelsForDiscovery(provider: any): Promise<Array<{
   quantization?: string;
 }>> {
   try {
-    const url = new URL(provider.baseUrl);
+    const baseUrl = provider.baseUrl.replace(/^https?:\/\//, '');
+    const url = new URL(`http://${baseUrl}`);
     if (provider.port) {
       url.port = provider.port.toString();
     }

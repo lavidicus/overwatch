@@ -484,6 +484,18 @@ router.post('/register-from-inspection', authenticate, auditLog('REGISTER_INSPEC
       return res.status(404).json({ error: 'Provider not found' });
     }
 
+    // Check for duplicate model name on this provider
+    const existing = await prisma.providerModel.findFirst({
+      where: {
+        providerId: body.providerId,
+        name: body.name,
+      },
+    });
+
+    if (existing) {
+      return res.status(409).json({ error: 'Model with this name already exists on this provider' });
+    }
+
     // If visionModelId provided, verify it exists on the same provider
     if (body.visionModelId) {
       const visionModel = await prisma.providerModel.findUnique({

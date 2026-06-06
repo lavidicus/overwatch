@@ -1,4 +1,4 @@
-import { Router, Request, Response } from 'express';
+import { Router, Request, Response, NextFunction } from 'express';
 import argon2 from 'argon2';
 import jwt from 'jsonwebtoken';
 import crypto from 'crypto';
@@ -7,6 +7,26 @@ import { authenticator } from 'otplib';
 import { PrismaClient } from '@prisma/client';
 import { auditLog } from '../middleware/audit.js';
 import { authLimiter } from '../middleware/rateLimiter.js';
+
+/**
+ * Lightweight JWT verification for auth routes that need it.
+ * Avoids importing the full authenticate middleware (circular dependency).
+ */
+function requireAuth(req: Request & { user?: any }, res: Response, next: NextFunction): void {
+  try {
+    const token = req.headers.authorization?.replace('Bearer ', '') || (req.cookies as Record<string, string>)?.token;
+    if (!token) {
+      res.status(401).json({ error: 'Authentication required' });
+      return;
+    }
+    const decoded = jwt.verify(token, process.env.JWT_SECRET!) as any;
+    req.user = { id: decoded.userId, email: decoded.email, role: decoded.role };
+    next();
+  } catch {
+    res.status(401).json({ error: 'Invalid or expired token' });
+    return;
+  }
+}
 
 const router = Router();
 const prisma = new PrismaClient();
@@ -212,7 +232,7 @@ router.post('/logout', auditLog('LOGOUT'), async (req, res): Promise<any> => {
  * GET /auth/me
  * Get current user info
  */
-router.get('/me', auditLog('GET_ME'), async (req: any, res): Promise<any> => {
+router.get('/me', requireAuth, auditLog('GET_ME'), async (req: any, res): Promise<any> => {
   try {
     // This route requires authentication middleware to be applied globally or per-route
     const userId = req.user?.id;
@@ -250,7 +270,7 @@ router.get('/me', auditLog('GET_ME'), async (req: any, res): Promise<any> => {
  * POST /auth/mfa/setup
  * Enable or disable MFA for current user
  */
-router.post('/mfa/setup', auditLog('MFA_SETUP'), async (req: any, res): Promise<any> => {
+router.post('/mfa/setup', requireAuth, auditLog('MFA_SETUP'), async (req: any, res): Promise<any> => {
   try {
     const userId = req.user?.id;
     if (!userId) {
@@ -339,7 +359,7 @@ router.post('/mfa/setup', auditLog('MFA_SETUP'), async (req: any, res): Promise<
  * GET /auth/mfa/qr
  * Get QR code URL for MFA setup (for users who need to re-scan)
  */
-router.get('/mfa/qr', auditLog('MFA_QR'), async (req: any, res): Promise<any> => {
+router.get('/mfa/qr', requireAuth, auditLog('MFA_QR'), async (req: any, res): Promise<any> => {
   try {
     const userId = req.user?.id;
     if (!userId) {

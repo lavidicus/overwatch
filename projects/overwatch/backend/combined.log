@@ -165,3 +165,103 @@
 {"level":"info","message":"Environment: development","timestamp":"2026-06-06T05:11:26.455Z"}
 {"level":"info","message":"Overwatch backend running on port 3000","timestamp":"2026-06-06T05:12:38.884Z"}
 {"level":"info","message":"Environment: development","timestamp":"2026-06-06T05:12:38.886Z"}
+{"level":"info","message":"Overwatch backend running on port 3000","timestamp":"2026-06-06T05:26:18.861Z"}
+{"level":"info","message":"Environment: development","timestamp":"2026-06-06T05:26:18.863Z"}
+{"level":"info","message":"Overwatch backend running on port 3000","timestamp":"2026-06-06T05:27:09.029Z"}
+{"level":"info","message":"Environment: development","timestamp":"2026-06-06T05:27:09.031Z"}
+{"level":"info","message":"Overwatch backend running on port 3000","timestamp":"2026-06-06T05:33:00.966Z"}
+{"level":"info","message":"Environment: development","timestamp":"2026-06-06T05:33:00.968Z"}
+{"level":"info","message":"Overwatch backend running on port 3000","timestamp":"2026-06-06T05:33:11.901Z"}
+{"level":"info","message":"Environment: development","timestamp":"2026-06-06T05:33:11.903Z"}
+{"level":"info","message":"Overwatch backend running on port 3000","timestamp":"2026-06-06T05:34:10.089Z"}
+{"level":"info","message":"Environment: development","timestamp":"2026-06-06T05:34:10.091Z"}
+{"level":"info","message":"Overwatch backend running on port 3000","timestamp":"2026-06-06T05:34:38.264Z"}
+{"level":"info","message":"Environment: development","timestamp":"2026-06-06T05:34:38.267Z"}
+{"level":"info","message":"Overwatch backend running on port 3000","timestamp":"2026-06-06T05:39:59.307Z"}
+{"level":"info","message":"Environment: development","timestamp":"2026-06-06T05:39:59.309Z"}
+{"level":"info","message":"Overwatch backend running on port 3000","timestamp":"2026-06-06T05:42:32.712Z"}
+{"level":"info","message":"Environment: development","timestamp":"2026-06-06T05:42:32.715Z"}
+{"level":"info","message":"Overwatch backend running on port 3000","timestamp":"2026-06-06T05:43:47.971Z"}
+{"level":"info","message":"Environment: development","timestamp":"2026-06-06T05:43:47.973Z"}
+{"level":"info","message":"Overwatch backend running on port 3000","timestamp":"2026-06-06T05:44:48.189Z"}
+{"level":"info","message":"Environment: development","timestamp":"2026-06-06T05:44:48.191Z"}
+{"level":"info","message":"Overwatch backend running on port 3000","timestamp":"2026-06-06T05:45:31.858Z"}
+{"level":"info","message":"Environment: development","timestamp":"2026-06-06T05:45:31.860Z"}
+{"level":"info","message":"Overwatch backend running on port 3000","timestamp":"2026-06-06T05:46:16.124Z"}
+{"level":"info","message":"Environment: development","timestamp":"2026-06-06T05:46:16.127Z"}
+{"level":"info","message":"Overwatch backend running on port 3000","timestamp":"2026-06-06T05:46:34.345Z"}
+{"level":"info","message":"Environment: development","timestamp":"2026-06-06T05:46:34.347Z"}
+{"level":"info","message":"Overwatch backend running on port 3000","timestamp":"2026-06-06T05:46:55.017Z"}
+{"level":"info","message":"Environment: development","timestamp":"2026-06-06T05:46:55.019Z"}
+{"level":"info","message":"Overwatch backend running on port 3000","timestamp":"2026-06-06T05:50:11.061Z"}
+{"level":"info","message":"Environment: development","timestamp":"2026-06-06T05:50:11.064Z"}
+{"level":"info","message":"Overwatch backend running on port 3000","timestamp":"2026-06-06T05:50:33.464Z"}
+{"level":"info","message":"Environment: development","timestamp":"2026-06-06T05:50:33.466Z"}
+{"level":"info","message":"Overwatch backend running on port 3000","timestamp":"2026-06-06T05:51:13.513Z"}
+{"level":"info","message":"Environment: development","timestamp":"2026-06-06T05:51:13.515Z"}
+{"level":"info","message":"Client connected: jmuiBl8QURvT509HAAAB (user: admin@overwatch.local)","timestamp":"2026-06-06T06:04:14.826Z"}
+{"level":"info","message":"Client disconnected: jmuiBl8QURvT509HAAAB","timestamp":"2026-06-06T06:04:16.529Z"}
+{"level":"info","message":"Client connected: bIqSEiZZ4Ux7PTvUAAAD (user: admin@overwatch.local)","timestamp":"2026-06-06T06:04:16.697Z"}
+{"level":"info","message":"Client disconnected: bIqSEiZZ4Ux7PTvUAAAD","timestamp":"2026-06-06T06:05:12.582Z"}
+{"level":"info","message":"Overwatch backend running on port 3000","timestamp":"2026-06-06T06:06:14.801Z"}
+{"level":"info","message":"Environment: development","timestamp":"2026-06-06T06:06:14.803Z"}
+{"level":"info","message":"Overwatch backend running on port 3000","timestamp":"2026-06-06T06:06:53.101Z"}
+{"level":"info","message":"Environment: development","timestamp":"2026-06-06T06:06:53.103Z"}
+{"level":"info","message":"Overwatch backend running on port 3000","timestamp":"2026-06-06T06:07:07.988Z"}
+{"level":"info","message":"Environment: development","timestamp":"2026-06-06T06:07:07.990Z"}
+{"level":"info","message":"Overwatch backend running on port 3000","timestamp":"2026-06-06T06:07:31.446Z"}
+{"level":"info","message":"Environment: development","timestamp":"2026-06-06T06:07:31.448Z"}
+{"level":"info","message":"Overwatch backend running on port 3000","timestamp":"2026-06-06T06:07:55.252Z"}
+{"level":"info","message":"Environment: development","timestamp":"2026-06-06T06:07:55.254Z"}
+{"level":"info","message":"Overwatch backend running on port 3000","timestamp":"2026-06-06T06:08:06.588Z"}
+{"level":"info","message":"Environment: development","timestamp":"2026-06-06T06:08:06.590Z"}
+{"level":"info","message":"Overwatch backend running on port 3000","timestamp":"2026-06-06T06:08:30.938Z"}
+{"level":"info","message":"Environment: development","timestamp":"2026-06-06T06:08:30.940Z"}
+{"level":"info","message":"Overwatch backend running on port 3000","timestamp":"2026-06-06T06:10:22.299Z"}
+{"level":"info","message":"Environment: development","timestamp":"2026-06-06T06:10:22.301Z"}
+{"level":"info","message":"Overwatch backend running on port 3000","timestamp":"2026-06-06T06:12:52.915Z"}
+{"level":"info","message":"Environment: development","timestamp":"2026-06-06T06:12:52.917Z"}
+{"level":"info","message":"Overwatch backend running on port 3000","timestamp":"2026-06-06T06:17:55.136Z"}
+{"level":"info","message":"Environment: development","timestamp":"2026-06-06T06:17:55.139Z"}
+{"level":"info","message":"Overwatch backend running on port 3000","timestamp":"2026-06-06T06:21:23.463Z"}
+{"level":"info","message":"Environment: development","timestamp":"2026-06-06T06:21:23.465Z"}
+{"level":"info","message":"Overwatch backend running on port 3000","timestamp":"2026-06-06T06:30:17.205Z"}
+{"level":"info","message":"Environment: development","timestamp":"2026-06-06T06:30:17.207Z"}
+{"level":"info","message":"Overwatch backend running on port 3000","timestamp":"2026-06-06T06:36:00.246Z"}
+{"level":"info","message":"Environment: development","timestamp":"2026-06-06T06:36:00.248Z"}
+{"level":"info","message":"Overwatch backend running on port 3000","timestamp":"2026-06-06T06:46:20.165Z"}
+{"level":"info","message":"Environment: development","timestamp":"2026-06-06T06:46:20.168Z"}
+{"level":"info","message":"Overwatch backend running on port 3000","timestamp":"2026-06-06T06:49:52.091Z"}
+{"level":"info","message":"Environment: development","timestamp":"2026-06-06T06:49:52.093Z"}
+{"level":"info","message":"Overwatch backend running on port 3000","timestamp":"2026-06-06T06:57:49.619Z"}
+{"level":"info","message":"Environment: development","timestamp":"2026-06-06T06:57:49.621Z"}
+{"level":"info","message":"Overwatch backend running on port 3000","timestamp":"2026-06-06T07:16:44.657Z"}
+{"level":"info","message":"Environment: development","timestamp":"2026-06-06T07:16:44.659Z"}
+{"level":"info","message":"Overwatch backend running on port 3000","timestamp":"2026-06-06T07:18:37.845Z"}
+{"level":"info","message":"Environment: development","timestamp":"2026-06-06T07:18:37.848Z"}
+{"level":"info","message":"Overwatch backend running on port 3000","timestamp":"2026-06-06T08:19:00.783Z"}
+{"level":"info","message":"Environment: development","timestamp":"2026-06-06T08:19:00.785Z"}
+{"level":"info","message":"Overwatch backend running on port 3099","timestamp":"2026-06-06T09:02:33.089Z"}
+{"level":"info","message":"Environment: development","timestamp":"2026-06-06T09:02:33.091Z"}
+{"level":"info","message":"Overwatch backend running on port 3000","timestamp":"2026-06-06T09:22:26.709Z"}
+{"level":"info","message":"Environment: development","timestamp":"2026-06-06T09:22:26.711Z"}
+{"level":"info","message":"Overwatch backend running on port 3000","timestamp":"2026-06-06T09:37:47.014Z"}
+{"level":"info","message":"Environment: development","timestamp":"2026-06-06T09:37:47.017Z"}
+{"level":"info","message":"Overwatch backend running on port 3000","timestamp":"2026-06-06T09:43:33.976Z"}
+{"level":"info","message":"Environment: development","timestamp":"2026-06-06T09:43:33.978Z"}
+{"level":"info","message":"Overwatch backend running on port 3000","timestamp":"2026-06-06T09:46:12.448Z"}
+{"level":"info","message":"Environment: development","timestamp":"2026-06-06T09:46:12.450Z"}
+{"level":"info","message":"Overwatch backend running on port 3000","timestamp":"2026-06-06T09:55:33.948Z"}
+{"level":"info","message":"Environment: development","timestamp":"2026-06-06T09:55:33.951Z"}
+{"level":"info","message":"Overwatch backend running on port 3000","timestamp":"2026-06-06T10:13:16.908Z"}
+{"level":"info","message":"Environment: development","timestamp":"2026-06-06T10:13:16.910Z"}
+{"level":"info","message":"Overwatch backend running on port 3000","timestamp":"2026-06-06T10:26:59.688Z"}
+{"level":"info","message":"Environment: development","timestamp":"2026-06-06T10:26:59.690Z"}
+{"level":"info","message":"Overwatch backend running on port 3000","timestamp":"2026-06-06T10:31:42.950Z"}
+{"level":"info","message":"Environment: development","timestamp":"2026-06-06T10:31:42.952Z"}
+{"level":"info","message":"Overwatch backend running on port 3000","timestamp":"2026-06-06T10:42:05.587Z"}
+{"level":"info","message":"Environment: development","timestamp":"2026-06-06T10:42:05.589Z"}
+{"level":"info","message":"Overwatch backend running on port 3000","timestamp":"2026-06-06T10:50:05.201Z"}
+{"level":"info","message":"Environment: development","timestamp":"2026-06-06T10:50:05.203Z"}
+{"level":"info","message":"Overwatch backend running on port 3000","timestamp":"2026-06-06T11:22:34.079Z"}
+{"level":"info","message":"Environment: development","timestamp":"2026-06-06T11:22:34.081Z"}

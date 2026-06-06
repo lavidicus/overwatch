@@ -111,7 +111,10 @@ model ProviderModel {
   source         ModelSource?
   downloadPath   String?
   systemId       String?                              // Remote system where model file lives (for LOCAL models)
+  system         RemoteSystem?                         @relation("ModelSystem", fields: [systemId], references: [id])
   visionModelId  String?                              // Linked vision/MMV model ID (for multimodal models)
+  visionModel    ProviderModel?                         @relation("VisionModelLink", fields: [visionModelId], references: [id])
+  companionModels ProviderModel[]                         @relation("VisionModelLink")
   status         ModelStatus
   downloadProgress Float?
   downloadedAt   DateTime?
@@ -121,9 +124,6 @@ model ProviderModel {
   benchmarkRuns BenchmarkRun[]    @relation("BenchmarkRunModel")
   chatSessions  ChatSession[]     @relation("ChatSessionModel")
   queueTasks    QueueTask[]       @relation("QueueTaskModel")
-  system        RemoteSystem?                         @relation("ModelSystem", fields: [systemId], references: [id])
-  visionModel   ProviderModel?                         @relation("VisionModelLink", fields: [visionModelId], references: [id])
-  companionModels ProviderModel[]                         @relation("VisionModelLink")
 
   @@index([providerId, status])
   @@index([systemId])
@@ -159,11 +159,11 @@ model RemoteSystem {
   createdAt         DateTime         @default(now())
   updatedAt         DateTime         @updatedAt
 
-  installations SystemInstallation[] @relation("SystemInstallSystem")
-  hardwareInfo  HardwareInfo?        @relation("HardwareInfoSystem")
-  systemAccess  SystemAccess[]       @relation("SystemAccessSystem")
-  hfDownloads   HFDownload[]         @relation("HFDownloadSystem")
-  models        ProviderModel[]      @relation("ModelSystem")
+  installations   SystemInstallation[] @relation("SystemInstallSystem")
+  hardwareInfo    HardwareInfo?        @relation("HardwareInfoSystem")
+  systemAccess    SystemAccess[]       @relation("SystemAccessSystem")
+  hfDownloads     HFDownload[]         @relation("HFDownloadSystem")
+  models          ProviderModel[]      @relation("ModelSystem")
 
   @@map("remote_systems")
 }

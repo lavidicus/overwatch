@@ -51,8 +51,9 @@ async function createProviderClient(providerId: string): Promise<ProviderClient>
   const Ctor = PROVIDER_CLIENTS[provider.type];
   if (!Ctor) throw new Error(`Unsupported provider type: ${provider.type}`);
 
+  const baseUrl = provider.baseUrl.replace(/^https?:\/\//, '');
   const config: ProviderConfig = {
-    baseUrl: provider.baseUrl + (provider.port ? `:${provider.port}` : ''),
+    baseUrl: `http://${baseUrl}${provider.port ? `:${provider.port}` : ''}`,
     model: provider.model || undefined,
     extraHeaders: provider.config as Record<string, string> | undefined,
   };
