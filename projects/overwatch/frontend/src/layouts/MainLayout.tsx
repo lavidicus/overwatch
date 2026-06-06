@@ -270,7 +270,8 @@ export default function MainLayout() {
           flexGrow: 1,
           p: 3,
           mt: '64px',
-          minHeight: '100vh',
+          height: 'calc(100vh - 64px)',
+          overflow: 'hidden',
           bgcolor: 'background.default',
         }}
       >

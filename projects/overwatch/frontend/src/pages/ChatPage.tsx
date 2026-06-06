@@ -176,7 +176,7 @@ export default function ChatPage() {
   };
 
   return (
-    <Box sx={{ display: 'flex', height: '100vh', overflow: 'hidden', bgcolor: '#0a0a0f' }}>
+    <Box sx={{ display: 'flex', height: '100%', minHeight: 0, overflow: 'hidden', bgcolor: '#0a0a0f' }}>
       {/* Mobile drawer toggle */}
       {isMobile && (
         <IconButton
