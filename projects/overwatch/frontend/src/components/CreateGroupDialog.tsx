@@ -368,34 +368,44 @@ export default function CreateGroupDialog({ open, onClose, onCreated }: Props) {
                         onChange={e => updateAgent(agent.uiId, { agentName: e.target.value })}
                         sx={{ flex: 1, minWidth: 120 }}
                       />
-                      <FormControl size="small" sx={{ minWidth: 220, flex: 2 }}>
-                        <InputLabel>Provider</InputLabel>
-                        <Select
+                      {providers.length > 0 ? (
+                        <FormControl size="small" sx={{ minWidth: 220, flex: 2 }}>
+                          <InputLabel>Provider</InputLabel>
+                          <Select
+                            label="Provider"
+                            value={agent.providerId}
+                            onChange={e => {
+                              const p = providers.find(x => x.id === e.target.value);
+                              if (!p) return;
+                              updateAgent(agent.uiId, {
+                                providerId: p.id,
+                                modelId: p.modelId,
+                              });
+                            }}
+                          >
+                            {providers.map(p => (
+                              <MenuItem key={p.id} value={p.id}>
+                                {p.name}
+                                <Typography
+                                  variant="caption"
+                                  color="text.secondary"
+                                  sx={{ ml: 1 }}
+                                >
+                                  ({p.type} — {p.modelName})
+                                </Typography>
+                              </MenuItem>
+                            ))}
+                          </Select>
+                        </FormControl>
+                      ) : (
+                        <TextField
+                          size="small"
                           label="Provider"
-                          value={agent.providerId}
-                          onChange={e => {
-                            const p = providers.find(x => x.id === e.target.value);
-                            if (!p) return;
-                            updateAgent(agent.uiId, {
-                              providerId: p.id,
-                              modelId: p.modelId,
-                            });
-                          }}
-                        >
-                          {providers.map(p => (
-                            <MenuItem key={p.id} value={p.id}>
-                              {p.name}
-                              <Typography
-                                variant="caption"
-                                color="text.secondary"
-                                sx={{ ml: 1 }}
-                              >
-                                ({p.type} — {p.modelName})
-                              </Typography>
-                            </MenuItem>
-                          ))}
-                        </Select>
-                      </FormControl>
+                          value="Loading providers…"
+                          disabled
+                          sx={{ minWidth: 220, flex: 2 }}
+                        />
+                      )}
                       <FormControl size="small" sx={{ minWidth: 140 }}>
                         <InputLabel>Role</InputLabel>
                         <Select
