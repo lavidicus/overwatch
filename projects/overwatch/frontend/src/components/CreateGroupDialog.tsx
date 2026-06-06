@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useState, useMemo } from 'react';
 import {
   Dialog,
   DialogTitle,
@@ -37,6 +37,15 @@ const ROLES: { value: AgentRole; label: string; hint: string }[] = [
 
 interface AgentDraft extends GroupAgentInput {
   uiId: string;
+  providerId: string;
+}
+
+interface ProviderSummary {
+  id: string;
+  name: string;
+  type: string;
+  modelId: string;
+  modelName: string;
 }
 
 interface Props {
@@ -54,6 +63,25 @@ export default function CreateGroupDialog({ open, onClose, onCreated }: Props) {
   const [submitting, setSubmitting] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [loadingModels, setLoadingModels] = useState(false);
+
+  // Build unique provider list from available models
+  const providers = useMemo<ProviderSummary[]>(() => {
+    const seen = new Set<string>();
+    return available
+      .filter(m => {
+        const key = m.providerId;
+        if (seen.has(key)) return false;
+        seen.add(key);
+        return true;
+      })
+      .map(m => ({
+        id: m.providerId,
+        name: m.providerName,
+        type: m.providerType,
+        modelId: m.modelId,
+        modelName: m.displayName || m.modelName,
+      }));
+  }, [available]);
 
   useEffect(() => {
     if (!open) return;
@@ -75,15 +103,16 @@ export default function CreateGroupDialog({ open, onClose, onCreated }: Props) {
   }, [open]);
 
   const addAgent = () => {
-    if (available.length === 0) return;
-    const first = available[0];
+    if (providers.length === 0) return;
+    // Pick the first provider
+    const prov = providers[0];
     setAgents(prev => [
       ...prev,
       {
         uiId: crypto.randomUUID(),
-        agentName: `${first.displayName || first.modelName} ${prev.length + 1}`,
-        providerId: first.providerId,
-        modelId: first.modelId,
+        agentName: `${prov.name} ${prev.length + 1}`,
+        providerId: prov.id,
+        modelId: prov.modelId,
         role: prev.length === 0 ? 'facilitator' : 'advisor',
         position: prev.length,
       },
@@ -193,7 +222,7 @@ export default function CreateGroupDialog({ open, onClose, onCreated }: Props) {
                 variant="outlined"
                 startIcon={<AddIcon />}
                 onClick={addAgent}
-                disabled={available.length === 0 || agents.length >= 8 || loadingModels}
+                disabled={providers.length === 0 || agents.length >= 8 || loadingModels}
               >
                 Add advisor
               </Button>
@@ -201,12 +230,12 @@ export default function CreateGroupDialog({ open, onClose, onCreated }: Props) {
 
             {loadingModels && (
               <Typography variant="body2" color="text.secondary">
-                Loading available models…
+                Loading available providers…
               </Typography>
             )}
-            {!loadingModels && available.length === 0 && (
+            {!loadingModels && providers.length === 0 && (
               <Alert severity="warning">
-                No ready provider models found. Add and start a model on the Models page first.
+                No ready providers found. Add and start a provider on the Providers page first.
               </Alert>
             )}
 
@@ -229,31 +258,31 @@ export default function CreateGroupDialog({ open, onClose, onCreated }: Props) {
                         size="small"
                         value={agent.agentName}
                         onChange={e => updateAgent(agent.uiId, { agentName: e.target.value })}
-                        sx={{ flex: 1, minWidth: 140 }}
+                        sx={{ flex: 1, minWidth: 120 }}
                       />
                       <FormControl size="small" sx={{ minWidth: 220, flex: 2 }}>
-                        <InputLabel>Model</InputLabel>
+                        <InputLabel>Provider</InputLabel>
                         <Select
-                          label="Model"
-                          value={agent.modelId || ''}
+                          label="Provider"
+                          value={agent.providerId}
                           onChange={e => {
-                            const m = available.find(x => x.modelId === e.target.value);
-                            if (!m) return;
+                            const p = providers.find(x => x.id === e.target.value);
+                            if (!p) return;
                             updateAgent(agent.uiId, {
-                              modelId: m.modelId,
-                              providerId: m.providerId,
+                              providerId: p.id,
+                              modelId: p.modelId,
                             });
                           }}
                         >
-                          {available.map(m => (
-                            <MenuItem key={m.modelId} value={m.modelId}>
-                              {m.displayName || m.modelName}
+                          {providers.map(p => (
+                            <MenuItem key={p.id} value={p.id}>
+                              {p.name}
                               <Typography
                                 variant="caption"
                                 color="text.secondary"
                                 sx={{ ml: 1 }}
                               >
-                                ({m.providerName})
+                                ({p.type} — {p.modelName})
                               </Typography>
                             </MenuItem>
                           ))}
