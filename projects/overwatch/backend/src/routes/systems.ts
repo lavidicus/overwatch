@@ -4,8 +4,11 @@ import { PrismaClient } from '@prisma/client';
 import { authenticate, AuthRequest } from '../middleware/auth.js';
 import { auditLog } from '../middleware/audit.js';
 import { EncryptionService } from '../services/encryption.js';
-import { spawn } from 'child_process';
+import { spawn, execSync } from 'child_process';
 import { notify } from '../services/notification.js';
+import * as fs from 'fs';
+import * as os from 'os';
+import * as path from 'path';
 
 const router = Router();
 const prisma = new PrismaClient();
@@ -668,9 +671,6 @@ async function testSSHConnection(
 
     if (sshKey) {
       // Write key to temp file
-      const fs = require('fs');
-      const os = require('os');
-      const path = require('path');
       const tempDir = os.tmpdir();
       const keyFile = path.join(tempDir, `ssh_key_${Date.now()}`);
       
@@ -736,8 +736,6 @@ async function runLocalHealthCheck(): Promise<{
   message?: string;
 }> {
   try {
-    const { execSync } = require('child_process');
-    
     // CPU info
     const cpuModel = execSync('cat /proc/cpuinfo | grep "model name" | head -1 | cut -d":" -f2 | xargs').toString().trim();
     const cpuCores = parseInt(execSync('nproc').toString().trim());
@@ -814,8 +812,6 @@ async function runWhatLLMLocal(): Promise<{
   message?: string;
 }> {
   try {
-    const { execSync } = require('child_process');
-    
     // Try to run whichllm CLI if available
     let whatllmOutput: any = {};
     try {

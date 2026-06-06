@@ -55,6 +55,12 @@ function buildSSHArgs(
     setTimeout(() => {
       try { fs.unlinkSync(tempKeyFile); } catch { /* ignore */ }
     }, 30000);
+  } else {
+    // Fallback to default SSH key
+    const defaultKey = path.join(os.homedir(), '.ssh', 'id_rsa');
+    if (fs.existsSync(defaultKey)) {
+      sshArgs.push('-i', defaultKey);
+    }
   }
 
   return sshArgs;
@@ -74,9 +80,30 @@ function runRemoteSSH(
   credentials: { hostname: string; port: number; username: string; sshKey?: string },
   command: string
 ): string {
+  const MAX_BUFFER = 50 * 1024 * 1024;
   const sshArgs = buildSSHArgs(credentials);
-  const cmd = [...sshArgs, sshTarget(credentials), command];
-  return execSync(`ssh ${cmd.join(' ')}`).toString().trim();
+  const targetStr = sshTarget(credentials);
+  const cmdFile = path.join(os.tmpdir(), `ov_cmd_${Date.now()}.sh`);
+  const remoteFile = `/tmp/ov_cmd_${Date.now()}_${Math.random().toString(36).slice(2)}.sh`;
+
+  try {
+    fs.writeFileSync(cmdFile, `#!/bin/bash\n${command}\n`, { mode: 0o755 });
+
+    // Build SCP options (SCP uses -P for port, SSH uses -p)
+    const scpBase = ['-o', 'StrictHostKeyChecking=no', '-o', 'BatchMode=yes', '-o', 'ConnectTimeout=10', '-P', credentials.port.toString()];
+    // Extract the key path from sshArgs for SCP
+    const keyIdx = sshArgs.indexOf('-i');
+    if (keyIdx >= 0) scpBase.push('-i', sshArgs[keyIdx + 1]);
+
+    execSync(`scp ${scpBase.join(' ')} ${cmdFile} ${targetStr}:${remoteFile}`, { timeout: 15000 });
+    const result = execSync(`ssh ${sshArgs.join(' ')} ${targetStr} bash ${remoteFile}`, {
+      timeout: 30000, encoding: 'utf8', maxBuffer: MAX_BUFFER,
+    }).trim();
+    try { execSync(`ssh ${sshArgs.join(' ')} ${targetStr} rm -f ${remoteFile}`, { timeout: 5000 }); } catch {}
+    return result;
+  } finally {
+    try { fs.unlinkSync(cmdFile); } catch {}
+  }
 }
 
 /**
@@ -87,119 +114,46 @@ function remoteGGUFInspect(
   credentials: { hostname: string; port: number; username: string; sshKey?: string },
   filePath: string
 ): string {
-  const sshArgs = buildSSHArgs(credentials);
-  const target = sshTarget(credentials);
-
-  // Write a self-contained Python script to the remote host, execute it, then delete it.
-  // We pipe the script via stdin to avoid file-creation race conditions.
-  const pythonScript = `
-import struct
-import sys
-import json
-import os
-
-def read_uint64(f):
-    return struct.unpack('<Q', f.read(8))[0]
-
-def read_uint32(f):
-    return struct.unpack('<I', f.read(4))[0]
-
-def read_string(f):
-    length = read_uint64(f)
-    return f.read(length).decode('utf-8', errors='ignore')
-
-def read_value(f, value_type):
-    """Read a GGUF value. Types: https://github.com/ggerganov/ggml/blob/master/docs/gguf.md#2-data-types"""
-    if value_type == 0:  # UINT8
-        return struct.unpack('<B', f.read(1))[0]
-    elif value_type == 1:  # INT8
-        return struct.unpack('<b', f.read(1))[0]
-    elif value_type == 2:  # UINT16
-        return struct.unpack('<H', f.read(2))[0]
-    elif value_type == 3:  # INT16
-        return struct.unpack('<h', f.read(2))[0]
-    elif value_type == 4:  # UINT32
-        return struct.unpack('<I', f.read(4))[0]
-    elif value_type == 5:  # INT32
-        return struct.unpack('<i', f.read(4))[0]
-    elif value_type == 6:  # FLOAT32
-        return struct.unpack('<f', f.read(4))[0]
-    elif value_type == 7:  # BOOL
-        return bool(struct.unpack('<B', f.read(1))[0])
-    elif value_type == 8:  # STRING
-        return read_string(f)
-    elif value_type == 9:  # ARRAY
-        arr_type = read_uint32(f)
-        arr_len = read_uint64(f)
-        return [read_value(f, arr_type) for _ in range(arr_len)]
-    elif value_type == 10:  # UINT64
-        return read_uint64(f)
-    elif value_type == 11:  # INT64
-        return struct.unpack('<q', f.read(8))[0]
-    elif value_type == 12:  # FLOAT64
-        return struct.unpack('<d', f.read(8))[0]
-    else:
-        return f"<unknown_type_{value_type}>"
-
+  // Build a shell script that creates a Python parser on the remote host via heredoc.
+  // Writing to a file completely avoids shell quoting issues.
+  const shellScript = `#!/bin/bash
+python3 - <<'PYEOF' "${filePath}"
+import struct,sys,json
+def ru64(f):return struct.unpack('<Q',f.read(8))[0]
+def ru32(f):return struct.unpack('<I',f.read(4))[0]
+def rs(f):
+ l=ru64(f);return f.read(l).decode('utf-8',errors='ignore')
+def rv(f,t):
+ if t==0:return struct.unpack('<B',f.read(1))[0]
+ elif t==1:return struct.unpack('<b',f.read(1))[0]
+ elif t==2:return struct.unpack('<H',f.read(2))[0]
+ elif t==3:return struct.unpack('<h',f.read(2))[0]
+ elif t==4:return struct.unpack('<I',f.read(4))[0]
+ elif t==5:return struct.unpack('<i',f.read(4))[0]
+ elif t==6:return struct.unpack('<f',f.read(4))[0]
+ elif t==7:return bool(struct.unpack('<B',f.read(1))[0])
+ elif t==8:return rs(f)
+ elif t==9:
+  at=ru32(f);al=ru64(f);return[rv(f,at)for _ in range(al)]
+ elif t==10:return ru64(f)
+ elif t==11:return struct.unpack('<q',f.read(8))[0]
+ elif t==12:return struct.unpack('<d',f.read(8))[0]
+ else:return str(t)
 try:
-    with open(sys.argv[1], 'rb') as f:
-        magic = f.read(4)
-        if magic != b'GGUF':
-            print(json.dumps({"error": "Not a GGUF file"}))
-            sys.exit(0)
-
-        version = read_uint32(f)
-        tensor_count = read_uint64(f)
-        kv_count = read_uint64(f)
-
-        metadata = {}
-        for _ in range(kv_count):
-            key = read_string(f)
-            value_type = read_uint32(f)
-            value = read_value(f, value_type)
-            metadata[key] = value
-
-        result = {
-            "version": version,
-            "tensor_count": tensor_count,
-            "kv_count": kv_count,
-            "metadata": metadata
-        }
-        print(json.dumps(result))
-except Exception as e:
-    print(json.dumps({"error": str(e)}))
-`;
-
-  // Send the script via heredoc to python3 - on the remote host
-  const escapedPath = filePath.replace(/'/g, "'\\''");
-  const cmd = `python3 << 'PYEOF' 2>/dev/null
-${pythonScript}
+ with open(sys.argv[1],'rb')as f:
+  m=f.read(4)
+  if m!=b'GGUF':print(json.dumps({'error':'Not GGUF'}));sys.exit(0)
+  v=ru32(f);tc=ru64(f);kc=ru64(f);md={}
+  for _ in range(kc):
+   k=rs(f);vt=ru32(f);val=rv(f,vt)
+   if isinstance(val,float)and val!=val:val=0.0
+   md[k]=val
+  print(json.dumps({'version':v,'tensor_count':tc,'kv_count':kc,'metadata':md},default=str))
+except Exception as e:print(json.dumps({'error':str(e)}))
 PYEOF
 `;
 
-  try {
-    const sshArgs = buildSSHArgs(credentials);
-    const cmdFull = [...sshArgs, target, `bash -c '${pythonScript.replace(/'/g, "'\\''")}' '${escapedPath}'`];
-    return execSync(`ssh ${cmdFull.join(' ')}`).toString().trim();
-  } catch {
-    // If inline script fails, try piping via temp file approach
-    try {
-      const tempScript = path.join(os.tmpdir(), `gguf_parse_${Date.now()}.py`);
-      fs.writeFileSync(tempScript, pythonScript);
-      const sshArgs = buildSSHArgs(credentials);
-      const targetStr = sshTarget(credentials);
-
-      // Copy script to remote, execute, remove
-      const copyCmd = `scp ${sshArgs.join(' ')} ${tempScript} ${targetStr}:/tmp/_ov_gguf_parse.py`;
-      execSync(`bash -c '${copyCmd}'`, { timeout: 15000 });
-
-      const result = runRemoteSSH(credentials, `python3 /tmp/_ov_gguf_parse.py '${escapedPath}' 2>/dev/null; rm -f /tmp/_ov_gguf_parse.py`);
-
-      return result;
-    } catch {
-      return JSON.stringify({ error: 'Remote GGUF inspection failed' });
-    }
-  }
+  return runRemoteSSH(credentials, shellScript);
 }
 
 // ─── Key-value map for common GGUF fields ───
