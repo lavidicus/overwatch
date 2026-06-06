@@ -158,4 +158,20 @@ export const whatllmApi = {
   compare: (systemIds: string[]) => api.post('/whatllm/compare', { systemIds }),
 };
 
+// HuggingFace API
+export const hfApi = {
+  search: (params: { q: string; limit?: number; sort?: string; tags?: string }) =>
+    api.get('/hf/search', { params }),
+  getModel: (repoId: string) =>
+    api.get(`/hf/models/${repoId}`),
+  download: (data: { repoId: string; filename: string; systemId: string; targetPath?: string }) =>
+    api.post('/hf/download', data),
+  listDownloads: (params?: { systemId?: string; status?: string }) =>
+    api.get('/hf/downloads', { params }),
+  getDownload: (id: string) =>
+    api.get(`/hf/downloads/${id}`),
+  cancelDownload: (id: string) =>
+    api.post(`/hf/downloads/${id}/cancel`),
+};
+
 export default api;

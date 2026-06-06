@@ -266,6 +266,28 @@ export async function inspectGGUFFile(
         console.log(`Remote inspection error: ${data.error}, falling back to filename`);
         return parseFromFilename(filePath, sizeBytes, sizeGB);
       }
+
+      // Also scan for companion mmproj files on the remote system
+      try {
+        const dir = path.dirname(filePath);
+        const baseName = path.basename(filePath, '.gguf');
+        const candidates = [
+          `${baseName}.mmproj.gguf`,
+          `mmproj-${baseName}.gguf`,
+          'mmproj.gguf',
+          `${baseName}-mmproj.gguf`,
+        ];
+        const remoteMmprojCheck = runRemoteSSH(sshCredentials,
+          `for f in ${candidates.join(' ')}; do [ -f "${dir}/$f" ] && echo "${dir}/$f"; done`
+        );
+        const mmprojPaths = remoteMmprojCheck.split('\n').filter(Boolean);
+        if (mmprojPaths.length > 0) {
+          data.metadata._remote_mmproj_check = mmprojPaths;
+        }
+      } catch {
+        // mmproj scan failed, not critical
+      }
+
       return parseGGUFMetadata(data, filePath, sizeBytes, sizeGB);
     } catch {
       console.log('Remote inspection returned invalid JSON, falling back to filename');
@@ -402,6 +424,17 @@ function parseGGUFMetadata(
           mmprojFiles.push(candidate);
         }
       } catch { /* remote path — file may not exist locally */ }
+    }
+
+    // For remote files, also check via SSH
+    // (passed via data.metadata._remote_mmproj_check from the remoteGGUFInspect wrapper)
+    if (data.metadata && data.metadata._remote_mmproj_check) {
+      const remoteMmprojs = data.metadata._remote_mmproj_check as string[];
+      for (const remotePath of remoteMmprojs) {
+        if (!mmprojFiles.includes(remotePath)) {
+          mmprojFiles.push(remotePath);
+        }
+      }
     }
   }
 

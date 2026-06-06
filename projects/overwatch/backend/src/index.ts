@@ -20,6 +20,7 @@ import whatllmRoutes from './routes/whatllm.js';
 import aiProxyRoutes from './routes/ai-proxy.js';
 import chatRoutes from './routes/chat.js';
 import benchmarkRoutes from './routes/benchmark.js';
+import huggingfaceRoutes from './routes/huggingface.js';
 
 // Import middleware
 import { apiLimiter, authLimiter } from './middleware/rateLimiter.js';
@@ -82,10 +83,11 @@ app.use('/api/models', authenticate, modelsRoutes);
 app.use('/api/systems', authenticate, systemsRoutes);
 app.use('/api/whatllm', authenticate, whatllmRoutes);
 
-// Phase 3: Chat, AI Proxy, Benchmark
+// Phase 3: Chat, AI Proxy, Benchmark, HuggingFace
 app.use('/api/ai', aiProxyRoutes);
 app.use('/api/chat', authenticate, chatRoutes);
 app.use('/api/benchmarks', authenticate, benchmarkRoutes);
+app.use('/api/hf', authenticate, huggingfaceRoutes);
 
 // Health check
 app.get('/health', (req, res) => {
