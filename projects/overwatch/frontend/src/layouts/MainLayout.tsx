@@ -16,22 +16,27 @@ import {
   Menu,
   MenuItem,
   Divider,
+  Collapse,
   useMediaQuery,
   useTheme,
 } from '@mui/material';
 import {
-  Dashboard as DashboardIcon,
-  Dns as ProvidersIcon,
-  ModelTraining as ModelsIcon,
   Chat as ChatIcon,
   Settings as SettingsIcon,
   AdminPanelSettings as AdminIcon,
   Menu as MenuIcon,
   Logout as LogoutIcon,
   Person as PersonIcon,
+  ExpandLess as ExpandLessIcon,
+  ExpandMore as ExpandMoreIcon,
+  Dashboard as DashboardIcon,
+  Dns as ProvidersIcon,
+  ModelTraining as ModelsIcon,
   Computer as SystemsIcon,
   Memory as HardwareIcon,
   Speed as BenchmarkIcon,
+  Build as ToolsIcon,
+  AltRoute as RoutingIcon,
 } from '@mui/icons-material';
 import { useAuthStore } from '../stores/authStore';
 import { authApi } from '../services/api';
@@ -39,14 +44,19 @@ import NotificationBell from '../components/NotificationBell';
 
 const DRAWER_WIDTH = 260;
 
-const navItems = [
+const topNavItems = [
+  { path: '/chat', label: 'Chat', icon: <ChatIcon /> },
+];
+
+const systemSettingsItems = [
   { path: '/', label: 'Dashboard', icon: <DashboardIcon /> },
   { path: '/providers', label: 'Providers', icon: <ProvidersIcon /> },
   { path: '/models', label: 'Models', icon: <ModelsIcon /> },
   { path: '/systems', label: 'Systems', icon: <SystemsIcon /> },
   { path: '/hardware', label: 'Hardware', icon: <HardwareIcon /> },
-  { path: '/chat', label: 'Chat', icon: <ChatIcon /> },
   { path: '/benchmark', label: 'Benchmark', icon: <BenchmarkIcon /> },
+  { path: '/tools', label: 'Tools', icon: <ToolsIcon /> },
+  { path: '/routing', label: 'Routing', icon: <RoutingIcon /> },
   { path: '/settings', label: 'Settings', icon: <SettingsIcon /> },
 ];
 
@@ -60,9 +70,10 @@ export default function MainLayout() {
   const navigate = useNavigate();
   const location = useLocation();
   const { user, logout } = useAuthStore();
-  
+
   const [mobileOpen, setMobileOpen] = useState(false);
   const [anchorEl, setAnchorEl] = useState<null | HTMLElement>(null);
+  const [systemExpanded, setSystemExpanded] = useState(true);
 
   const handleDrawerToggle = () => {
     setMobileOpen(!mobileOpen);
@@ -87,6 +98,10 @@ export default function MainLayout() {
     }
   };
 
+  const isSystemActive = systemSettingsItems.some(
+    item => location.pathname === item.path
+  );
+
   const drawerContent = (
     <Box sx={{ height: '100%', display: 'flex', flexDirection: 'column' }}>
       {/* Logo */}
@@ -100,7 +115,8 @@ export default function MainLayout() {
 
       {/* Navigation */}
       <List sx={{ flex: 1 }}>
-        {navItems.map((item) => (
+        {/* Top-level nav items (Chat only) */}
+        {topNavItems.map((item) => (
           <ListItem key={item.path} disablePadding>
             <ListItemButton
               selected={location.pathname === item.path}
@@ -123,6 +139,54 @@ export default function MainLayout() {
             </ListItemButton>
           </ListItem>
         ))}
+
+        {/* System Settings submenu */}
+        <ListItem disablePadding sx={{ px: 1, mt: 1 }}>
+          <ListItemButton
+            onClick={() => setSystemExpanded(!systemExpanded)}
+            sx={{
+              '&.Mui-selected': {
+                bgcolor: 'transparent',
+              },
+            }}
+          >
+            <ListItemIcon>
+              <SettingsIcon sx={{ color: isSystemActive ? 'primary.main' : 'inherit' }} />
+            </ListItemIcon>
+            <ListItemText
+              primary="System Settings"
+              primaryTypographyProps={{ fontWeight: isSystemActive ? 600 : 400 }}
+            />
+            {systemExpanded ? <ExpandLessIcon /> : <ExpandMoreIcon />}
+          </ListItemButton>
+        </ListItem>
+        <Collapse in={systemExpanded} timeout="auto" unmountOnExit>
+          <List component="div" disablePadding>
+            {systemSettingsItems.map((item) => (
+              <ListItem key={item.path} disablePadding sx={{ pl: 4 }}>
+                <ListItemButton
+                  selected={location.pathname === item.path}
+                  onClick={() => {
+                    navigate(item.path);
+                    if (isMobile) setMobileOpen(false);
+                  }}
+                  sx={{
+                    '&.Mui-selected': {
+                      borderRight: '3px solid',
+                      borderColor: 'primary.main',
+                      bgcolor: 'rgba(0, 188, 212, 0.08)',
+                    },
+                  }}
+                >
+                  <ListItemIcon sx={{ color: location.pathname === item.path ? 'primary.main' : 'inherit', minWidth: 36 }}>
+                    {item.icon}
+                  </ListItemIcon>
+                  <ListItemText primary={item.label} />
+                </ListItemButton>
+              </ListItem>
+            ))}
+          </List>
+        </Collapse>
 
         {/* Admin section (ADMIN role only) */}
         {user?.role === 'ADMIN' && (
@@ -199,7 +263,10 @@ export default function MainLayout() {
           </IconButton>
 
           <Typography variant="h6" component="div" sx={{ flexGrow: 1 }}>
-            {navItems.find((item) => item.path === location.pathname)?.label || 'Overwatch'}
+            {topNavItems.find((item) => item.path === location.pathname)?.label ||
+             systemSettingsItems.find((item) => item.path === location.pathname)?.label ||
+             adminItems.find((item) => item.path === location.pathname)?.label ||
+             'Overwatch'}
           </Typography>
 
           {/* Notifications */}

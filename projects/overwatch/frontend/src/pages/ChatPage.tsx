@@ -1,4 +1,5 @@
 import { useState, useEffect, useRef, useCallback } from 'react';
+import { useNavigate } from 'react-router-dom';
 import {
   Box, List, ListItem, ListItemButton, ListItemText,
   IconButton, Dialog, DialogTitle, DialogContent, DialogActions,
@@ -8,16 +9,19 @@ import {
 import AddIcon from '@mui/icons-material/Add';
 import DeleteIcon from '@mui/icons-material/Delete';
 import MenuIcon from '@mui/icons-material/Menu';
-import CloseIcon from '@mui/icons-material/Close';
+import ArrowBackIcon from '@mui/icons-material/ArrowBack';
 import { listSessions, createSession, getSession, deleteSession, sendMessageStreaming, ChatMessage } from '../api/chat';
 import { useChatEvents, initSocket, leaveChatSession } from '../hooks/useSocket';
 import ChatInput from '../components/ChatInput';
 import MessageBubble from '../components/MessageBubble';
 import ProviderConfigDialog from '../components/ProviderConfig';
 
+const CHAT_DRAWER_WIDTH = 280;
+
 export default function ChatPage() {
   const theme = useTheme();
-  const isMobile = useMediaQuery(theme.breakpoints.down('sm'));
+  const isMobile = useMediaQuery(theme.breakpoints.down('md'));
+  const navigate = useNavigate();
   const [sessions, setSessions] = useState<any[]>([]);
   const [currentSession, setCurrentSession] = useState<any | null>(null);
   const [messages, setMessages] = useState<ChatMessage[]>([]);
@@ -47,7 +51,6 @@ export default function ChatPage() {
       createdAt: new Date().toISOString(),
     }]);
     setStreamContent('');
-    // Refresh session count
     loadSessions();
   }, [currentSession]);
 
@@ -96,6 +99,8 @@ export default function ChatPage() {
     setError(null);
     setStreaming(false);
 
+    if (isMobile) setDrawerOpen(false);
+
     try {
       const data = await getSession(sessionId);
       setCurrentSession(data);
@@ -133,7 +138,6 @@ export default function ChatPage() {
   const handleSend = async (content: string) => {
     if (!currentSession || streaming) return;
 
-    // Add user message immediately
     const userMsg: ChatMessage = {
       id: `temp-${Date.now()}`,
       role: 'user',
@@ -175,43 +179,51 @@ export default function ChatPage() {
     }
   };
 
+  const handleBack = () => {
+    navigate(-1);
+  };
+
+  const handleToggleDrawer = () => {
+    setDrawerOpen(!drawerOpen);
+  };
+
   return (
     <Box sx={{ display: 'flex', height: '100%', minHeight: 0, overflow: 'hidden', bgcolor: '#0a0a0f' }}>
-      {/* Mobile drawer toggle */}
-      {isMobile && (
-        <IconButton
-          onClick={() => setDrawerOpen(!drawerOpen)}
-          sx={{ position: 'fixed', top: 8, left: 8, zIndex: 1100, bgcolor: 'background.paper' }}
-        >
-          {drawerOpen ? <CloseIcon /> : <MenuIcon />}
-        </IconButton>
-      )}
-
-      {/* Sidebar / Drawer */}
+      {/* Chat Session Sidebar */}
       <Drawer
         variant={isMobile ? 'temporary' : 'permanent'}
         open={isMobile ? drawerOpen : true}
         onClose={() => setDrawerOpen(false)}
+        ModalProps={{ keepMounted: true }}
         sx={{
-          width: drawerOpen ? 280 : 0,
+          width: CHAT_DRAWER_WIDTH,
           flexShrink: 0,
+          display: { xs: 'block', md: drawerOpen ? 'block' : 'none' },
           '& .MuiDrawer-paper': {
-            width: 280,
+            width: CHAT_DRAWER_WIDTH,
             bgcolor: '#0d1117',
             borderRight: `1px solid ${theme.palette.divider}`,
+            boxSizing: 'border-box',
           },
         }}
       >
-        <Box sx={{ p: 2, display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
-          <Typography variant="h6" color="primary">Chats</Typography>
-          <IconButton onClick={createNewSession} color="primary">
+        <Box sx={{ p: 2, display: 'flex', alignItems: 'center', justifyContent: 'space-between', minHeight: 56 }}>
+          <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+            {isMobile && (
+              <IconButton onClick={handleBack} size="small" color="primary">
+                <ArrowBackIcon />
+              </IconButton>
+            )}
+            <Typography variant="h6" color="primary" sx={{ whiteSpace: 'nowrap' }}>Chats</Typography>
+          </Box>
+          <IconButton onClick={createNewSession} color="primary" size="small">
             <AddIcon />
           </IconButton>
         </Box>
 
-        <List sx={{ overflow: 'auto', maxHeight: 'calc(100vh - 120px)' }}>
+        <List sx={{ overflow: 'auto', flex: 1, py: 0 }}>
           {loadingSessions ? (
-            <ListItem><Typography>Loading...</Typography></ListItem>
+            <ListItem><Typography sx={{ px: 2 }}>Loading...</Typography></ListItem>
           ) : sessions.length === 0 ? (
             <ListItem><Typography color="text.secondary" sx={{ px: 2 }}>No chats yet</Typography></ListItem>
           ) : (
@@ -248,33 +260,44 @@ export default function ChatPage() {
         </List>
       </Drawer>
 
-      {/* Main Chat Area */}
-      <Box sx={{ flex: 1, display: 'flex', flexDirection: 'column', overflow: 'hidden' }}>
+      {/* Chat Content Area */}
+      <Box sx={{ flex: 1, display: 'flex', flexDirection: 'column', overflow: 'hidden', minHeight: 0 }}>
         {currentSession ? (
           <>
             {/* Header */}
             <Box sx={{
-              p: 2,
+              p: 1.5,
               borderBottom: 1,
               borderColor: 'divider',
               bgcolor: '#0d1117',
               display: 'flex',
               alignItems: 'center',
               gap: 1,
+              flexShrink: 0,
             }}>
-              <Typography variant="h6" sx={{ flex: 1, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+              {isMobile && !drawerOpen && (
+                <IconButton onClick={handleToggleDrawer} size="small" color="primary" sx={{ mr: 0.5 }}>
+                  <MenuIcon />
+                </IconButton>
+              )}
+              {isMobile && drawerOpen && (
+                <IconButton onClick={() => setDrawerOpen(false)} size="small" color="primary" sx={{ mr: 0.5 }}>
+                  <ArrowBackIcon />
+                </IconButton>
+              )}
+              <Typography variant="h6" sx={{ flex: 1, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap', fontSize: '1.1rem' }}>
                 {currentSession.title || 'Chat'}
               </Typography>
               {currentSession.providerName && (
-                <Chip label={currentSession.providerName} size="small" color="info" />
+                <Chip label={currentSession.providerName} size="small" color="info" sx={{ fontSize: '0.7rem', height: 22 }} />
               )}
               {currentSession.model && (
-                <Chip label={currentSession.model} size="small" variant="outlined" />
+                <Chip label={currentSession.model} size="small" variant="outlined" sx={{ fontSize: '0.7rem', height: 22 }} />
               )}
             </Box>
 
             {/* Messages */}
-            <Box sx={{ flex: 1, overflow: 'auto', py: 2 }}>
+            <Box sx={{ flex: 1, overflow: 'auto', py: 2, minHeight: 0 }}>
               {messages.length === 0 && !streaming && (
                 <Box sx={{ display: 'flex', justifyContent: 'center', alignItems: 'center', height: '100%', flexDirection: 'column', gap: 2 }}>
                   <Typography color="text.secondary" variant="h5">Start a conversation</Typography>
@@ -304,22 +327,31 @@ export default function ChatPage() {
 
             {/* Error Banner */}
             {error && (
-              <Box sx={{ px: 2, py: 1, bgcolor: 'error.main', color: 'error.contrastText' }}>
+              <Box sx={{ px: 2, py: 1, bgcolor: 'error.main', color: 'error.contrastText', flexShrink: 0 }}>
                 <Typography variant="body2">{error}</Typography>
               </Box>
             )}
 
             {/* Input */}
-            <ChatInput
-              onSend={handleSend}
-              disabled={streaming}
-              placeholder="Type a message..."
-            />
+            <Box sx={{ flexShrink: 0 }}>
+              <ChatInput
+                onSend={handleSend}
+                disabled={streaming}
+                placeholder="Type a message..."
+              />
+            </Box>
           </>
         ) : (
-          <Box sx={{ display: 'flex', justifyContent: 'center', alignItems: 'center', height: '100%', flexDirection: 'column', gap: 3 }}>
+          <Box sx={{ display: 'flex', justifyContent: 'center', alignItems: 'center', height: '100%', flexDirection: 'column', gap: 3, px: 2 }}>
+            {isMobile && (
+              <Box sx={{ position: 'absolute', top: 8, left: 8 }}>
+                <IconButton onClick={handleToggleDrawer} color="primary" sx={{ bgcolor: 'background.paper' }}>
+                  <MenuIcon />
+                </IconButton>
+              </Box>
+            )}
             <Typography variant="h4" color="primary">Overwatch Chat</Typography>
-            <Typography color="text.secondary">Select a chat or create a new one</Typography>
+            <Typography color="text.secondary" sx={{ textAlign: 'center' }}>Select a chat or create a new one</Typography>
             <Button variant="contained" onClick={createNewSession} startIcon={<AddIcon />}>
               New Chat
             </Button>

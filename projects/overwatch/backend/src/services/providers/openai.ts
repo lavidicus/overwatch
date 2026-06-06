@@ -27,6 +27,19 @@ export class OpenAICompatibleProvider extends BaseProviderClient {
 
     if (req.temperature !== undefined) body.temperature = req.temperature;
     if (req.maxTokens !== undefined) body.max_tokens = req.maxTokens;
+    if (req.stream) body.stream = true;
+
+    if (req.tools && req.tools.length > 0) {
+      body.tools = req.tools.map((t) => ({
+        type: 'function',
+        function: {
+          name: t.name,
+          description: t.description,
+          parameters: t.parameters,
+        },
+      }));
+      body.tool_choice = 'auto';
+    }
 
     return body;
   }
@@ -58,6 +71,23 @@ export class OpenAICompatibleProvider extends BaseProviderClient {
     const choice = (data.choices as any[] | undefined)?.[0];
     const usage = (data.usage || {}) as any;
 
+    const rawToolCalls = (choice?.message?.tool_calls as any[] | undefined) ?? [];
+    const toolCalls = rawToolCalls.map((tc: any) => {
+      let args: Record<string, unknown> = {};
+      try {
+        args = typeof tc.function?.arguments === 'string'
+          ? JSON.parse(tc.function.arguments)
+          : (tc.function?.arguments ?? {});
+      } catch {
+        args = { _rawArguments: tc.function?.arguments };
+      }
+      return {
+        id: tc.id ?? `tc-${Math.random().toString(36).slice(2, 10)}`,
+        name: tc.function?.name ?? 'unknown',
+        arguments: args,
+      };
+    });
+
     return {
       content: (choice?.message?.content as string) || '',
       model: data.model as string || req.model,
@@ -65,6 +95,7 @@ export class OpenAICompatibleProvider extends BaseProviderClient {
       completionTokens: usage.completion_tokens as number | undefined,
       totalTokens: usage.total_tokens as number | undefined,
       finishReason: choice?.finish_reason as string | undefined,
+      toolCalls: toolCalls.length > 0 ? toolCalls : undefined,
       raw: data,
     };
   }

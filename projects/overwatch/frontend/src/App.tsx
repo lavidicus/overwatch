@@ -8,6 +8,8 @@ import SystemsPage from './pages/SystemsPage';
 import HardwarePage from './pages/HardwarePage';
 import ChatPage from './pages/ChatPage';
 import BenchmarkPage from './pages/BenchmarkPage';
+import ToolsPage from './pages/ToolsPage';
+import RoutingPage from './pages/RoutingPage';
 
 // Placeholder pages - will be implemented in subsequent phases
 const DashboardPage = () => <div>Dashboard</div>;
@@ -60,6 +62,8 @@ function App() {
         <Route path="hardware" element={<HardwarePage />} />
         <Route path="chat" element={<ChatPage />} />
         <Route path="benchmark" element={<BenchmarkPage />} />
+        <Route path="tools" element={<ToolsPage />} />
+        <Route path="routing" element={<RoutingPage />} />
         <Route path="settings" element={<SettingsPage />} />
         <Route path="admin" element={<AdminPage />} />
       </Route>

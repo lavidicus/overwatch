@@ -5,6 +5,18 @@ export interface ChatMessage {
   content: string;
 }
 
+export interface ToolDefinition {
+  name: string;
+  description: string;
+  parameters: Record<string, unknown>;
+}
+
+export interface ToolCallRequest {
+  id: string;
+  name: string;
+  arguments: Record<string, unknown>;
+}
+
 export interface ChatCompletionRequest {
   model: string;
   messages: ChatMessage[];
@@ -13,6 +25,7 @@ export interface ChatCompletionRequest {
   maxTokens?: number;
   stream?: boolean;
   systemPrompt?: string;
+  tools?: ToolDefinition[];
 }
 
 export interface ChatCompletionChunk {
@@ -28,6 +41,7 @@ export interface ChatCompletionResult {
   completionTokens?: number;
   totalTokens?: number;
   finishReason?: string;
+  toolCalls?: ToolCallRequest[];
   raw?: unknown;
 }
 

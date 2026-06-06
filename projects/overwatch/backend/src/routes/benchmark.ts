@@ -4,6 +4,7 @@ import { PrismaClient, BenchmarkType } from '@prisma/client';
 import { authenticate, AuthRequest } from '../middleware/auth.js';
 import { auditLog } from '../middleware/audit.js';
 import { runBenchmark, BenchmarkParams, BenchmarkEvent, BenchmarkResultEntry } from '../services/benchmark/runner.js';
+import { runQualityBenchmark, runComparativeBenchmark, STANDARD_QUALITY_PROMPTS, QualityPrompt } from '../services/benchmark/quality.js';
 import { getIO } from '../index.js';
 import { ALL_PROMPT_SETS } from '../services/benchmark/prompts.js';
 
@@ -125,6 +126,144 @@ router.post('/', authenticate, auditLog('CREATE_BENCHMARK'), async (req: AuthReq
     if (error instanceof z.ZodError) return res.status(400).json({ error: error.errors });
     console.error('Create benchmark error:', error);
     res.status(500).json({ error: 'Failed to create benchmark' });
+  }
+});
+
+/**
+ * POST /api/benchmarks/quality
+ * Quality benchmark with reference answers + optional LLM-judge scoring.
+ */
+router.post('/quality', authenticate, auditLog('CREATE_QUALITY_BENCHMARK'), async (req: AuthRequest, res): Promise<any> => {
+  try {
+    const body = z.object({
+      name: z.string().min(1).max(200),
+      providerId: z.string().uuid(),
+      modelId: z.string(),
+      prompts: z.array(z.object({
+        prompt: z.string(),
+        reference: z.string(),
+        category: z.string().optional(),
+        scoring: z.enum(['exact', 'judge']).optional(),
+      })).optional(),
+      judgeProviderId: z.string().uuid().optional(),
+      judgeModelId: z.string().optional(),
+    }).parse(req.body);
+
+    const prompts: QualityPrompt[] = (body.prompts as QualityPrompt[] | undefined) ?? STANDARD_QUALITY_PROMPTS;
+
+    const run = await prisma.benchmarkRun.create({
+      data: {
+        name: body.name,
+        benchmarkType: 'QUALITY',
+        providerId: body.providerId,
+        modelId: body.modelId,
+        prompt: JSON.stringify({ prompts, judgeProviderId: body.judgeProviderId, judgeModelId: body.judgeModelId }),
+        status: 'RUNNING',
+        userId: req.user!.id,
+        results: {},
+      } as any,
+    });
+
+    (async () => {
+      try {
+        const summary = await runQualityBenchmark({
+          providerId: body.providerId,
+          modelId: body.modelId,
+          prompts,
+          judgeProviderId: body.judgeProviderId,
+          judgeModelId: body.judgeModelId,
+        });
+        await prisma.benchmarkRun.update({
+          where: { id: run.id },
+          data: {
+            status: 'COMPLETED',
+            results: JSON.parse(JSON.stringify(summary)) as any,
+            completedAt: new Date(),
+          },
+        });
+        getIO()?.to(`user:${req.user!.id}`).emit('benchmark:progress', { runId: run.id, type: 'done', data: { result: summary } });
+      } catch (err) {
+        await prisma.benchmarkRun.update({
+          where: { id: run.id },
+          data: { status: 'FAILED', results: JSON.parse(JSON.stringify({ error: (err as Error).message })) as any },
+        });
+      }
+    })();
+
+    res.status(201).json({ id: run.id, status: 'RUNNING' });
+  } catch (err) {
+    if (err instanceof z.ZodError) return res.status(400).json({ error: err.errors });
+    res.status(500).json({ error: (err as Error).message || 'Failed to start quality benchmark' });
+  }
+});
+
+/**
+ * POST /api/benchmarks/comparative
+ * Run the same prompts against multiple targets and compare.
+ */
+router.post('/comparative', authenticate, auditLog('CREATE_COMPARATIVE_BENCHMARK'), async (req: AuthRequest, res): Promise<any> => {
+  try {
+    const body = z.object({
+      name: z.string().min(1).max(200),
+      prompts: z.array(z.object({
+        prompt: z.string(),
+        reference: z.string(),
+        category: z.string().optional(),
+        scoring: z.enum(['exact', 'judge']).optional(),
+      })).optional(),
+      targets: z.array(z.object({
+        providerId: z.string().uuid(),
+        modelId: z.string(),
+        label: z.string().optional(),
+      })).min(2),
+      judgeProviderId: z.string().uuid().optional(),
+      judgeModelId: z.string().optional(),
+    }).parse(req.body);
+
+    const prompts: QualityPrompt[] = (body.prompts as QualityPrompt[] | undefined) ?? STANDARD_QUALITY_PROMPTS;
+
+    const run = await prisma.benchmarkRun.create({
+      data: {
+        name: body.name,
+        benchmarkType: 'COMPARATIVE',
+        providerId: body.targets[0].providerId,
+        modelId: body.targets[0].modelId,
+        prompt: JSON.stringify({ prompts, targets: body.targets, judgeProviderId: body.judgeProviderId }),
+        status: 'RUNNING',
+        userId: req.user!.id,
+        results: {},
+      } as any,
+    });
+
+    (async () => {
+      try {
+        const summary = await runComparativeBenchmark({
+          prompts,
+          targets: body.targets,
+          judgeProviderId: body.judgeProviderId,
+          judgeModelId: body.judgeModelId,
+        });
+        await prisma.benchmarkRun.update({
+          where: { id: run.id },
+          data: {
+            status: 'COMPLETED',
+            results: JSON.parse(JSON.stringify(summary)) as any,
+            completedAt: new Date(),
+          },
+        });
+        getIO()?.to(`user:${req.user!.id}`).emit('benchmark:progress', { runId: run.id, type: 'done', data: { result: summary } });
+      } catch (err) {
+        await prisma.benchmarkRun.update({
+          where: { id: run.id },
+          data: { status: 'FAILED', results: JSON.parse(JSON.stringify({ error: (err as Error).message })) as any },
+        });
+      }
+    })();
+
+    res.status(201).json({ id: run.id, status: 'RUNNING' });
+  } catch (err) {
+    if (err instanceof z.ZodError) return res.status(400).json({ error: err.errors });
+    res.status(500).json({ error: (err as Error).message || 'Failed to start comparative benchmark' });
   }
 });
 

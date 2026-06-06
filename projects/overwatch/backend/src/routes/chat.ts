@@ -6,6 +6,8 @@ import { auditLog } from '../middleware/audit.js';
 import { getProviderClient } from '../services/providers/index.js';
 import { getIO } from '../index.js';
 import { ChatMessage } from '../services/providers/types.js';
+import { runAgentLoop } from '../services/tools/agent-loop.js';
+import { pickRoute } from '../services/routing/engine.js';
 
 const router = Router();
 const prisma = new PrismaClient();
@@ -17,11 +19,14 @@ const createSessionSchema = z.object({
   systemPrompt: z.string().optional(),
   temperature: z.number().min(0).max(2).optional(),
   maxTokens: z.number().positive().optional(),
+  isAgentChat: z.boolean().optional(),
+  allowedToolIds: z.array(z.string().uuid()).optional(),
 });
 
 const sendMessageSchema = z.object({
   content: z.string().min(1).max(50000),
   stream: z.boolean().default(false),
+  useRouting: z.boolean().default(false),
 });
 
 /**
@@ -74,18 +79,31 @@ router.post('/sessions', authenticate, auditLog('CREATE_CHAT_SESSION'), async (r
   try {
     const body = createSessionSchema.parse(req.body);
 
+    // Resolve model name → ProviderModel ID
+    let resolvedModelId: string | null = null;
+    if (body.model && body.providerId) {
+      const foundModel = await prisma.providerModel.findFirst({
+        where: { providerId: body.providerId, name: body.model },
+        select: { id: true },
+      });
+      resolvedModelId = foundModel?.id ?? null;
+    }
+
     const session = await prisma.chatSession.create({
       data: {
         userId: req.user!.id,
         name: body.title || null,
         providerId: body.providerId || null,
-        modelId: body.model || null,
+        modelId: resolvedModelId,
         systemPrompt: body.systemPrompt || null,
         temperature: body.temperature || null,
         maxTokens: body.maxTokens || null,
+        isAgentChat: body.isAgentChat ?? false,
+        allowedToolIds: (body.allowedToolIds ?? null) as any,
       },
       include: {
         provider: { select: { name: true } },
+        model: { select: { name: true } },
         _count: { select: { messages: true } },
       },
     });
@@ -95,7 +113,7 @@ router.post('/sessions', authenticate, auditLog('CREATE_CHAT_SESSION'), async (r
       title: session.name,
       providerId: session.providerId,
       providerName: session.provider?.name,
-      model: session.modelId,
+      model: session.model?.name || body.model,
       messageCount: session._count.messages,
     });
   } catch (error) {
@@ -165,7 +183,7 @@ router.patch('/sessions/:id', authenticate, auditLog('UPDATE_CHAT_SESSION'), asy
   try {
     const userId = req.user!.id;
     const sessionId = req.params.id as string;
-    const { title: t, providerId, model, systemPrompt, temperature, maxTokens, close } = req.body;
+    const { title: t, providerId, model, systemPrompt, temperature, maxTokens, close, isAgentChat, allowedToolIds } = req.body;
 
     const updateData: Record<string, unknown> = {};
     if (t !== undefined) updateData.name = t;
@@ -175,6 +193,8 @@ router.patch('/sessions/:id', authenticate, auditLog('UPDATE_CHAT_SESSION'), asy
     if (temperature !== undefined) updateData.temperature = temperature;
     if (maxTokens !== undefined) updateData.maxTokens = maxTokens;
     if (close !== undefined) updateData.isActive = !close;
+    if (isAgentChat !== undefined) updateData.isAgentChat = isAgentChat;
+    if (allowedToolIds !== undefined) updateData.allowedToolIds = allowedToolIds;
 
     const session = await prisma.chatSession.findFirst({
       where: { id: sessionId, userId },
@@ -238,7 +258,7 @@ router.post('/sessions/:id/messages', authenticate, auditLog('CHAT_SEND_MESSAGE'
   try {
     const userId = req.user!.id;
     const sessionId = req.params.id as string;
-    const { content, stream } = sendMessageSchema.parse(req.body);
+    const { content, stream, useRouting } = sendMessageSchema.parse(req.body);
 
     // Verify session ownership with provider data
     const session = await prisma.chatSession.findFirst({
@@ -253,6 +273,35 @@ router.post('/sessions/:id/messages', authenticate, auditLog('CHAT_SEND_MESSAGE'
       return res.status(404).json({ error: 'Session not found' });
     }
 
+    // Optional routing: lets the engine override session provider/model.
+    let effectiveProviderId = session.providerId;
+    let effectiveModelName: string | null = session.model?.name || session.provider?.model || null;
+    let routedRule: { id: string; name: string; reason: string } | null = null;
+    if (useRouting) {
+      const decision = await pickRoute({ prompt: content });
+      if (decision?.providerId) {
+        effectiveProviderId = decision.providerId;
+        routedRule = { id: decision.ruleId, name: decision.ruleName, reason: decision.reason };
+        if (decision.modelId) {
+          const m = await prisma.providerModel.findUnique({ where: { id: decision.modelId }, select: { name: true } });
+          if (m?.name) effectiveModelName = m.name;
+        } else {
+          const p = await prisma.provider.findUnique({ where: { id: decision.providerId }, select: { model: true } });
+          if (p?.model) effectiveModelName = p.model;
+        }
+      }
+    }
+
+    if (!effectiveProviderId) {
+      return res.status(400).json({ error: 'Session has no provider configured' });
+    }
+
+    // Resolve model name: prefer the selected ProviderModel name, fall back to provider default.
+    const resolvedModelName = effectiveModelName;
+    if (!resolvedModelName) {
+      return res.status(400).json({ error: 'No model configured for provider' });
+    }
+
     // Save user message immediately
     const userMsg = await prisma.chatMessage.create({
       data: {
@@ -260,7 +309,7 @@ router.post('/sessions/:id/messages', authenticate, auditLog('CHAT_SEND_MESSAGE'
         userId,
         role: MessageRole.USER,
         content,
-        modelUsed: session.modelId || undefined,
+        modelUsed: resolvedModelName,
       },
       select: { id: true, role: true, content: true, createdAt: true },
     });
@@ -281,21 +330,24 @@ router.post('/sessions/:id/messages', authenticate, auditLog('CHAT_SEND_MESSAGE'
       select: { role: true, content: true },
     });
 
+    // allMessages already contains the user message we just inserted; do not duplicate it.
     const chatMessages: ChatMessage[] = [
       ...(session.systemPrompt ? [{ role: 'system' as const, content: session.systemPrompt }] : []),
       ...allMessages.map(m => ({ role: toProviderRole(m.role), content: m.content })),
-      { role: 'user', content },
     ];
 
-    const client = await getProviderClient(session.providerId!);
+    const client = await getProviderClient(effectiveProviderId);
     const chatReq = {
-      providerId: session.providerId!,
-      model: session.modelId || session.provider!.model!,
+      providerId: effectiveProviderId,
+      model: resolvedModelName,
       messages: chatMessages,
       temperature: session.temperature || undefined,
       maxTokens: session.maxTokens || undefined,
       stream,
     };
+    if (routedRule && getIO()) {
+      getIO()!.to(`chat:${sessionId}`).emit('chat:routed', { sessionId, rule: routedRule, providerId: effectiveProviderId, model: resolvedModelName });
+    }
 
     // Emit typing indicator via Socket.io
     const io = getIO();
@@ -463,6 +515,129 @@ router.get('/sessions/:id/messages', authenticate, auditLog('GET_CHAT_MESSAGES')
   } catch (error) {
     console.error('Get messages error:', error);
     res.status(500).json({ error: 'Failed to get messages' });
+  }
+});
+
+/**
+ * POST /api/chat/sessions/:id/agent-message
+ * Send a message that runs a tool-calling agent loop (max 10 iterations).
+ */
+router.post('/sessions/:id/agent-message', authenticate, auditLog('CHAT_AGENT_MESSAGE'), async (req: AuthRequest, res): Promise<any> => {
+  try {
+    const userId = req.user!.id;
+    const sessionId = req.params.id as string;
+    const body = z.object({
+      content: z.string().min(1).max(50_000),
+      maxIterations: z.number().int().min(1).max(20).optional(),
+    }).parse(req.body);
+
+    const session = await prisma.chatSession.findFirst({
+      where: { id: sessionId, userId },
+      include: {
+        provider: { select: { id: true, model: true } },
+        model: { select: { name: true } },
+      },
+    });
+    if (!session) return res.status(404).json({ error: 'Session not found' });
+    if (!session.providerId || !session.provider) return res.status(400).json({ error: 'Session has no provider configured' });
+
+    const resolvedModelName = session.model?.name || session.provider.model;
+    if (!resolvedModelName) return res.status(400).json({ error: 'No model configured' });
+
+    // Determine allowed tools
+    const allowed = (session.allowedToolIds as string[] | null) ?? [];
+    const tools = await prisma.tool.findMany({
+      where: {
+        enabled: true,
+        ...(allowed.length > 0 ? { id: { in: allowed } } : {}),
+      },
+    });
+
+    if (tools.length === 0) {
+      return res.status(400).json({ error: 'No tools available for this session. Enable tools globally or set allowedToolIds.' });
+    }
+
+    // Save user message
+    const userMsg = await prisma.chatMessage.create({
+      data: { sessionId, userId, role: MessageRole.USER, content: body.content, modelUsed: resolvedModelName },
+      select: { id: true, role: true, content: true, createdAt: true },
+    });
+
+    // Generate title from first message
+    const msgCount = await prisma.chatMessage.count({ where: { sessionId } });
+    if (msgCount === 1 && !session.name) {
+      await prisma.chatSession.update({
+        where: { id: sessionId },
+        data: { name: body.content.slice(0, 60) + (body.content.length > 60 ? '...' : '') },
+      });
+    }
+
+    // Build message history
+    const allMessages = await prisma.chatMessage.findMany({
+      where: { sessionId },
+      orderBy: { createdAt: 'asc' },
+      select: { role: true, content: true },
+    });
+    const chatMessages: ChatMessage[] = [
+      ...(session.systemPrompt ? [{ role: 'system' as const, content: session.systemPrompt }] : []),
+      ...allMessages.map((m) => ({ role: toProviderRole(m.role), content: m.content })),
+    ];
+
+    const io = getIO();
+    io?.to(`chat:${sessionId}`).emit('chat:typing', { sessionId, userId });
+
+    const loopResult = await runAgentLoop({
+      sessionId,
+      providerId: session.providerId,
+      model: resolvedModelName,
+      userId,
+      messages: chatMessages,
+      tools: tools.map((t) => ({
+        id: t.id,
+        name: t.name,
+        description: t.description,
+        requiresApproval: t.requiresApproval,
+        schema: t.schema as Record<string, unknown>,
+      })),
+      maxIterations: body.maxIterations,
+      temperature: session.temperature ?? undefined,
+      maxTokens: session.maxTokens ?? undefined,
+      onIteration: (event) => {
+        io?.to(`chat:${sessionId}`).emit('chat:agent:event', { sessionId, ...event });
+      },
+    });
+
+    // Persist assistant message
+    const assistantMsg = await prisma.chatMessage.create({
+      data: {
+        sessionId,
+        userId,
+        role: MessageRole.ASSISTANT,
+        content: loopResult.finalContent,
+        modelUsed: resolvedModelName,
+      },
+      select: { id: true, role: true, content: true, modelUsed: true, createdAt: true },
+    });
+
+    res.json({
+      userMessage: userMsg,
+      assistantMessage: assistantMsg,
+      agent: {
+        iterations: loopResult.iterations,
+        pending: loopResult.pending,
+        invocationIds: loopResult.invocationIds,
+        toolCalls: loopResult.toolCalls.map((c) => ({
+          name: c.name,
+          args: c.args,
+          ok: !c.error,
+          error: c.error,
+        })),
+      },
+    });
+  } catch (error) {
+    if (error instanceof z.ZodError) return res.status(400).json({ error: error.errors });
+    console.error('Agent message error:', error);
+    res.status(500).json({ error: (error as Error).message || 'Failed to run agent' });
   }
 });
 
