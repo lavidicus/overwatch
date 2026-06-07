@@ -434,7 +434,12 @@ export default function ModelsPage() {
   };
 
   return (
-    <Box>
+    <Box sx={{
+      height: 'calc(100vh - 64px)',
+      overflow: 'auto',
+      display: 'flex',
+      flexDirection: 'column',
+    }}>
       {/* Header */}
       <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 3 }}>
         <Box sx={{ display: 'flex', alignItems: 'center', gap: 2 }}>
