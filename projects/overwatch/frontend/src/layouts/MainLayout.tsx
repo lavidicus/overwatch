@@ -41,6 +41,7 @@ import {
   AltRoute as RoutingIcon,
   Psychology as MemoryRagIcon,
   AutoFixHigh as ImprovementIcon,
+  SmartDisplay as AdvisorsIcon,
 } from '@mui/icons-material';
 import { useAuthStore } from '../stores/authStore';
 import { authApi } from '../services/api';
@@ -65,6 +66,7 @@ const systemSettingsItems = [
   { path: '/routing', label: 'Routing', icon: <RoutingIcon /> },
   { path: '/memory', label: 'Memory (RAG)', icon: <MemoryRagIcon /> },
   { path: '/improvement', label: 'Self-Improvement', icon: <ImprovementIcon /> },
+  { path: '/advisors', label: 'Advisors', icon: <AdvisorsIcon /> },
   { path: '/settings', label: 'Settings', icon: <SettingsIcon /> },
 ];
 

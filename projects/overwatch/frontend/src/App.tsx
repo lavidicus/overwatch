@@ -14,6 +14,7 @@ import ToolPermissionsPage from './pages/ToolPermissionsPage';
 import RoutingPage from './pages/RoutingPage';
 import MemoryPage from './pages/MemoryPage';
 import ImprovementPage from './pages/ImprovementPage';
+import AdvisorsPage from './pages/AdvisorsPage';
 
 // Placeholder pages - will be implemented in subsequent phases
 const DashboardPage = () => <div>Dashboard</div>;
@@ -72,6 +73,7 @@ function App() {
         <Route path="routing" element={<RoutingPage />} />
         <Route path="memory" element={<MemoryPage />} />
         <Route path="improvement" element={<ImprovementPage />} />
+        <Route path="advisors" element={<AdvisorsPage />} />
         <Route path="settings" element={<SettingsPage />} />
         <Route path="admin" element={<AdminPage />} />
       </Route>

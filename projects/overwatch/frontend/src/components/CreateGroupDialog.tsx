@@ -130,7 +130,7 @@ export default function CreateGroupDialog({ open, onClose, onCreated, editData }
 
   const selectedJudgeProviderId = judgeProviderId || providers[0]?.id || '';
   const selectedJudgeModels = selectedJudgeProviderId ? (providerModels[selectedJudgeProviderId] || []) : [];
-  const selectedJudgeModelId = judgeModelId || selectedJudgeModels[0]?.modelId || '';
+  // Model is auto-selected as first available from provider
 
   // Populate or reset form fields when dialog opens/closes
   useEffect(() => {
