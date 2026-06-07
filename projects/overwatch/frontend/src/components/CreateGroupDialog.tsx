@@ -234,7 +234,11 @@ export default function CreateGroupDialog({ open, onClose, onCreated, editData }
     setSubmitting(true);
     setError(null);
     try {
-      const agentPayload = agents.map(({ uiId: _uiId, ...rest }, idx) => ({ ...rest, position: idx }));
+      const agentPayload = agents.map(({ uiId: _uiId, systemPrompt, ...rest }, idx) => ({
+        ...rest,
+        position: idx,
+        systemPrompt: systemPrompt ?? undefined,
+      }));
       if (isEditing && editData) {
         await updateGroup(editData.id, {
           name: name.trim(),

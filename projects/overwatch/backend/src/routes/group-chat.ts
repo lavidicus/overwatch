@@ -24,7 +24,7 @@ const agentSchema = z.object({
   providerId: z.string().uuid(),
   modelId: z.string().uuid().optional(),
   role: z.enum(VALID_ROLES).default('advisor'),
-  systemPrompt: z.string().max(4000).optional(),
+  systemPrompt: z.string().max(4000).nullish(),
   position: z.number().int().min(0).max(99).optional(),
   isActive: z.boolean().optional(),
 });
@@ -35,6 +35,9 @@ const createGroupSchema = z.object({
   maxRounds: z.number().int().min(1).max(10).optional(),
   judgeProviderId: z.string().uuid().optional(),
   judgeModelId: z.string().uuid().optional(),
+  allowToolCalls: z.boolean().optional(),
+  requireToolApproval: z.boolean().optional(),
+  allowedToolIds: z.array(z.string().uuid()).nullable().optional(),
   agents: z.array(agentSchema).min(1).max(8),
 });
 
@@ -44,6 +47,9 @@ const updateGroupSchema = z.object({
   maxRounds: z.number().int().min(1).max(10).optional(),
   judgeProviderId: z.string().uuid().nullable().optional(),
   judgeModelId: z.string().uuid().nullable().optional(),
+  allowToolCalls: z.boolean().optional(),
+  requireToolApproval: z.boolean().optional(),
+  allowedToolIds: z.array(z.string().uuid()).nullable().optional(),
   isActive: z.boolean().optional(),
   agents: z.array(agentSchema).max(8).optional(),
 });
@@ -120,6 +126,11 @@ async function serializeGroup(groupId: string) {
     maxRounds: group.maxRounds,
     judgeProviderId: group.judgeProviderId,
     judgeModelId: group.judgeModelId,
+    allowToolCalls: group.allowToolCalls,
+    requireToolApproval: group.requireToolApproval,
+    allowedToolIds: Array.isArray(group.allowedToolIds)
+      ? (group.allowedToolIds as string[])
+      : null,
     createdAt: group.createdAt,
     updatedAt: group.updatedAt,
     agents: group.agents.map(a => ({
@@ -216,6 +227,9 @@ router.post(
             maxRounds: body.maxRounds ?? 5,
             judgeProviderId: body.judgeProviderId,
             judgeModelId: body.judgeModelId,
+            allowToolCalls: body.allowToolCalls ?? true,
+            requireToolApproval: body.requireToolApproval ?? true,
+            allowedToolIds: (body.allowedToolIds ?? null) as any,
           },
         });
         // Auto-add owner as a (human) member for symmetry with existing schema.
@@ -296,6 +310,12 @@ router.patch(
             maxRounds: body.maxRounds ?? undefined,
             judgeProviderId: body.judgeProviderId ?? undefined,
             judgeModelId: body.judgeModelId ?? undefined,
+            allowToolCalls: body.allowToolCalls ?? undefined,
+            requireToolApproval: body.requireToolApproval ?? undefined,
+            allowedToolIds:
+              body.allowedToolIds === undefined
+                ? undefined
+                : ((body.allowedToolIds ?? null) as any),
             isActive: body.isActive ?? undefined,
           },
         });
