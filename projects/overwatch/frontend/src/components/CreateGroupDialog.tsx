@@ -1,4 +1,4 @@
-import { useEffect, useState, useMemo } from 'react';
+import { useEffect, useState, useMemo, useRef } from 'react';
 import {
   Dialog,
   DialogTitle,
@@ -95,6 +95,10 @@ export default function CreateGroupDialog({ open, onClose, onCreated }: Props) {
       }));
   }, [available]);
 
+  // Keep a ref to the latest providers so addAgent always sees fresh data
+  const providersRef = useRef(providers);
+  providersRef.current = providers;
+
   // Ensure selectedToolIds only contains valid tool IDs
   const validSelectedToolIds = useMemo(
     () => selectedToolIds.filter(id => tools.some(t => t.id === id)),
@@ -134,8 +138,9 @@ export default function CreateGroupDialog({ open, onClose, onCreated }: Props) {
   }, [open]);
 
   const addAgent = () => {
-    if (providers.length === 0 || loadingModels) return;
-    const prov = providers[0];
+    if (providersRef.current.length === 0 || loadingModels) return;
+    const prov = providersRef.current[0];
+    if (!prov) return;
     setAgents(prev => [
       ...prev,
       {
@@ -360,10 +365,12 @@ export default function CreateGroupDialog({ open, onClose, onCreated }: Props) {
                 ? agent.role
                 : 'advisor') as AgentRole;
 
-              // Ensure provider value is valid
-              const providerValue = providers.find(p => p.id === agent.providerId)
-                ? agent.providerId
-                : (providers.length > 0 ? providers[0].id : '');
+              // Ensure provider value is valid (fallback to first provider)
+              const providerId = agent.providerId;
+              const providerValue =
+                providerId && providers.find(p => p.id === providerId)
+                  ? providerId
+                  : (providers.length > 0 ? providers[0].id : '');
 
               return (
                 <Box
@@ -386,7 +393,7 @@ export default function CreateGroupDialog({ open, onClose, onCreated }: Props) {
                     {providers.length > 0 ? (
                       <FormControl size="small" sx={{ minWidth: 220, flex: 2 }}>
                         <Select
-                          value={providerValue || ''}
+                          value={providerValue || providers[0]?.id || ''}
                           onChange={e => {
                             const p = providers.find(x => x.id === e.target.value);
                             if (!p) return;
