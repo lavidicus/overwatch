@@ -72,6 +72,9 @@ export interface AvailableAgent {
   providerName: string;
   providerType: string;
   providerStatus: string;
+  isAdvisor?: boolean;
+  systemPrompt?: string | null;
+  advisorModel?: string | null;
 }
 
 export interface ConsensusToolCallRef {

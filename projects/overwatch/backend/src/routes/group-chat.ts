@@ -503,8 +503,8 @@ router.get(
 
 /**
  * GET /api/chat/groups/agents/available
- * List provider models the user can pick when assembling a panel.
- * Returns ready (status=READY or RUNNING) models from active providers.
+ * List provider models + advisor profiles the user can pick when assembling a panel.
+ * Returns ready models from active providers AND all advisor profiles.
  */
 router.get(
   '/groups/agents/available',
@@ -521,16 +521,41 @@ router.get(
         },
         orderBy: { name: 'asc' },
       });
+
+      // Also fetch all advisor profiles (they're user-defined agent templates)
+      const advisors = await prisma.advisorProfile.findMany({
+        include: { provider: { select: { id: true, name: true, type: true } } },
+        orderBy: { name: 'asc' },
+      });
+
+      // Map to a unified format the frontend expects
+      const providerModels = models.map(m => ({
+        modelId: m.id,
+        modelName: m.name,
+        displayName: m.displayName,
+        providerId: m.providerId,
+        providerName: m.provider.name,
+        providerType: m.provider.type,
+        providerStatus: m.provider.status,
+        isAdvisor: false,
+      }));
+
+      const advisorModels = advisors.map(a => ({
+        modelId: `advisor:${a.id}`,  // prefixed to distinguish from provider models
+        modelName: a.name,
+        displayName: a.name,
+        providerId: a.providerId || '',
+        providerName: a.provider?.name || 'Custom',
+        providerType: 'ADVISOR',
+        providerStatus: 'AVAILABLE',
+        isAdvisor: true,
+        systemPrompt: a.systemPrompt,
+        advisorModel: a.model,
+      }));
+
       res.json({
-        models: models.map(m => ({
-          modelId: m.id,
-          modelName: m.name,
-          displayName: m.displayName,
-          providerId: m.providerId,
-          providerName: m.provider.name,
-          providerType: m.provider.type,
-          providerStatus: m.provider.status,
-        })),
+        models: [...providerModels, ...advisorModels],
+        advisorCount: advisors.length,
       });
     } catch (err) {
       console.error('List available agents error:', err);

@@ -61,9 +61,143 @@ export const BUILTIN_TOOLS: BuiltinTool[] = [
       const query = String(args.query);
       const count = Math.min(Math.max(1, Number(args.count) || 5), 10);
       
-      // Try to use OpenClaw gateway if available, otherwise fall back to direct APIs
-      const gatewayUrl = process.env.OPENCLAW_GATEWAY_URL || 'http://localhost:8787';
+      // Try to use OpenClaw gateway if available
+      const gatewayUrl = process.env.OPENCLAW_GATEWAY_URL || 'http://localhost:18789';
       const gatewayToken = process.env.OPENCLAW_GATEWAY_TOKEN;
+      
+      try {
+        // Attempt to call OpenClaw's web_search tool via gateway
+        const headers: Record<string, string> = { 'Content-Type': 'application/json' };
+        if (gatewayToken) {
+          headers['Authorization'] = `Bearer ${gatewayToken}`;
+        }
+        
+        const res = await fetch(`${gatewayUrl}/api/tools/web_search`, {
+          method: 'POST',
+          headers,
+          body: JSON.stringify({ query, count }),
+        });
+        
+        if (res.ok) {
+          const data = await res.json() as { results?: Array<{ title?: string; url?: string; snippet?: string } | string> };
+          return {
+            ok: true,
+            query,
+            results: data.results || [],
+            source: 'openclaw',
+          };
+        }
+      } catch (err) {
+        // Fall through to direct search
+      }
+      
+      // Fallback 1: Use Brave Search API (if key configured)
+      if (process.env.BRAVE_SEARCH_API_KEY) {
+        try {
+          const res = await fetch('https://api.search.brave.com/res/v1/web/search', {
+            method: 'GET',
+            headers: {
+              'Accept': 'application/json',
+              'X-Subscription-Token': process.env.BRAVE_SEARCH_API_KEY,
+            },
+            signal: AbortSignal.timeout(10000),
+          });
+          if (res.ok) {
+            const data = await res.json() as { web?: { results?: Array<{ title?: string; url?: string; description?: string }> } };
+            const results: Array<{ title: string; url: string; snippet: string }> = (data.web?.results || []).slice(0, count).map(r => ({
+              title: r.title || '',
+              url: r.url || '',
+              snippet: r.description || '',
+            }));
+            return { ok: true, query, results, source: 'brave' };
+          }
+        } catch {
+          // Fall through to Bing
+        }
+      }
+      
+      // Fallback 2: Use Bing (no API key needed for basic web scraping)
+      try {
+        const bingUrl = `https://www.bing.com/search?q=${encodeURIComponent(query)}&count=${count}`;
+        const res = await fetch(bingUrl, {
+          headers: { 'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36' },
+          signal: AbortSignal.timeout(10000),
+        });
+        const html = await res.text();
+        
+        const results: Array<{ title: string; url: string; snippet: string }> = [];
+        
+        // Extract result blocks: <h2><a href=...>Title</a></h2> + <p>Snippet</p>
+        // Find all h2 result links
+        const h2Links = html.match(/<h2[^>]*class="[^"]*rll__link[^\"]*"[^>]*href="([^"]+)"[^>]*>([^<]*)<\/a><\/h2>/gi) || [];
+        const h2Simple = html.match(/<h2[^>]*href="([^"]+)"[^>]*>([^<]*)<\/a><\/h2>/gi) || [];
+        
+        // Try rll__link class first, fall back to any h2 with link
+        const allLinks = h2Links.length > 0 ? h2Links : h2Simple;
+        for (const h2 of allLinks) {
+          if (results.length >= count) break;
+          // Extract href
+          const hrefMatch = h2.match(/href="([^"]+)"/i);
+          if (!hrefMatch) continue;
+          const url = hrefMatch[1];
+          // Extract title
+          const titleMatch = h2.match(/href="[^"]+"[^>]*>([^<]*)<\/a>/i);
+          if (!titleMatch) continue;
+          const title = titleMatch[1].trim();
+          // Skip navigation/footer links
+          if (['About', 'Advertising', 'Business', 'Privacy', 'Terms', 'Settings'].includes(title)) continue;
+          
+          // Extract snippet: find <p class="alc"...> or <span class="...">...</span> after the h2
+          const idx = html.indexOf(h2);
+          const after = html.substring(idx);
+          const snippetMatch = after.match(/<[ps][^>]*class="[^"]*alc[^\"]*"[^>]*>([^<]*(?:<[^>]+>[^<]*)*)/i);
+          if (snippetMatch) {
+            results.push({ title, url, snippet: snippetMatch[1].replace(/<[^>]+>/g, '').trim() });
+          }
+        }
+        
+        if (results.length > 0) {
+          return { ok: true, query, results, source: 'bing' };
+        }
+      } catch {
+        // Fall through to DuckDuckGo
+      }
+      
+      // Fallback 3: Simple text-based Bing scraping
+      try {
+        const bingUrl = `https://www.bing.com/search?q=${encodeURIComponent(query)}`;
+        const res = await fetch(bingUrl, {
+          headers: { 'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64)' },
+          signal: AbortSignal.timeout(10000),
+        });
+        const html = await res.text();
+        
+        // Very basic: extract all h2 > a links and their following text
+        const results: Array<{ title: string; url: string; snippet: string }> = [];
+        const blocks = html.split(/<h2[^>]*>/i);
+        for (const block of blocks.slice(1)) {
+          if (results.length >= count) break;
+          const urlMatch = block.match(/href="([^"]+)"/);
+          const titleMatch = block.match(/href="[^"]+"[^>]*>([^<]*)<\/a>/);
+          if (!urlMatch || !titleMatch) continue;
+          const url = urlMatch[1];
+          const title = titleMatch[1].trim();
+          // Get snippet from next h2/p tags
+          const snippetMatch = block.match(/class="[^\"]*alc[^\"]*"[^>]*>([^<]*)<\/?[ps]/i);
+          const snippet = snippetMatch ? snippetMatch[1].replace(/<[^>]+>/g, '').trim() : '';
+          if (title && !['About','Advertising','Business','Privacy','Terms','Settings','Help','Feedback'].includes(title)) {
+            results.push({ title, url, snippet });
+          }
+        }
+        
+        if (results.length > 0) {
+          return { ok: true, query, results, source: 'bing-text' };
+        }
+      } catch {
+        // All search backends failed
+      }
+      
+      // Ultimate fallback: return error so the model knows it couldn't search
       
       try {
         // Attempt to call OpenClaw's web_search tool via gateway
