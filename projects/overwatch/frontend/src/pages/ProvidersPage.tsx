@@ -19,6 +19,8 @@ import {
   CircularProgress,
   Divider,
   InputAdornment,
+  FormControlLabel,
+  Switch,
 } from '@mui/material';
 import {
   Add as AddIcon,
@@ -73,6 +75,7 @@ export default function ProvidersPage() {
     port: '',
     apiKey: '',
     model: '',
+    piEngine: false,
   });
 
   useEffect(() => {
@@ -102,6 +105,7 @@ export default function ProvidersPage() {
         port: provider.port?.toString() || '',
         apiKey: '',
         model: provider.model,
+        piEngine: (provider as any).config?.engine === 'pi' || false,
       });
     } else {
       setEditingProvider(null);
@@ -112,6 +116,7 @@ export default function ProvidersPage() {
         port: '',
         apiKey: '',
         model: '',
+        piEngine: false,
       });
     }
     setDialogOpen(true);
@@ -127,14 +132,16 @@ export default function ProvidersPage() {
       port: '',
       apiKey: '',
       model: '',
+      piEngine: false,
     });
   };
 
   const handleSubmit = async () => {
     try {
-      const data = {
+      const data: any = {
         ...formData,
         port: formData.port ? parseInt(formData.port) : undefined,
+        config: formData.piEngine ? { engine: 'pi' } : {},
       };
 
       if (editingProvider) {
@@ -445,7 +452,7 @@ export default function ProvidersPage() {
                 label="Name"
                 value={formData.name}
                 onChange={(e) => setFormData({ ...formData, name: e.target.value })}
-                fullWidth
+                //
                 required
                 placeholder="My vLLM Server"
               />
@@ -471,7 +478,7 @@ export default function ProvidersPage() {
                 label="Host"
                 value={formData.baseUrl}
                 onChange={(e) => setFormData({ ...formData, baseUrl: e.target.value })}
-                fullWidth
+                //
                 required
                 placeholder="localhost or 192.168.1.100"
                 helperText="Hostname or IP address only"
@@ -492,7 +499,7 @@ export default function ProvidersPage() {
               <TextField
                 label="Full URL (auto-preview)"
                 value={previewUrl()}
-                fullWidth
+                //
                 InputProps={{
                   readOnly: true,
                   endAdornment: (
@@ -512,7 +519,7 @@ export default function ProvidersPage() {
               label="API Key (optional)"
               value={formData.apiKey}
               onChange={(e) => setFormData({ ...formData, apiKey: e.target.value })}
-              fullWidth
+              //
               type="password"
               placeholder="sk-... (only if the provider requires auth)"
               helperText="Skip for local servers (vLLM, Ollama, llama.cpp)"
@@ -523,11 +530,38 @@ export default function ProvidersPage() {
               label="Default Model"
               value={formData.model}
               onChange={(e) => setFormData({ ...formData, model: e.target.value })}
-              fullWidth
+              //
               required
               placeholder="Qwen3.6-35B"
               helperText="The main model for this provider. Add more via Auto-Detect"
             />
+            
+            {/* Pi Engine Toggle */}
+            <Box sx={{ mt: 1 }}>
+              <FormControlLabel
+                control={
+                  <Switch
+                    checked={formData.piEngine}
+                    onChange={(e) => setFormData({ ...formData, piEngine: e.target.checked })}
+                    color="primary"
+                  />
+                }
+                label={
+                  <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+                    <AutoAwesomeIcon fontSize="small" color="primary" />
+                    <Typography variant="body2">Use Pi AI engine (access 60+ providers)</Typography>
+                  </Box>
+                }
+                //
+              />
+              {formData.piEngine && (
+                <Alert severity="info" sx={{ mt: 1, fontSize: '0.75rem' }} icon={false}>
+                  <Typography variant="caption">
+                    When enabled, use catalog models like openai/gpt-4o-mini, anthropic/claude-opus-4-6. Pi handles execution while keeping your provider config.
+                  </Typography>
+                </Alert>
+              )}
+            </Box>
           </Box>
         </DialogContent>
         <DialogActions>

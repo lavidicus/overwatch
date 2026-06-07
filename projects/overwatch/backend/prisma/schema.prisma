@@ -289,16 +289,21 @@ model ChatMessage {
 }
 
 model ChatGroup {
-  id              String             @id @default(uuid())
-  name            String
-  description     String?
-  ownerId         String
-  isActive        Boolean            @default(true)
-  maxRounds       Int                @default(5)
-  judgeProviderId String?
-  judgeModelId    String?
-  createdAt       DateTime           @default(now())
-  updatedAt       DateTime           @updatedAt
+  id                  String             @id @default(uuid())
+  name                String
+  description         String?
+  ownerId             String
+  isActive            Boolean            @default(true)
+  maxRounds           Int                @default(5)
+  judgeProviderId     String?
+  judgeModelId        String?
+  // Tool-calling for the panel.
+  allowToolCalls      Boolean            @default(true)
+  requireToolApproval Boolean            @default(true)
+  // JSON array of tool ids the panel may call; null/empty = all enabled tools.
+  allowedToolIds      Json?
+  createdAt           DateTime           @default(now())
+  updatedAt           DateTime           @updatedAt
   members         ChatGroupMember[]  @relation("ChatGroupMembers")
   owner           User               @relation("ChatGroupOwner", fields: [ownerId], references: [id])
   messages        ChatMessage[]      @relation("ChatMessageGroup")
@@ -708,6 +713,20 @@ model EncryptionKey {
 
   @@index([isActive])
   @@map("encryption_keys")
+}
+
+model AdvisorProfile {
+  id           String    @id @default(cuid())
+  name         String
+  systemPrompt String
+  providerId   String?
+  model        String?
+  createdAt    DateTime  @default(now())
+  updatedAt    DateTime  @updatedAt
+  
+  provider     Provider? @relation(fields: [providerId], references: [id], onDelete: Cascade)
+
+  @@map("advisor_profiles")
 }
 
 enum Role {

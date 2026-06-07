@@ -2,6 +2,7 @@ packages:
   - 'backend'
   - 'frontend'
 allowBuilds:
+  '@google/genai': true
   '@prisma/client': false
   '@prisma/engines': false
   argon2: true
@@ -9,3 +10,4 @@ allowBuilds:
   esbuild: false
   msgpackr-extract: false
   prisma: false
+  protobufjs: true

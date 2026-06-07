@@ -1,5 +1,5 @@
-import { getIO } from '../index';
-import { emitToUser, emitToRoom } from '../middleware/socketAuth';
+import { getIO } from '../index.js';
+import { emitToUser, emitToRoom } from '../middleware/socketAuth.js';
 
 export interface Notification {
   type: 'info' | 'success' | 'warning' | 'error';

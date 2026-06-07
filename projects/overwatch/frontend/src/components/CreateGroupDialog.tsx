@@ -65,6 +65,8 @@ export interface EditGroupData {
   allowToolCalls: boolean;
   requireToolApproval: boolean;
   allowedToolIds: string[] | null;
+  judgeProviderId: string | null;
+  judgeModelId: string | null;
   agents: { agentName: string; providerId: string; modelId: string | null; role: AgentRole; systemPrompt: string | null; position?: number }[];
 }
 
@@ -91,6 +93,9 @@ export default function CreateGroupDialog({ open, onClose, onCreated, editData }
   const [selectedToolIds, setSelectedToolIds] = useState<string[]>([]);
   const [allToolsSelected, setAllToolsSelected] = useState(true);
   const [rendered, setRendered] = useState(false);
+  const [judgeProviderId, setJudgeProviderId] = useState<string | undefined>(undefined);
+  // judgeModelId is auto-derived from provider, kept internally but not user-editable
+  const [judgeModelId, setJudgeModelId] = useState<string | undefined>(undefined);
 
   // Group models by provider: providerId -> list of models
   const providerModels = useMemo<Record<string, AvailableAgent[]>>(() => {
@@ -123,6 +128,10 @@ export default function CreateGroupDialog({ open, onClose, onCreated, editData }
     [selectedToolIds, tools],
   );
 
+  const selectedJudgeProviderId = judgeProviderId || providers[0]?.id || '';
+  const selectedJudgeModels = selectedJudgeProviderId ? (providerModels[selectedJudgeProviderId] || []) : [];
+  const selectedJudgeModelId = judgeModelId || selectedJudgeModels[0]?.modelId || '';
+
   // Populate or reset form fields when dialog opens/closes
   useEffect(() => {
     if (open) {
@@ -149,6 +158,8 @@ export default function CreateGroupDialog({ open, onClose, onCreated, editData }
         const toolIds = editData.allowedToolIds ?? [];
         setSelectedToolIds(toolIds);
         setAllToolsSelected(toolIds.length === 0);
+        setJudgeProviderId(editData.judgeProviderId ?? undefined);
+        setJudgeModelId(editData.judgeModelId ?? undefined);
         setAgents(editData.agents.map(a => ({
           uiId: a.providerId + a.modelId + a.agentName + safeRandomUUID(),
           agentName: a.agentName,
@@ -167,6 +178,8 @@ export default function CreateGroupDialog({ open, onClose, onCreated, editData }
         setRequireToolApproval(true);
         setSelectedToolIds([]);
         setAllToolsSelected(true);
+        setJudgeProviderId(undefined);
+        setJudgeModelId(undefined);
       }
     } else {
       setName('');
@@ -177,6 +190,8 @@ export default function CreateGroupDialog({ open, onClose, onCreated, editData }
       setRequireToolApproval(true);
       setSelectedToolIds([]);
       setAllToolsSelected(true);
+      setJudgeProviderId(undefined);
+      setJudgeModelId(undefined);
     }
   }, [open, editData]);
 
@@ -184,6 +199,22 @@ export default function CreateGroupDialog({ open, onClose, onCreated, editData }
   useEffect(() => {
     if (open) setError(null);
   }, [open]);
+
+  // Initialize judge selection after models load, and keep the model valid when the provider changes.
+  useEffect(() => {
+    if (!open || loadingModels || providers.length === 0) return;
+
+    const provider = providers.find(p => p.id === judgeProviderId) ?? providers[0];
+    const models = providerModels[provider.id] || [];
+    const currentModelIsValid = !!judgeModelId && models.some(m => m.modelId === judgeModelId);
+
+    if (judgeProviderId !== provider.id) {
+      setJudgeProviderId(provider.id);
+    }
+    if (!currentModelIsValid) {
+      setJudgeModelId(models[0]?.modelId ?? provider.modelId);
+    }
+  }, [open, loadingModels, providers, providerModels, judgeProviderId, judgeModelId]);
 
   const addAgent = () => {
     if (providersRef.current.length === 0 || loadingModels) return;
@@ -216,11 +247,17 @@ export default function CreateGroupDialog({ open, onClose, onCreated, editData }
 
   const handleSubmit = async () => {
     if (!name.trim()) {
-      setError('Group name is required');
+      setError('Panel name is required');
       return;
     }
     if (agents.length === 0) {
-      setError('Add at least one agent');
+      setError('Add at least one advisor');
+      return;
+    }
+    const submitJudgeProviderId = judgeProviderId || selectedJudgeProviderId;
+    // judgeModelId is auto-derived from provider, no need to validate separately
+    if (!submitJudgeProviderId) {
+      setError('Judge provider is required');
       return;
     }
     const names = new Set<string>();
@@ -244,6 +281,8 @@ export default function CreateGroupDialog({ open, onClose, onCreated, editData }
           name: name.trim(),
           description: description.trim() || undefined,
           maxRounds,
+          judgeProviderId: submitJudgeProviderId,
+          // judgeModelId is auto-derived by backend from provider
           allowToolCalls,
           requireToolApproval,
           allowedToolIds:
@@ -258,6 +297,8 @@ export default function CreateGroupDialog({ open, onClose, onCreated, editData }
           name: name.trim(),
           description: description.trim() || undefined,
           maxRounds,
+          judgeProviderId: submitJudgeProviderId,
+          // judgeModelId is auto-derived by backend from provider
           allowToolCalls,
           requireToolApproval,
           allowedToolIds:
@@ -315,6 +356,55 @@ export default function CreateGroupDialog({ open, onClose, onCreated, editData }
               marks
               valueLabelDisplay="auto"
             />
+          </Box>
+
+          <Box
+            sx={{
+              border: 1,
+              borderColor: 'divider',
+              borderRadius: 1,
+              p: 1.5,
+            }}
+          >
+            <Typography variant="subtitle2" gutterBottom>
+              Judge Configuration
+            </Typography>
+            <Typography variant="caption" color="text.secondary" sx={{ display: 'block', mb: 1.5 }}>
+              The judge evaluates whether consensus has been reached after each round. The model is auto-selected from the provider.
+            </Typography>
+            {loadingModels ? (
+              <Typography variant="body2" color="text.secondary">
+                Loading available providers…
+              </Typography>
+            ) : providers.length === 0 ? (
+              <Alert severity="warning">
+                No ready providers found. Add and start a provider on the Providers page first.
+              </Alert>
+            ) : (
+              <Stack direction={{ xs: 'column', sm: 'row' }} spacing={1} alignItems={{ sm: 'center' }}>
+                <FormControl size="small" sx={{ minWidth: 200, flex: 1 }}>
+                  <Select
+                    value={selectedJudgeProviderId}
+                    onChange={e => {
+                      const p = providers.find(x => x.id === e.target.value);
+                      if (!p) return;
+                      const models = providerModels[p.id] || [];
+                      setJudgeProviderId(p.id);
+                      setJudgeModelId(models.length > 0 ? models[0].modelId : p.modelId);
+                    }}
+                  >
+                    {providers.map(p => (
+                      <MenuItem key={p.id} value={p.id}>
+                        {p.name} ({p.type})
+                      </MenuItem>
+                    ))}
+                  </Select>
+                </FormControl>
+                <Typography variant="body2" color="text.secondary" sx={{ flex: 2 }}>
+                  Model: <strong>{selectedJudgeModels[0]?.displayName || selectedJudgeModels[0]?.modelName || 'Auto-selected'}</strong>
+                </Typography>
+              </Stack>
+            )}
           </Box>
 
           <Box

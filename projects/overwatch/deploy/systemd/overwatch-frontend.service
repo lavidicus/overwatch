@@ -1,0 +1,18 @@
+[Unit]
+Description=Overwatch frontend Vite server
+After=network.target overwatch-backend.service
+Requires=overwatch-backend.service
+
+[Service]
+Type=simple
+User=localadmin
+Group=localadmin
+EnvironmentFile=/home/localadmin/.openclaw/workspace/projects/overwatch/backend/.env
+Environment=NODE_ENV=development
+Environment=PATH=/home/localadmin/.local/bin:/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin
+ExecStart=/bin/bash -lc 'cd /home/localadmin/.openclaw/workspace/projects/overwatch/frontend && exec /home/localadmin/.local/bin/pnpm dev'
+Restart=on-failure
+RestartSec=5
+
+[Install]
+WantedBy=multi-user.target

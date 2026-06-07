@@ -27,6 +27,13 @@ export class AnthropicProvider extends BaseProviderClient {
 
     if (systemPrompt) body.system = systemPrompt;
     if (req.temperature !== undefined) body.temperature = req.temperature;
+    if (req.tools && req.tools.length > 0) {
+      body.tools = req.tools.map((t) => ({
+        name: t.name,
+        description: t.description,
+        input_schema: t.parameters,
+      }));
+    }
 
     return body;
   }
@@ -52,8 +59,21 @@ export class AnthropicProvider extends BaseProviderClient {
     }
 
     const data = await response.json() as Record<string, unknown>;
-    const contentBlocks = data.content as { type: string; text?: string }[] | undefined;
+    const contentBlocks = data.content as {
+      type: string;
+      text?: string;
+      id?: string;
+      name?: string;
+      input?: Record<string, unknown>;
+    }[] | undefined;
     const usage = (data.usage || {}) as Record<string, unknown>;
+    const toolCalls = (contentBlocks ?? [])
+      .filter((c) => c.type === 'tool_use' && c.name)
+      .map((c) => ({
+        id: c.id ?? `tc-${Math.random().toString(36).slice(2, 10)}`,
+        name: c.name ?? 'unknown',
+        arguments: c.input ?? {},
+      }));
 
     return {
       content: contentBlocks?.find(c => c.type === 'text')?.text || '',
@@ -62,6 +82,7 @@ export class AnthropicProvider extends BaseProviderClient {
       completionTokens: usage.output_tokens as number | undefined,
       totalTokens: ((usage.input_tokens as number) + (usage.output_tokens as number)) || undefined,
       finishReason: data.stop_reason as string | undefined,
+      toolCalls: toolCalls.length > 0 ? toolCalls : undefined,
       raw: data,
     };
   }

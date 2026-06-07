@@ -33,7 +33,7 @@ const createGroupSchema = z.object({
   name: z.string().min(1).max(200),
   description: z.string().max(2000).optional(),
   maxRounds: z.number().int().min(1).max(10).optional(),
-  judgeProviderId: z.string().uuid().optional(),
+  judgeProviderId: z.string().uuid(),
   judgeModelId: z.string().uuid().optional(),
   allowToolCalls: z.boolean().optional(),
   requireToolApproval: z.boolean().optional(),
@@ -61,6 +61,26 @@ const consensusSchema = z.object({
 });
 
 // ─────────────────────────── helpers ───────────────────────────
+
+/**
+ * Derive judge model ID from provider if not explicitly set.
+ * Returns the first AVAILABLE model for the provider.
+ */
+async function deriveJudgeModelId(judgeProviderId: string, explicitJudgeModelId?: string | null): Promise<string | null> {
+  if (explicitJudgeModelId) return explicitJudgeModelId;
+  if (!judgeProviderId) return null;
+  
+  const firstModel = await prisma.providerModel.findFirst({
+    where: {
+      providerId: judgeProviderId,
+      status: 'AVAILABLE',
+    },
+    orderBy: { createdAt: 'asc' },
+    select: { id: true },
+  });
+  
+  return firstModel?.id ?? null;
+}
 
 async function ownedGroup(id: string, userId: string) {
   return prisma.chatGroup.findFirst({ where: { id, ownerId: userId } });
@@ -219,6 +239,8 @@ router.post(
       }
 
       const group = await prisma.$transaction(async tx => {
+        const finalJudgeModelId = await deriveJudgeModelId(body.judgeProviderId, body.judgeModelId);
+        
         const created = await tx.chatGroup.create({
           data: {
             name: body.name,
@@ -226,7 +248,7 @@ router.post(
             ownerId: userId,
             maxRounds: body.maxRounds ?? 5,
             judgeProviderId: body.judgeProviderId,
-            judgeModelId: body.judgeModelId,
+            judgeModelId: finalJudgeModelId,
             allowToolCalls: body.allowToolCalls ?? true,
             requireToolApproval: body.requireToolApproval ?? true,
             allowedToolIds: (body.allowedToolIds ?? null) as any,
@@ -302,6 +324,10 @@ router.patch(
       if (!existing) return res.status(404).json({ error: 'Group not found' });
 
       await prisma.$transaction(async tx => {
+        const finalJudgeModelId = body.judgeProviderId
+          ? await deriveJudgeModelId(body.judgeProviderId, body.judgeModelId ?? undefined)
+          : undefined;
+        
         await tx.chatGroup.update({
           where: { id: existing.id },
           data: {
@@ -309,7 +335,7 @@ router.patch(
             description: body.description ?? undefined,
             maxRounds: body.maxRounds ?? undefined,
             judgeProviderId: body.judgeProviderId ?? undefined,
-            judgeModelId: body.judgeModelId ?? undefined,
+            judgeModelId: finalJudgeModelId ?? undefined,
             allowToolCalls: body.allowToolCalls ?? undefined,
             requireToolApproval: body.requireToolApproval ?? undefined,
             allowedToolIds:

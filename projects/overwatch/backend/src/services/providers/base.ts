@@ -21,7 +21,15 @@ export class BaseProviderClient implements ProviderClient {
    * Returns undefined for providers without keys (local vLLM/Ollama/llama.cpp).
    */
   protected async getApiKey(): Promise<string | undefined> {
-    if (this.config.apiKey) return this.config.apiKey;
+    if (this.config.apiKey) {
+      const apiKey = this.config.apiKey.trim();
+      if (apiKey.startsWith('{')) {
+        const encryptedField = JSON.parse(apiKey) as any;
+        return (await EncryptionService.decrypt(encryptedField)).trim();
+      }
+
+      return apiKey;
+    }
 
     const provider = await prisma.provider.findUnique({
       where: { id: this.providerId },
@@ -34,7 +42,7 @@ export class BaseProviderClient implements ProviderClient {
 
     // apiKey is stored as JSON string of EncryptedField
     const encryptedField = JSON.parse(provider.apiKey) as any;
-    return EncryptionService.decrypt(encryptedField);
+    return (await EncryptionService.decrypt(encryptedField)).trim();
   }
 
   /**

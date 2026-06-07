@@ -1,0 +1,16 @@
+[Unit]
+Description=Overwatch backend API
+After=network.target
+
+[Service]
+Type=simple
+User=localadmin
+Group=localadmin
+EnvironmentFile=/home/localadmin/.openclaw/workspace/projects/overwatch/backend/.env
+Environment=NODE_ENV=production
+ExecStart=/bin/bash -lc 'cd /home/localadmin/.openclaw/workspace/projects/overwatch/backend && exec /usr/bin/node dist/index.js'
+Restart=on-failure
+RestartSec=5
+
+[Install]
+WantedBy=multi-user.target

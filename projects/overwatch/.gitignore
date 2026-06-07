@@ -1,0 +1,56 @@
+# Dependencies
+node_modules/
+.pnpm-store/
+
+# Environment files
+.env
+.env.local
+.env.*.local
+
+# Database files (Prisma SQLite dev DB)
+prisma/dev.db
+backend/prisma/dev.db
+*.db-journal
+
+# Build outputs
+dist/
+build/
+.next/
+out/
+*.tsbuildinfo
+
+# Keep frontend dist for deployment
+!frontend/dist/
+
+# Logs
+*.log
+logs/
+combined.log
+error.log
+
+# IDE files
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+
+# Coverage files
+coverage/
+.nyc_output/
+lcov.info
+
+# OS files
+.DS_Store
+Thumbs.db
+desktop.ini
+
+# Temporary files
+tmp/
+temp/
+*.tmp
+*.bak
+
+# Test artifacts
+test-results/
+playwright-report/

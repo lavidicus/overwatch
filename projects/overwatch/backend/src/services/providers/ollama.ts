@@ -9,7 +9,10 @@ export class OllamaProvider extends BaseProviderClient {
   readonly providerType = 'ollama';
 
   constructor(providerId: string, config: ProviderConfig) {
-    super(providerId, config);
+    super(providerId, {
+      ...config,
+      baseUrl: normalizeOllamaBaseUrl(config.baseUrl),
+    });
     this.timeoutMs = 120_000;
   }
 
@@ -37,7 +40,17 @@ export class OllamaProvider extends BaseProviderClient {
 
     if (systemPrompt) body.system = systemPrompt;
     if (req.temperature !== undefined) body.temperature = req.temperature;
-    if (req.maxTokens !== undefined) body.options = { num_ctx: req.maxTokens };
+    if (req.maxTokens !== undefined) body.options = { num_predict: req.maxTokens };
+    if (req.tools && req.tools.length > 0) {
+      body.tools = req.tools.map((t) => ({
+        type: 'function',
+        function: {
+          name: t.name,
+          description: t.description,
+          parameters: t.parameters,
+        },
+      }));
+    }
 
     return body;
   }
@@ -47,11 +60,15 @@ export class OllamaProvider extends BaseProviderClient {
    */
   async chatCompletion(req: ChatCompletionRequest): Promise<ChatCompletionResult> {
     const url = `${this.config.baseUrl}/api/chat`;
+    const apiKey = await this.getApiKey();
 
     const body = this.buildBody(req);
     const response = await this.fetchWithRetry(url, {
       method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
+      headers: {
+        'Content-Type': 'application/json',
+        ...(apiKey ? { 'Authorization': `Bearer ${apiKey}` } : {}),
+      },
       body: JSON.stringify({ ...body, stream: false }),
     });
 
@@ -61,6 +78,23 @@ export class OllamaProvider extends BaseProviderClient {
     }
 
     const data = await response.json() as any;
+    const rawToolCalls = (data.message?.tool_calls as any[] | undefined) ?? [];
+    const toolCalls = rawToolCalls.map((tc: any) => {
+      let args: Record<string, unknown> = {};
+      const rawArgs = tc.function?.arguments ?? tc.function?.args ?? tc.arguments ?? tc.args;
+      try {
+        args = typeof rawArgs === 'string'
+          ? JSON.parse(rawArgs)
+          : (rawArgs ?? {});
+      } catch {
+        args = { _rawArguments: rawArgs };
+      }
+      return {
+        id: tc.id ?? `tc-${Math.random().toString(36).slice(2, 10)}`,
+        name: tc.function?.name ?? tc.name ?? 'unknown',
+        arguments: args,
+      };
+    });
 
     return {
       content: (data.message?.content as string) || '',
@@ -69,6 +103,7 @@ export class OllamaProvider extends BaseProviderClient {
       completionTokens: (data.eval_count as number) || undefined,
       totalTokens: ((data.prompt_eval_count as number) + (data.eval_count as number)) || undefined,
       finishReason: (data.done_reason === 'length') ? 'length' : 'stop',
+      toolCalls: toolCalls.length > 0 ? toolCalls : undefined,
       raw: data,
     };
   }
@@ -78,11 +113,15 @@ export class OllamaProvider extends BaseProviderClient {
    */
   async *chatCompletionStream(req: ChatCompletionRequest): AsyncIterable<ChatCompletionChunk> {
     const url = `${this.config.baseUrl}/api/chat`;
+    const apiKey = await this.getApiKey();
 
     const body = this.buildBody({ ...req, stream: true });
     const response = await this.fetchWithRetry(url, {
       method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
+      headers: {
+        'Content-Type': 'application/json',
+        ...(apiKey ? { 'Authorization': `Bearer ${apiKey}` } : {}),
+      },
       body: JSON.stringify(body),
     });
 
@@ -139,7 +178,13 @@ export class OllamaProvider extends BaseProviderClient {
     const start = Date.now();
 
     try {
-      const response = await this.fetchWithRetry(url, { method: 'GET' });
+      const apiKey = await this.getApiKey();
+      const response = await this.fetchWithRetry(url, {
+        method: 'GET',
+        headers: {
+          ...(apiKey ? { 'Authorization': `Bearer ${apiKey}` } : {}),
+        },
+      });
 
       if (!response.ok) {
         return { ok: false, latencyMs: Date.now() - start, error: `HTTP ${response.status}` };
@@ -158,4 +203,21 @@ export class OllamaProvider extends BaseProviderClient {
       return { ok: false, latencyMs: Date.now() - start, error: message };
     }
   }
+}
+
+/**
+ * Ollama Cloud is hosted at https://ollama.com and uses the same /api/*
+ * routes as a local Ollama daemon. Local bare hosts remain HTTP by default.
+ */
+function normalizeOllamaBaseUrl(baseUrl: string): string {
+  const rawBaseUrl = baseUrl.trim();
+  const hasProtocol = /^https?:\/\//i.test(rawBaseUrl);
+  const host = rawBaseUrl.replace(/^https?:\/\//i, '').replace(/\/+$/, '');
+  const protocol = hasProtocol
+    ? undefined
+    : host.toLowerCase() === 'ollama.com'
+      ? 'https'
+      : 'http';
+
+  return new URL(protocol ? `${protocol}://${host}` : rawBaseUrl).toString().replace(/\/$/, '');
 }

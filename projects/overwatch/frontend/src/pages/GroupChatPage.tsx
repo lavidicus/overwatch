@@ -133,9 +133,9 @@ function toolEventFromPayload(
 ): ToolEvent {
   return {
     kind,
-    agentName,
+    agentName: agentName || 'Agent',
     toolName: (payload.name as string) || 'tool',
-    args: payload.arguments as Record<string, unknown> | undefined,
+    args: (payload.arguments ?? payload.args) as Record<string, unknown> | undefined,
     result: payload.result,
     ok: payload.ok as boolean | undefined,
     error: payload.error as string | undefined,
@@ -143,6 +143,17 @@ function toolEventFromPayload(
     status: payload.status as string | undefined,
     requiresApproval: payload.requiresApproval as boolean | undefined,
   };
+}
+
+function formatToolValue(value: unknown): string {
+  if (value === undefined || value === null) return '';
+  if (typeof value === 'string') return value;
+  if (typeof value === 'number' || typeof value === 'boolean') return String(value);
+  try {
+    return JSON.stringify(value, null, 2);
+  } catch {
+    return String(value);
+  }
 }
 
 function transformRounds(
@@ -199,6 +210,8 @@ export default function GroupChatPage() {
     allowToolCalls: boolean;
     requireToolApproval: boolean;
     allowedToolIds: string[] | null;
+    judgeProviderId: string | null;
+    judgeModelId: string | null;
     agents: { agentName: string; providerId: string; modelId: string | null; role: 'facilitator' | 'analyst' | 'critic' | 'advisor'; systemPrompt: string | null; position?: number }[];
   } | null>(null);
   const [drawerOpen, setDrawerOpen] = useState(!isMobile);
@@ -387,7 +400,7 @@ export default function GroupChatPage() {
       const event = toolEventFromPayload(payload, 'call', payload.agentName);
 
       // If pending approval, show approval UI.
-      if (payload.status === 'pending-approval' && payload.invocationId) {
+      if (payload.status === 'pending-approval' && payload.requiresApproval === true && payload.invocationId) {
         setPendingApprovals(prev => ({
           ...prev,
           [payload.invocationId!]: event,
@@ -487,6 +500,8 @@ export default function GroupChatPage() {
       allowToolCalls: group.allowToolCalls,
       requireToolApproval: group.requireToolApproval,
       allowedToolIds: group.allowedToolIds,
+      judgeProviderId: group.judgeProviderId,
+      judgeModelId: group.judgeModelId,
       agents: group.agents,
     });
     setShowCreate(true);
@@ -746,9 +761,11 @@ export default function GroupChatPage() {
                         by {event.agentName}
                       </Typography>
                     </Stack>
-                    <Typography variant="body2" sx={{ mb: 1, fontFamily: 'monospace', fontSize: 12, wordBreak: 'break-all' }}>
-                      {JSON.stringify(event.args)}
-                    </Typography>
+                    {formatToolValue(event.args) && (
+                      <Typography variant="body2" sx={{ mb: 1, fontFamily: 'monospace', fontSize: 12, wordBreak: 'break-all', whiteSpace: 'pre-wrap' }}>
+                        {formatToolValue(event.args)}
+                      </Typography>
+                    )}
                     <Stack direction="row" spacing={1}>
                       <Button size="small" variant="contained" color="success" onClick={() => handleApprove(invId, event)}>
                         Approve
@@ -911,6 +928,14 @@ function ToolEventCard({
   onReject?: (invocationId: string, event: ToolEvent) => void;
 }) {
   const color = colorFor(event.agentName);
+  const formattedArgs = formatToolValue(event.args);
+  const formattedResult = formatToolValue(event.result);
+  const canApprove = event.kind === 'call'
+    && event.status === 'pending-approval'
+    && event.requiresApproval === true
+    && !!event.invocationId
+    && !!onApprove
+    && !!onReject;
 
   return (
     <Box sx={{ pl: 6, mt: 0.5, mb: 0.5 }}>
@@ -937,12 +962,14 @@ function ToolEventCard({
             </Typography>
           </Stack>
 
-          <Typography
-            variant="caption"
-            sx={{ fontFamily: 'monospace', fontSize: 11, display: 'block', mb: 0.5 }}
-          >
-            {JSON.stringify(event.args)}
-          </Typography>
+          {formattedArgs && (
+            <Typography
+              variant="caption"
+              sx={{ fontFamily: 'monospace', fontSize: 11, display: 'block', mb: 0.5, whiteSpace: 'pre-wrap', wordBreak: 'break-all' }}
+            >
+              {formattedArgs}
+            </Typography>
+          )}
 
           {event.kind === 'result' && event.error && (
             <Typography variant="body2" color="error" fontSize={12}>
@@ -950,18 +977,18 @@ function ToolEventCard({
             </Typography>
           )}
 
-          {event.kind === 'result' && event.ok && event.result ? (
+          {event.kind === 'result' && event.ok && formattedResult ? (
             <Typography
               variant="body2"
               color="success.main"
               fontSize={12}
               sx={{ whiteSpace: 'pre-wrap' }}
             >
-              {(event.result as React.ReactNode)}
+              {formattedResult}
             </Typography>
           ) : null}
 
-          {event.kind === 'call' && event.invocationId && onApprove && onReject && (
+          {canApprove && (
             <Stack direction="row" spacing={1} sx={{ mt: 0.5 }}>
               <Button size="small" variant="contained" color="success" onClick={() => onApprove(event.invocationId!, event)}>
                 Approve
@@ -988,6 +1015,9 @@ function RoundCard({
 }) {
   const augmented = round as AugmentedRoundTranscript;
   const toolEvents = augmented.toolEvents ?? [];
+  const judgeTurns = round.turns.filter(t => t.role === 'judge');
+  const otherTurns = round.turns.filter(t => t.role !== 'judge');
+  
   return (
     <Card variant="outlined">
       <CardContent>
@@ -1020,34 +1050,54 @@ function RoundCard({
           </Alert>
         )}
 
-        <Collapse in={expanded}>
-          <Stack spacing={1.5} sx={{ mt: 1 }}>
-            {toolEvents.map((te, i) => (
-              <ToolEventCard key={`tool-${i}`} event={te} />
-            ))}
-            {round.turns.map((t, i) => (
+        {/* Judge responses - always visible */}
+        {judgeTurns.length > 0 && (
+          <Stack spacing={1.5} sx={{ mb: 1 }}>
+            {judgeTurns.map((t, i) => (
               <AgentMessage
-                key={`${round.roundId}-${i}`}
+                key={`judge-${i}`}
                 agentName={t.agentName}
                 role={t.role}
                 message={t.message}
                 error={t.error}
               />
             ))}
-            {round.judgeAnalysis && (
-              <Box sx={{ pl: 6 }}>
-                <Typography variant="caption" color="text.secondary" sx={{ fontStyle: 'italic' }}>
-                  Judge: {round.judgeAnalysis}
-                </Typography>
-              </Box>
-            )}
           </Stack>
+        )}
+
+        {/* Logs section - collapsible */}
+        <Collapse in={expanded}>
+          <Box sx={{ mt: 2, pt: 2, borderTop: 1, borderColor: 'divider' }}>
+            <Typography variant="subtitle2" color="text.secondary" sx={{ mb: 1 }}>
+              Logs ({toolEvents.length + otherTurns.length})
+            </Typography>
+            <Stack spacing={1.5}>
+              {toolEvents.map((te, i) => (
+                <ToolEventCard key={`tool-${i}`} event={te} />
+              ))}
+              {otherTurns.map((t, i) => (
+                <AgentMessage
+                  key={`turn-${i}`}
+                  agentName={t.agentName}
+                  role={t.role}
+                  message={t.message}
+                  error={t.error}
+                />
+              ))}
+              {round.judgeAnalysis && !judgeTurns.some(t => t.message === round.judgeAnalysis) && (
+                <Box sx={{ pl: 6 }}>
+                  <Typography variant="caption" color="text.secondary" sx={{ fontStyle: 'italic' }}>
+                    Judge: {round.judgeAnalysis}
+                  </Typography>
+                </Box>
+              )}
+            </Stack>
+          </Box>
         </Collapse>
       </CardContent>
     </Card>
   );
 }
-
 function LiveRoundCard({
   round,
   onToolApprove,
@@ -1070,7 +1120,7 @@ function LiveRoundCard({
         </Stack>
 
         <Stack spacing={1}>
-          {round.toolEvents.map((te, i) => (
+          {(round.toolEvents ?? []).map((te, i) => (
             <ToolEventCard
               key={`live-tool-${i}`}
               event={te}

@@ -464,6 +464,25 @@ router.delete('/:id', authenticate, auditLog('DELETE_PROVIDER'), async (req: Aut
 });
 
 /**
+ * Build a provider API base URL. Explicit protocols are preserved; bare
+ * ollama.com is Ollama Cloud and must use HTTPS for authenticated chat calls.
+ */
+function buildProviderBaseUrl(provider: any): string {
+  const rawBaseUrl = String(provider.baseUrl || '').trim();
+  const hasProtocol = /^https?:\/\//i.test(rawBaseUrl);
+  const host = rawBaseUrl.replace(/^https?:\/\//i, '').replace(/\/$/, '');
+  const protocol = hasProtocol
+    ? undefined
+    : provider.type === 'OLLAMA' && host.toLowerCase() === 'ollama.com'
+      ? 'https'
+      : 'http';
+
+  const url = new URL(protocol ? `${protocol}://${host}` : rawBaseUrl);
+  if (provider.port) url.port = provider.port.toString();
+  return url.toString().replace(/\/$/, '');
+}
+
+/**
  * Test connection to a provider based on type.
  */
 async function testProviderConnection(
@@ -473,22 +492,21 @@ async function testProviderConnection(
   const startTime = Date.now();
 
   try {
-    const baseUrl = provider.baseUrl.replace(/^https?:\/\//, '');
-    const url = new URL(`http://${baseUrl}`);
-    if (provider.port) {
-      url.port = provider.port.toString();
-    }
+    const baseUrl = buildProviderBaseUrl(provider);
 
-    let testUrl = url.toString();
+    let testUrl = baseUrl;
     const headers: Record<string, string> = {
       'Content-Type': 'application/json',
     };
 
     switch (provider.type) {
       case 'VLLM':
-      case 'OLLAMA':
       case 'LLAMACPP':
-        testUrl = `${url.protocol}//${url.hostname}:${provider.port || 80}/v1/models`;
+        testUrl = `${baseUrl}/v1/models`;
+        break;
+      case 'OLLAMA':
+        testUrl = `${baseUrl}/api/tags`;
+        if (apiKey) headers['Authorization'] = `Bearer ${apiKey}`;
         break;
       case 'OPENAI':
         testUrl = 'https://api.openai.com/v1/models';
@@ -499,14 +517,14 @@ async function testProviderConnection(
         if (apiKey) headers['X-API-Key'] = apiKey;
         break;
       case 'OPENCLAW':
-        testUrl = `${url.protocol}//${url.hostname}:${provider.port || 3000}/health`;
+        testUrl = `${baseUrl}/health`;
         break;
       case 'HERMES':
-        testUrl = `${url.protocol}//${url.hostname}:${provider.port || 3000}/api/health`;
+        testUrl = `${baseUrl}/api/health`;
         if (apiKey) headers['Authorization'] = `Bearer ${apiKey}`;
         break;
       default:
-        testUrl = `${url.protocol}//${url.hostname}:${provider.port || 80}`;
+        testUrl = baseUrl;
     }
 
     const controller = new AbortController();
@@ -573,13 +591,9 @@ async function fetchProviderModelsForDiscovery(provider: any): Promise<Array<{
   quantization?: string;
 }>> {
   try {
-    const baseUrl = provider.baseUrl.replace(/^https?:\/\//, '');
-    const url = new URL(`http://${baseUrl}`);
-    if (provider.port) {
-      url.port = provider.port.toString();
-    }
+    const baseUrl = buildProviderBaseUrl(provider);
 
-    let testUrl = `${url.protocol}//${url.hostname}:${url.port}/v1/models`;
+    let testUrl = `${baseUrl}/v1/models`;
     const headers: Record<string, string> = {
       'Content-Type': 'application/json',
     };
@@ -602,7 +616,7 @@ async function fetchProviderModelsForDiscovery(provider: any): Promise<Array<{
 
     // Ollama uses /api/tags instead of /v1/models
     if (provider.type === 'OLLAMA') {
-      testUrl = `${url.protocol}//${url.hostname}:${url.port}/api/tags`;
+      testUrl = `${baseUrl}/api/tags`;
     }
 
     const controller = new AbortController();

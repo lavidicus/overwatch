@@ -58,14 +58,75 @@ export const BUILTIN_TOOLS: BuiltinTool[] = [
       required: ['query'],
     },
     async execute(args) {
-      // Minimal stub: real implementation would call a search API.
-      // Returning a documented stub keeps the contract predictable.
-      return {
-        ok: true,
-        note: 'web_search is a stub; wire to a real provider (Brave/Perplexity) to enable live results.',
-        query: args.query,
-        results: [],
-      };
+      const query = String(args.query);
+      const count = Math.min(Math.max(1, Number(args.count) || 5), 10);
+      
+      // Try to use OpenClaw gateway if available, otherwise fall back to direct APIs
+      const gatewayUrl = process.env.OPENCLAW_GATEWAY_URL || 'http://localhost:8787';
+      const gatewayToken = process.env.OPENCLAW_GATEWAY_TOKEN;
+      
+      try {
+        // Attempt to call OpenClaw's web_search tool via gateway
+        const headers: Record<string, string> = { 'Content-Type': 'application/json' };
+        if (gatewayToken) {
+          headers['Authorization'] = `Bearer ${gatewayToken}`;
+        }
+        
+        const res = await fetch(`${gatewayUrl}/api/tools/web_search`, {
+          method: 'POST',
+          headers,
+          body: JSON.stringify({ query, count }),
+        });
+        
+        if (res.ok) {
+          const data = await res.json() as { results?: Array<{ title?: string; url?: string; snippet?: string } | string> };
+          return {
+            ok: true,
+            query,
+            results: data.results || [],
+            source: 'openclaw',
+          };
+        }
+      } catch (err) {
+        // Fall through to direct search
+      }
+      
+      // Fallback: Use DuckDuckGo HTML search (no API key needed)
+      try {
+        const ddgUrl = `https://html.duckduckgo.com/html/?q=${encodeURIComponent(query)}&kl=wt-wt`;
+        const res = await fetch(ddgUrl, {
+          headers: { 'User-Agent': 'Mozilla/5.0 (compatible; OverwatchToolBot/1.0)' },
+        });
+        const html = await res.text();
+        
+        // Parse results from DuckDuckGo HTML
+        const results: Array<{ title: string; url: string; snippet: string }> = [];
+        const resultRegex = /<a class="result__a" href="([^"]+)">([^<]+)<\/a>[\s\S]*?<a class="result__snippet" [^>]*>([^<]*(?:<[^>]+>[^<]*)*)</g;
+        let match;
+        let i = 0;
+        while ((match = resultRegex.exec(html)) && i < count) {
+          i++;
+          results.push({
+            title: match[2],
+            url: match[1],
+            snippet: match[3].replace(/<[^>]+>/g, ''),
+          });
+        }
+        
+        return {
+          ok: true,
+          query,
+          results,
+          source: 'duckduckgo',
+        };
+      } catch (err) {
+        return {
+          ok: false,
+          error: err instanceof Error ? err.message : 'Search failed',
+          query,
+          results: [],
+        };
+      }
     },
   },
   {

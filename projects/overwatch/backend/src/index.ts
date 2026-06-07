@@ -1,9 +1,10 @@
+import './config/env.js';
+
 import express from 'express';
 import cors from 'cors';
 import helmet from 'helmet';
 import compression from 'compression';
 import cookieParser from 'cookie-parser';
-import { config } from 'dotenv';
 import { createServer } from 'http';
 import { Server } from 'socket.io';
 import winston from 'winston';
@@ -28,6 +29,7 @@ import routingRoutes from './routes/routing.js';
 import queueRoutes from './routes/queue.js';
 import memoryRoutes from './routes/memory.js';
 import improvementRoutes, { proposalsRouter } from './routes/improvement.js';
+import advisorsRoutes from './routes/advisors.js';
 import { syncBuiltinTools } from './services/tools/index.js';
 import { initQueues } from './services/queue/index.js';
 import { initMemorySubsystem } from './services/memory/service.js';
@@ -36,9 +38,6 @@ import { initMemorySubsystem } from './services/memory/service.js';
 import { apiLimiter, authLimiter } from './middleware/rateLimiter.js';
 import { authenticate } from './middleware/auth.js';
 import { socketAuthMiddleware, joinUserRoom } from './middleware/socketAuth.js';
-
-// Load environment variables
-config();
 
 // Logger setup
 const logger = winston.createLogger({
@@ -110,6 +109,7 @@ app.use('/api/queue', authenticate, queueRoutes);
 app.use('/api/memory', authenticate, memoryRoutes);
 app.use('/api/improvement', authenticate, improvementRoutes);
 app.use('/api/change-proposals', authenticate, proposalsRouter);
+app.use('/api/advisors', authenticate, advisorsRoutes);
 
 // Health check
 app.get('/health', (req, res) => {
