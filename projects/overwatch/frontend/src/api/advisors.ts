@@ -7,6 +7,14 @@ function headers(): Record<string, string> {
   return t ? { Authorization: `Bearer ${t}`, 'Content-Type': 'application/json' } : { 'Content-Type': 'application/json' };
 }
 
+export interface ProviderModel {
+  id: string;
+  name: string;
+  displayName?: string;
+  quantization?: string;
+  status: string;
+}
+
 export interface Provider {
   id: string;
   name: string;
@@ -85,6 +93,12 @@ export async function deleteAdvisor(id: string): Promise<{ ok: boolean }> {
 export async function listProviders(): Promise<{ providers: Provider[] }> {
   const r = await fetch(`${API_BASE}/providers`, { headers: headers() });
   if (!r.ok) throw new Error('Failed to list providers');
+  return r.json();
+}
+
+export async function listProviderModels(providerId: string): Promise<{ models: ProviderModel[] }> {
+  const r = await fetch(`${API_BASE}/providers/${providerId}/models`, { headers: headers() });
+  if (!r.ok) throw new Error('Failed to list provider models');
   return r.json();
 }
 

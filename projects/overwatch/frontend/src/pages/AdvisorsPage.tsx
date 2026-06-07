@@ -22,7 +22,7 @@ import {
   Paper,
 } from '@mui/material';
 import { Edit, Delete, Add, Construction, RocketLaunch } from '@mui/icons-material';
-import { AdvisorProfile, listAdvisors, createAdvisor, updateAdvisor, deleteAdvisor, listProviders, Provider, generateAdvisor } from '../api/advisors';
+import { AdvisorProfile, listAdvisors, createAdvisor, updateAdvisor, deleteAdvisor, listProviders, listProviderModels, Provider, ProviderModel, generateAdvisor } from '../api/advisors';
 
 export default function AdvisorsPage() {
   const [advisors, setAdvisors] = useState<AdvisorProfile[]>([]);
@@ -41,10 +41,54 @@ export default function AdvisorsPage() {
   // AI generation state
   const [genInstruction, setGenInstruction] = useState('');
   const [genProviderId, setGenProviderId] = useState('');
+  const [genModel, setGenModel] = useState('');
+  const [genProviderModels, setGenProviderModels] = useState<ProviderModel[]>([]);
+  const [genModelLoading, setGenModelLoading] = useState(false);
   const [generating, setGenerating] = useState(false);
   const [genResult, setGenResult] = useState<string | null>(null);
   const [genError, setGenError] = useState<string | null>(null);
   const [deletingId, setDeletingId] = useState<string | null>(null);
+
+  // Manual form model loading
+  const [formProviderModels, setFormProviderModels] = useState<ProviderModel[]>([]);
+  const [formModelLoading, setFormModelLoading] = useState(false);
+
+  // When genProvider changes, load its models
+  useEffect(() => {
+    if (!genProviderId) {
+      setGenProviderModels([]);
+      setGenModel('');
+      return;
+    }
+    setGenModelLoading(true);
+    listProviderModels(genProviderId)
+      .then(r => {
+        const available = r.models.filter(m => m.status === 'AVAILABLE');
+        setGenProviderModels(available);
+        // Auto-select first available
+        if (available.length > 0) {
+          setGenModel(available[0].name);
+        }
+      })
+      .catch(() => { setGenProviderModels([]); setGenModel(''); })
+      .finally(() => setGenModelLoading(false));
+  }, [genProviderId]);
+
+  // When form provider changes, load its models
+  useEffect(() => {
+    if (!formData.providerId) {
+      setFormProviderModels([]);
+      return;
+    }
+    setFormModelLoading(true);
+    listProviderModels(formData.providerId)
+      .then(r => {
+        const available = r.models.filter(m => m.status === 'AVAILABLE');
+        setFormProviderModels(available);
+      })
+      .catch(() => setFormProviderModels([]))
+      .finally(() => setFormModelLoading(false));
+  }, [formData.providerId]);
 
   const loadData = async () => {
     try {
@@ -82,6 +126,8 @@ export default function AdvisorsPage() {
     }
     setGenInstruction('');
     setGenProviderId('');
+    setGenModel('');
+    setGenProviderModels([]);
     setGenResult(null);
     setGenError(null);
     setDialogOpen(true);
@@ -138,6 +184,7 @@ export default function AdvisorsPage() {
       const result = await generateAdvisor({
         instruction: genInstruction,
         providerId: genProviderId || undefined,
+        model: genModel || undefined,
       });
       setGenResult(result.generatedPrompt);
     } catch (e: any) {
@@ -251,7 +298,7 @@ export default function AdvisorsPage() {
               <Typography variant="subtitle2" fontWeight={600}>AI-Assisted Profile Generation</Typography>
             </Stack>
             <Typography variant="caption" color="text.secondary" sx={{ display: 'block', mb: 1 }}>
-              Describe what your advisor should do and the AI will generate the system prompt for you.
+              Describe what your advisor should do and pick a model to generate the system prompt.
             </Typography>
             <TextField
               label="Describe your advisor"
@@ -263,22 +310,46 @@ export default function AdvisorsPage() {
               placeholder="e.g., Create a security review advisor that specializes in AWS cloud infrastructure, checks for CIS benchmarks, and recommends remediations."
               sx={{ mb: 1 }}
             />
-            <TextField
-              label="Provider (optional — auto-selects first connected provider)"
-              select
-              value={genProviderId}
-              onChange={(e) => setGenProviderId(e.target.value)}
-              fullWidth
-              size="small"
-              sx={{ mb: 1 }}
-            >
-              <MenuItem value=""><em>Auto-select</em></MenuItem>
-              {providers.map((provider) => (
-                <MenuItem key={provider.id} value={provider.id}>
-                  {provider.name} ({provider.type})
-                </MenuItem>
-              ))}
-            </TextField>
+            <Stack direction="row" spacing={1} sx={{ mb: 1 }}>
+              <TextField
+                label="Provider"
+                select
+                value={genProviderId}
+                onChange={(e) => setGenProviderId(e.target.value)}
+                fullWidth
+                size="small"
+              >
+                <MenuItem value=""><em>Auto-select</em></MenuItem>
+                {providers.map((provider) => (
+                  <MenuItem key={provider.id} value={provider.id}>
+                    {provider.name} ({provider.type})
+                  </MenuItem>
+                ))}
+              </TextField>
+              {genProviderModels.length > 0 && genProviderId && (
+                <TextField
+                  label="Model"
+                  select
+                  value={genModel}
+                  onChange={(e) => setGenModel(e.target.value)}
+                  fullWidth
+                  size="small"
+                  SelectProps={{ displayEmpty: true }}
+                >
+                  {genModelLoading && <MenuItem value="" disabled><CircularProgress size={16} sx={{ mr: 1 }} />Loading...</MenuItem>}
+                  {genProviderModels.map((m) => (
+                    <MenuItem key={m.id} value={m.name}>
+                      {m.displayName || m.name}
+                    </MenuItem>
+                  ))}
+                </TextField>
+              )}
+            </Stack>
+            {genProviderId && genProviderModels.length === 0 && !genModelLoading && (
+              <Typography variant="caption" color="text.secondary" sx={{ display: 'block', mb: 1 }}>
+                No available models for this provider.
+              </Typography>
+            )}
             {genError && <Typography color="error" variant="caption" sx={{ display: 'block', mb: 1 }}>{genError}</Typography>}
             <Button
               variant="outlined"
@@ -296,7 +367,7 @@ export default function AdvisorsPage() {
             <Paper variant="outlined" sx={{ p: 2, mb: 2, bgcolor: 'success.lighter' }}>
               <Stack direction="row" alignItems="center" justifyContent="space-between">
                 <Typography variant="subtitle2" color="success.dark">
-                  ✅ Generated successfully
+                  ✅ Generated successfully (used {genProviderId ? providers.find(p => p.id === genProviderId)?.name : 'auto'} model)
                 </Typography>
                 <Stack direction="row" spacing={1}>
                   <Button size="small" variant="outlined" onClick={() => setGenResult(null)}>Discard</Button>
@@ -335,26 +406,42 @@ export default function AdvisorsPage() {
               placeholder="You are a helpful assistant specialized in..."
             />
             <TextField
-              label="Provider (optional)"
+              label="Provider"
               select
               value={formData.providerId}
               onChange={(e) => setFormData({ ...formData, providerId: e.target.value })}
               fullWidth
+              SelectProps={{
+                displayEmpty: true,
+              }}
             >
-              <MenuItem value=""><em>Default Provider</em></MenuItem>
+              <MenuItem value=""><em>None</em></MenuItem>
               {providers.map((provider) => (
                 <MenuItem key={provider.id} value={provider.id}>
                   {provider.name} ({provider.type})
                 </MenuItem>
               ))}
             </TextField>
-            <TextField
-              label="Model (optional)"
-              value={formData.model}
-              onChange={(e) => setFormData({ ...formData, model: e.target.value })}
-              fullWidth
-              placeholder="e.g., qwen3.5:cloud, gpt-4o"
-            />
+            {formData.providerId && (
+              <TextField
+                label="Model"
+                select
+                value={formData.model}
+                onChange={(e) => setFormData({ ...formData, model: e.target.value })}
+                fullWidth
+                SelectProps={{
+                  displayEmpty: true,
+                }}
+              >
+                {formModelLoading && <MenuItem value="" disabled><CircularProgress size={16} sx={{ mr: 1 }} />Loading...</MenuItem>}
+                <MenuItem value=""><em>None</em></MenuItem>
+                {formProviderModels.map((m) => (
+                  <MenuItem key={m.id} value={m.name}>
+                    {m.displayName || m.name}
+                  </MenuItem>
+                ))}
+              </TextField>
+            )}
           </Box>
         </DialogContent>
         <DialogActions>

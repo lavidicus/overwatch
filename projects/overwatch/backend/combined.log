@@ -289,3 +289,12 @@
 {"level":"info","message":"Built-in tools synced","timestamp":"2026-06-07T16:26:34.581Z"}
 {"level":"info","message":"Queue system initialized","timestamp":"2026-06-07T16:26:34.593Z"}
 {"level":"info","message":"Memory subsystem initialized","timestamp":"2026-06-07T16:26:34.599Z"}
+{"level":"info","message":"Client connected: Q09nQyjmo_X0Lv-XAAAB (user: admin@overwatch.local)","timestamp":"2026-06-07T16:31:39.444Z"}
+{"level":"info","message":"Client disconnected: Q09nQyjmo_X0Lv-XAAAB","timestamp":"2026-06-07T16:34:00.335Z"}
+{"level":"info","message":"Client connected: 8EbbLuuLOeyaNqu1AAAD (user: admin@overwatch.local)","timestamp":"2026-06-07T16:34:31.381Z"}
+{"level":"info","message":"Socket 8EbbLuuLOeyaNqu1AAAD joined group room group:779a2f8e-b11f-4dc7-94c4-97aa749d593d","timestamp":"2026-06-07T16:34:49.015Z"}
+{"level":"info","message":"Client disconnected: 8EbbLuuLOeyaNqu1AAAD","timestamp":"2026-06-07T16:36:46.442Z"}
+{"level":"info","message":"Client connected: 8XzonyxVYCKZjJvQAAAF (user: admin@overwatch.local)","timestamp":"2026-06-07T16:36:47.911Z"}
+{"level":"info","message":"Client disconnected: 8XzonyxVYCKZjJvQAAAF","timestamp":"2026-06-07T16:36:48.457Z"}
+{"level":"info","message":"Client connected: isvOS4h5xJlyN79FAAAH (user: admin@overwatch.local)","timestamp":"2026-06-07T16:36:50.915Z"}
+{"level":"info","message":"Socket isvOS4h5xJlyN79FAAAH joined group room group:779a2f8e-b11f-4dc7-94c4-97aa749d593d","timestamp":"2026-06-07T16:36:53.214Z"}
