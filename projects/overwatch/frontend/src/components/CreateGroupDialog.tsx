@@ -76,24 +76,26 @@ export default function CreateGroupDialog({ open, onClose, onCreated }: Props) {
   const [allToolsSelected, setAllToolsSelected] = useState(true);
   const [rendered, setRendered] = useState(false);
 
-  // Build unique provider list from available models
-  const providers = useMemo<ProviderSummary[]>(() => {
-    const seen = new Set<string>();
-    return available
-      .filter(m => {
-        const key = m.providerId;
-        if (seen.has(key)) return false;
-        seen.add(key);
-        return true;
-      })
-      .map(m => ({
-        id: m.providerId,
-        name: m.providerName,
-        type: m.providerType,
-        modelId: m.modelId,
-        modelName: m.displayName || m.modelName,
-      }));
+  // Group models by provider: providerId -> list of models
+  const providerModels = useMemo<Record<string, AvailableAgent[]>>(() => {
+    const map: Record<string, AvailableAgent[]> = {};
+    for (const m of available) {
+      if (!map[m.providerId]) map[m.providerId] = [];
+      map[m.providerId].push(m);
+    }
+    return map;
   }, [available]);
+
+  // Unique provider list (first model of each provider as default)
+  const providers = useMemo<ProviderSummary[]>(() => {
+    return Object.entries(providerModels).map(([id, models]) => ({
+      id,
+      name: models[0].providerName,
+      type: models[0].providerType,
+      modelId: models[0].modelId,
+      modelName: models[0].displayName || models[0].modelName,
+    }));
+  }, [providerModels]);
 
   // Keep a ref to the latest providers so addAgent always sees fresh data
   const providersRef = useRef(providers);
@@ -141,13 +143,14 @@ export default function CreateGroupDialog({ open, onClose, onCreated }: Props) {
     if (providersRef.current.length === 0 || loadingModels) return;
     const prov = providersRef.current[0];
     if (!prov) return;
+    const models = providerModels[prov.id] || [];
     setAgents(prev => [
       ...prev,
       {
         uiId: safeRandomUUID(),
         agentName: `${prov.name} ${prev.length + 1}`,
         providerId: prov.id,
-        modelId: prov.modelId,
+        modelId: models.length > 0 ? models[0].modelId : prov.modelId,
         role: prev.length === 0 ? 'facilitator' : 'advisor',
         position: prev.length,
       },
@@ -391,40 +394,65 @@ export default function CreateGroupDialog({ open, onClose, onCreated }: Props) {
                       sx={{ flex: 1, minWidth: 120 }}
                     />
                     {providers.length > 0 ? (
-                      <FormControl size="small" sx={{ minWidth: 220, flex: 2 }}>
-                        <Select
-                          value={providerValue || providers[0]?.id || ''}
-                          onChange={e => {
-                            const p = providers.find(x => x.id === e.target.value);
-                            if (!p) return;
-                            updateAgent(agent.uiId, {
-                              providerId: p.id,
-                              modelId: p.modelId,
-                            });
-                          }}
-                        >
-                          {providers.map(p => (
-                            <MenuItem key={p.id} value={p.id}>
-                              {p.name}
-                              <Typography
-                                variant="caption"
-                                color="text.secondary"
-                                sx={{ ml: 1 }}
-                              >
-                                ({p.type} — {p.modelName})
-                              </Typography>
-                            </MenuItem>
-                          ))}
-                        </Select>
-                      </FormControl>
+                      <>
+                        <FormControl size="small" sx={{ minWidth: 200, flex: 2 }}>
+                          <Select
+                            value={providerValue || providers[0]?.id || ''}
+                            onChange={e => {
+                              const p = providers.find(x => x.id === e.target.value);
+                              if (!p) return;
+                              const models = providerModels[p.id] || [];
+                              updateAgent(agent.uiId, {
+                                providerId: p.id,
+                                modelId: models.length > 0 ? models[0].modelId : p.modelId,
+                              });
+                            }}
+                          >
+                            {providers.map(p => (
+                              <MenuItem key={p.id} value={p.id}>
+                                {p.name}
+                              </MenuItem>
+                            ))}
+                          </Select>
+                        </FormControl>
+                        <FormControl size="small" sx={{ minWidth: 200, flex: 3 }}>
+                          <Select
+                            value={agent.modelId || ''}
+                            disabled={loadingModels}
+                            onChange={e => updateAgent(agent.uiId, { modelId: e.target.value })}
+                          >
+                            {(providerModels[agent.providerId] || []).map(m => (
+                              <MenuItem key={m.modelId} value={m.modelId}>
+                                {m.displayName || m.modelName}
+                                <Typography
+                                  variant="caption"
+                                  color="text.secondary"
+                                  sx={{ ml: 1 }}
+                                >
+                                  ({m.providerName})
+                                </Typography>
+                              </MenuItem>
+                            ))}
+                          </Select>
+                        </FormControl>
+                      </>
                     ) : (
-                      <TextField
-                        size="small"
-                        label="Provider"
-                        value="Loading…"
-                        disabled
-                        sx={{ minWidth: 220, flex: 2 }}
-                      />
+                      <>
+                        <TextField
+                          size="small"
+                          label="Provider"
+                          value="Loading…"
+                          disabled
+                          sx={{ minWidth: 200, flex: 2 }}
+                        />
+                        <TextField
+                          size="small"
+                          label="Model"
+                          value="Loading…"
+                          disabled
+                          sx={{ minWidth: 200, flex: 3 }}
+                        />
+                      </>
                     )}
                     <FormControl size="small" sx={{ minWidth: 140 }}>
                       <Select
