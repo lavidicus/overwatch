@@ -107,16 +107,45 @@ export default function CreateGroupDialog({ open, onClose, onCreated, editData }
     return map;
   }, [available]);
 
-  // Unique provider list (first model of each provider as default)
+  // Separate advisors from provider models
+  const advisors = useMemo<AvailableAgent[]>(
+    () => available.filter((m) => m.isAdvisor),
+    [available],
+  );
+  const providerModelsOnly = useMemo<AvailableAgent[]>(
+    () => available.filter((m) => !m.isAdvisor),
+    [available],
+  );
+
+  // Build provider grouping from only non-advisor models
+  const providerModelsWithAdvisors = useMemo<Record<string, AvailableAgent[]>>(() => {
+    const map: Record<string, AvailableAgent[]> = {};
+    for (const m of providerModelsOnly) {
+      if (!map[m.providerId]) map[m.providerId] = [];
+      map[m.providerId].push(m);
+    }
+    // Add all advisors to every provider's list so they're always selectable
+    for (const providerId of Object.keys(map)) {
+      map[providerId] = [...map[providerId], ...advisors];
+    }
+    return map;
+  }, [providerModelsOnly, advisors]);
+
+  // Unique provider list (first model of each provider as default, excluding advisors)
   const providers = useMemo<ProviderSummary[]>(() => {
-    return Object.entries(providerModels).map(([id, models]) => ({
+    const map: Record<string, AvailableAgent[]> = {};
+    for (const m of providerModelsOnly) {
+      if (!map[m.providerId]) map[m.providerId] = [];
+      map[m.providerId].push(m);
+    }
+    return Object.entries(map).map(([id, models]) => ({
       id,
       name: models[0].providerName,
       type: models[0].providerType,
       modelId: models[0].modelId,
       modelName: models[0].displayName || models[0].modelName,
     }));
-  }, [providerModels]);
+  }, [providerModelsOnly]);
 
   // Keep a ref to the latest providers so addAgent always sees fresh data
   const providersRef = useRef(providers);
@@ -129,7 +158,7 @@ export default function CreateGroupDialog({ open, onClose, onCreated, editData }
   );
 
   const selectedJudgeProviderId = judgeProviderId || providers[0]?.id || '';
-  const selectedJudgeModels = selectedJudgeProviderId ? (providerModels[selectedJudgeProviderId] || []) : [];
+  const selectedJudgeModels = selectedJudgeProviderId ? (providerModelsWithAdvisors[selectedJudgeProviderId] || []).filter(m => !m.isAdvisor) : [];
   // Model is auto-selected as first available from provider
 
   // Populate or reset form fields when dialog opens/closes
@@ -205,7 +234,7 @@ export default function CreateGroupDialog({ open, onClose, onCreated, editData }
     if (!open || loadingModels || providers.length === 0) return;
 
     const provider = providers.find(p => p.id === judgeProviderId) ?? providers[0];
-    const models = providerModels[provider.id] || [];
+    const models = (providerModelsWithAdvisors[provider.id] || []).filter(m => !m.isAdvisor);
     const currentModelIsValid = !!judgeModelId && models.some(m => m.modelId === judgeModelId);
 
     if (judgeProviderId !== provider.id) {
@@ -220,14 +249,16 @@ export default function CreateGroupDialog({ open, onClose, onCreated, editData }
     if (providersRef.current.length === 0 || loadingModels) return;
     const prov = providersRef.current[0];
     if (!prov) return;
-    const models = providerModels[prov.id] || [];
+    const allModels = providerModelsWithAdvisors[prov.id] || [];
+    // Default to first non-advisor model
+    const defaultModel = allModels.find(m => !m.isAdvisor)?.modelId || prov.modelId;
     setAgents(prev => [
       ...prev,
       {
         uiId: safeRandomUUID(),
         agentName: `${prov.name} ${prev.length + 1}`,
         providerId: prov.id,
-        modelId: models.length > 0 ? models[0].modelId : prov.modelId,
+        modelId: defaultModel,
         role: prev.length === 0 ? 'facilitator' : 'advisor',
         systemPrompt: null,
         position: prev.length,
@@ -385,7 +416,7 @@ export default function CreateGroupDialog({ open, onClose, onCreated, editData }
                     onChange={e => {
                       const p = providers.find(x => x.id === e.target.value);
                       if (!p) return;
-                      const models = providerModels[p.id] || [];
+                      const models = (providerModelsWithAdvisors[p.id] || []).filter(m => !m.isAdvisor);
                       setJudgeProviderId(p.id);
                       setJudgeModelId(models.length > 0 ? models[0].modelId : p.modelId);
                     }}
@@ -556,10 +587,16 @@ export default function CreateGroupDialog({ open, onClose, onCreated, editData }
                             onChange={e => {
                               const p = providers.find(x => x.id === e.target.value);
                               if (!p) return;
-                              const models = providerModels[p.id] || [];
+                              const allModels = providerModelsWithAdvisors[p.id] || [];
+                              // Auto-load system prompt when an advisor is selected
+                              const selectedAdvisor = allModels.find(m => m.modelId === (agent.modelId || ''));
+                              const newSystemPrompt = selectedAdvisor?.isAdvisor && selectedAdvisor?.systemPrompt
+                                ? selectedAdvisor.systemPrompt
+                                : agent.systemPrompt;
                               updateAgent(agent.uiId, {
                                 providerId: p.id,
-                                modelId: models.length > 0 ? models[0].modelId : p.modelId,
+                                modelId: allModels.find(m => !m.isAdvisor)?.modelId || p.modelId,
+                                systemPrompt: newSystemPrompt,
                               });
                             }}
                           >
@@ -574,18 +611,37 @@ export default function CreateGroupDialog({ open, onClose, onCreated, editData }
                           <Select
                             value={agent.modelId || ''}
                             disabled={loadingModels}
-                            onChange={e => updateAgent(agent.uiId, { modelId: e.target.value })}
+                            onChange={e => {
+                              const allModels = providerModelsWithAdvisors[agent.providerId] || [];
+                              // Auto-load system prompt when an advisor is selected
+                              const selectedModel = allModels.find(m => m.modelId === e.target.value);
+                              const newPrompt = selectedModel?.isAdvisor && selectedModel?.systemPrompt
+                                ? selectedModel.systemPrompt
+                                : agent.systemPrompt;
+                              updateAgent(agent.uiId, { modelId: e.target.value, systemPrompt: newPrompt });
+                            }}
                           >
-                            {(providerModels[agent.providerId] || []).map(m => (
+                            {(providerModelsWithAdvisors[agent.providerId] || []).map(m => (
                               <MenuItem key={m.modelId} value={m.modelId}>
                                 {m.displayName || m.modelName}
-                                <Typography
-                                  variant="caption"
-                                  color="text.secondary"
-                                  sx={{ ml: 1 }}
-                                >
-                                  ({m.providerName})
-                                </Typography>
+                                {m.isAdvisor && (
+                                  <Typography
+                                    variant="caption"
+                                    color="primary"
+                                    sx={{ ml: 1 }}
+                                  >
+                                    ★ Advisor
+                                  </Typography>
+                                )}
+                                {!m.isAdvisor && (
+                                  <Typography
+                                    variant="caption"
+                                    color="text.secondary"
+                                    sx={{ ml: 1 }}
+                                  >
+                                    ({m.providerName})
+                                  </Typography>
+                                )}
                               </MenuItem>
                             ))}
                           </Select>
