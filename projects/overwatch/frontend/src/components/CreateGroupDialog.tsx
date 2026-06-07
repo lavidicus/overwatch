@@ -1,5 +1,4 @@
-import { Component, useEffect, useState, useMemo } from 'react';
-import type { ReactNode } from 'react';
+import { useEffect, useState, useMemo } from 'react';
 import {
   Dialog,
   DialogTitle,
@@ -13,7 +12,6 @@ import {
   MenuItem,
   Select,
   FormControl,
-  InputLabel,
   Stack,
   Chip,
   Slider,
@@ -41,55 +39,6 @@ const ROLES: { value: AgentRole; label: string; hint: string }[] = [
   { value: 'critic', label: 'Critic', hint: 'Challenges assumptions, surfaces risks' },
   { value: 'advisor', label: 'Advisor', hint: 'General contributor' },
 ];
-
-const DEFAULT_ROLE: AgentRole = 'advisor';
-const VALID_ROLE_VALUES = new Set<AgentRole>(ROLES.map(r => r.value));
-
-function normalizeRole(role: AgentRole): AgentRole {
-  return VALID_ROLE_VALUES.has(role) ? role : DEFAULT_ROLE;
-}
-
-interface DialogErrorBoundaryProps {
-  children: ReactNode;
-  resetKey: string;
-}
-
-interface DialogErrorBoundaryState {
-  hasError: boolean;
-  message: string;
-}
-
-class CreateGroupDialogErrorBoundary extends Component<
-  DialogErrorBoundaryProps,
-  DialogErrorBoundaryState
-> {
-  state: DialogErrorBoundaryState = { hasError: false, message: '' };
-
-  static getDerivedStateFromError(error: unknown): DialogErrorBoundaryState {
-    return {
-      hasError: true,
-      message: error instanceof Error ? error.message : 'Unexpected dialog error',
-    };
-  }
-
-  componentDidUpdate(prevProps: DialogErrorBoundaryProps) {
-    if (prevProps.resetKey !== this.props.resetKey && this.state.hasError) {
-      this.setState({ hasError: false, message: '' });
-    }
-  }
-
-  render() {
-    if (this.state.hasError) {
-      return (
-        <Alert severity="error">
-          The panel form could not be displayed. {this.state.message}
-        </Alert>
-      );
-    }
-
-    return this.props.children;
-  }
-}
 
 interface AgentDraft extends GroupAgentInput {
   uiId: string;
@@ -124,6 +73,7 @@ export default function CreateGroupDialog({ open, onClose, onCreated }: Props) {
   const [tools, setTools] = useState<Tool[]>([]);
   const [selectedToolIds, setSelectedToolIds] = useState<string[]>([]);
   const [allToolsSelected, setAllToolsSelected] = useState(true);
+  const [rendered, setRendered] = useState(false);
 
   // Build unique provider list from available models
   const providers = useMemo<ProviderSummary[]>(() => {
@@ -144,27 +94,28 @@ export default function CreateGroupDialog({ open, onClose, onCreated }: Props) {
       }));
   }, [available]);
 
-  const selectedToolIdsForSelect = useMemo(
+  // Ensure selectedToolIds only contains valid tool IDs
+  const validSelectedToolIds = useMemo(
     () => selectedToolIds.filter(id => tools.some(t => t.id === id)),
     [selectedToolIds, tools],
   );
 
+  // Force re-render after dialog opens
   useEffect(() => {
-    if (!open) return;
-    setError(null);
-    setLoadingModels(true);
-    listAvailableAgents()
-      .then(r => setAvailable(r.models))
-      .catch(err => setError(err.message || 'Failed to load models'))
-      .finally(() => setLoadingModels(false));
-    // Load tools catalogue in parallel; non-fatal.
-    listTools()
-      .then(r => setTools(r.tools.filter(t => t.enabled)))
-      .catch(() => setTools([]));
-  }, [open]);
+    if (open) {
+      setRendered(true);
+      setError(null);
+      setLoadingModels(true);
 
-  useEffect(() => {
-    if (!open) {
+      listAvailableAgents()
+        .then(r => setAvailable(r.models))
+        .catch(err => setError(err.message || 'Failed to load models'))
+        .finally(() => setLoadingModels(false));
+
+      listTools()
+        .then(r => setTools(r.tools.filter(t => t.enabled)))
+        .catch(() => setTools([]));
+    } else {
       setName('');
       setDescription('');
       setMaxRounds(5);
@@ -176,35 +127,13 @@ export default function CreateGroupDialog({ open, onClose, onCreated }: Props) {
     }
   }, [open]);
 
+  // Reset error when dialog re-opens
   useEffect(() => {
-    if (providers.length === 0) return;
-
-    setAgents(prev =>
-      prev.map(agent => {
-        const provider = providers.find(p => p.id === agent.providerId) || providers[0];
-        const role = normalizeRole(agent.role);
-
-        if (
-          provider.id === agent.providerId &&
-          provider.modelId === agent.modelId &&
-          role === agent.role
-        ) {
-          return agent;
-        }
-
-        return {
-          ...agent,
-          providerId: provider.id,
-          modelId: provider.modelId,
-          role,
-        };
-      }),
-    );
-  }, [providers]);
+    if (open) setError(null);
+  }, [open]);
 
   const addAgent = () => {
-    if (providers.length === 0) return;
-    // Pick the first provider
+    if (providers.length === 0 || loadingModels) return;
     const prov = providers[0];
     setAgents(prev => [
       ...prev,
@@ -225,9 +154,7 @@ export default function CreateGroupDialog({ open, onClose, onCreated }: Props) {
   const updateAgent = (uiId: string, patch: Partial<AgentDraft>) =>
     setAgents(prev =>
       prev.map(a =>
-        a.uiId === uiId
-          ? { ...a, ...patch, role: patch.role ? normalizeRole(patch.role) : a.role }
-          : a,
+        a.uiId === uiId ? { ...a, ...patch, role: (patch.role ?? a.role) as AgentRole } : a,
       ),
     );
 
@@ -240,18 +167,11 @@ export default function CreateGroupDialog({ open, onClose, onCreated }: Props) {
       setError('Add at least one agent');
       return;
     }
-    // Name uniqueness within the group:
     const names = new Set<string>();
     for (const a of agents) {
       const n = a.agentName.trim();
-      if (!n) {
-        setError('All agents need a name');
-        return;
-      }
-      if (names.has(n)) {
-        setError(`Duplicate agent name: ${n}`);
-        return;
-      }
+      if (!n) { setError('All agents need a name'); return; }
+      if (names.has(n)) { setError(`Duplicate agent name: ${n}`); return; }
       names.add(n);
     }
 
@@ -265,13 +185,10 @@ export default function CreateGroupDialog({ open, onClose, onCreated }: Props) {
         allowToolCalls,
         requireToolApproval,
         allowedToolIds:
-          !allowToolCalls || allToolsSelected || selectedToolIdsForSelect.length === 0
+          !allowToolCalls || allToolsSelected || validSelectedToolIds.length === 0
             ? null
-            : selectedToolIdsForSelect,
-        agents: agents.map(({ uiId: _uiId, ...rest }, idx) => ({
-          ...rest,
-          position: idx,
-        })),
+            : validSelectedToolIds,
+        agents: agents.map(({ uiId: _uiId, ...rest }, idx) => ({ ...rest, position: idx })),
       });
       onCreated(result.group.id);
     } catch (err) {
@@ -281,13 +198,15 @@ export default function CreateGroupDialog({ open, onClose, onCreated }: Props) {
     }
   };
 
+  if (!open) return null;
+  if (!rendered) return null;
+
   return (
     <Dialog open={open} onClose={onClose} maxWidth="md" fullWidth>
       <DialogTitle>New AI Panel</DialogTitle>
       <DialogContent dividers>
-        <CreateGroupDialogErrorBoundary resetKey={open ? 'open' : 'closed'}>
-          {error && <Alert severity="error" sx={{ mb: 2 }}>{error}</Alert>}
-          <Stack spacing={2}>
+        {error && <Alert severity="error" sx={{ mb: 2 }}>{error}</Alert>}
+        <Stack spacing={2}>
           <TextField
             label="Panel name"
             value={name}
@@ -365,11 +284,9 @@ export default function CreateGroupDialog({ open, onClose, onCreated }: Props) {
                   />
                   {!allToolsSelected && (
                     <FormControl size="small" fullWidth>
-                      <InputLabel>Allowed tools</InputLabel>
                       <Select
-                        key={tools.length}
                         multiple
-                        value={selectedToolIdsForSelect}
+                        value={validSelectedToolIds}
                         input={<OutlinedInput label="Allowed tools" />}
                         onChange={e => {
                           const v = e.target.value;
@@ -386,7 +303,7 @@ export default function CreateGroupDialog({ open, onClose, onCreated }: Props) {
                       >
                         {tools.map(t => (
                           <MenuItem key={t.id} value={t.id}>
-                            <Checkbox checked={selectedToolIdsForSelect.includes(t.id)} />
+                            <Checkbox checked={validSelectedToolIds.includes(t.id)} />
                             <ListItemText
                               primary={t.name}
                               secondary={
@@ -436,37 +353,39 @@ export default function CreateGroupDialog({ open, onClose, onCreated }: Props) {
               </Alert>
             )}
 
-            <Stack spacing={1.5}>
-              {agents.map(agent => {
-                const agentRole = normalizeRole(agent.role);
-                const role = ROLES.find(r => r.value === agentRole);
-                const providerValue = providers.some(p => p.id === agent.providerId)
-                  ? agent.providerId
-                  : providers[0]?.id || '';
-                return (
-                  <Box
-                    key={agent.uiId}
-                    sx={{
-                      border: 1,
-                      borderColor: 'divider',
-                      borderRadius: 1,
-                      p: 1.5,
-                    }}
-                  >
-                    <Stack direction={{ xs: 'column', sm: 'row' }} spacing={1} alignItems={{ sm: 'center' }}>
-                      <TextField
-                        label="Display name"
-                        size="small"
-                        value={agent.agentName}
-                        onChange={e => updateAgent(agent.uiId, { agentName: e.target.value })}
-                        sx={{ flex: 1, minWidth: 120 }}
-                      />
-                      {providers.length > 0 ? (
+            {agents.map(agent => {
+              // Ensure role is valid
+              const roleValue = (ROLES.find(r => r.value === agent.role)
+                ? agent.role
+                : 'advisor') as AgentRole;
+
+              // Ensure provider value is valid
+              const providerValue = providers.find(p => p.id === agent.providerId)
+                ? agent.providerId
+                : (providers.length > 0 ? providers[0].id : '');
+
+              return (
+                <Box
+                  key={agent.uiId}
+                  sx={{
+                    border: 1,
+                    borderColor: 'divider',
+                    borderRadius: 1,
+                    p: 1.5,
+                  }}
+                >
+                  <Stack direction={{ xs: 'column', sm: 'row' }} spacing={1} alignItems={{ sm: 'center' }}>
+                    <TextField
+                      label="Display name"
+                      size="small"
+                      value={agent.agentName || ''}
+                      onChange={e => updateAgent(agent.uiId, { agentName: e.target.value })}
+                      sx={{ flex: 1, minWidth: 120 }}
+                    />
+                    {providers.length > 0 ? (
+                      <FormControl size="small" sx={{ minWidth: 220, flex: 2 }}>
                         <Select
-                          size="small"
-                          label="Provider"
-                          value={providers.length > 0 ? providerValue : ''}
-                          defaultValue=""
+                          value={providerValue || ''}
                           onChange={e => {
                             const p = providers.find(x => x.id === e.target.value);
                             if (!p) return;
@@ -475,7 +394,6 @@ export default function CreateGroupDialog({ open, onClose, onCreated }: Props) {
                               modelId: p.modelId,
                             });
                           }}
-                          sx={{ minWidth: 220, flex: 2 }}
                         >
                           {providers.map(p => (
                             <MenuItem key={p.id} value={p.id}>
@@ -490,24 +408,23 @@ export default function CreateGroupDialog({ open, onClose, onCreated }: Props) {
                             </MenuItem>
                           ))}
                         </Select>
-                      ) : (
-                        <TextField
-                          size="small"
-                          label="Provider"
-                          value="Loading providers…"
-                          disabled
-                          sx={{ minWidth: 220, flex: 2 }}
-                        />
-                      )}
-                      <Select
+                      </FormControl>
+                    ) : (
+                      <TextField
                         size="small"
-                        label="Role"
-                        value={agentRole}
+                        label="Provider"
+                        value="Loading…"
+                        disabled
+                        sx={{ minWidth: 220, flex: 2 }}
+                      />
+                    )}
+                    <FormControl size="small" sx={{ minWidth: 140 }}>
+                      <Select
+                        value={roleValue}
                         disabled={loadingModels}
                         onChange={e =>
                           updateAgent(agent.uiId, { role: e.target.value as AgentRole })
                         }
-                        sx={{ minWidth: 140 }}
                       >
                         {ROLES.map(r => (
                           <MenuItem key={r.value} value={r.value}>
@@ -515,43 +432,40 @@ export default function CreateGroupDialog({ open, onClose, onCreated }: Props) {
                           </MenuItem>
                         ))}
                       </Select>
-                      <IconButton
-                        size="small"
-                        onClick={() => removeAgent(agent.uiId)}
-                        aria-label="Remove agent"
-                      >
-                        <DeleteIcon fontSize="small" />
-                      </IconButton>
-                    </Stack>
-                    {role && (
-                      <Typography
-                        variant="caption"
-                        color="text.secondary"
-                        sx={{ display: 'block', mt: 0.5 }}
-                      >
-                        {role.hint}
-                      </Typography>
-                    )}
-                    <TextField
-                      label="Custom system prompt (optional)"
+                    </FormControl>
+                    <IconButton
                       size="small"
-                      multiline
-                      minRows={1}
-                      maxRows={4}
-                      value={agent.systemPrompt || ''}
-                      onChange={e =>
-                        updateAgent(agent.uiId, { systemPrompt: e.target.value })
-                      }
-                      fullWidth
-                      sx={{ mt: 1 }}
-                    />
-                  </Box>
-                );
-              })}
-            </Stack>
+                      onClick={() => removeAgent(agent.uiId)}
+                      aria-label="Remove agent"
+                    >
+                      <DeleteIcon fontSize="small" />
+                    </IconButton>
+                  </Stack>
+                  <Typography
+                    variant="caption"
+                    color="text.secondary"
+                    sx={{ display: 'block', mt: 0.5 }}
+                  >
+                    {ROLES.find(r => r.value === roleValue)?.hint || ''}
+                  </Typography>
+                  <TextField
+                    label="Custom system prompt (optional)"
+                    size="small"
+                    multiline
+                    minRows={1}
+                    maxRows={4}
+                    value={agent.systemPrompt || ''}
+                    onChange={e =>
+                      updateAgent(agent.uiId, { systemPrompt: e.target.value })
+                    }
+                    fullWidth
+                    sx={{ mt: 1 }}
+                  />
+                </Box>
+              );
+            })}
           </Box>
-          </Stack>
-        </CreateGroupDialogErrorBoundary>
+        </Stack>
       </DialogContent>
       <DialogActions>
         <Button onClick={onClose}>Cancel</Button>
