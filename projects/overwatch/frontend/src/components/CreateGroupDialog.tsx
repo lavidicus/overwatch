@@ -32,6 +32,7 @@ import {
   AgentRole,
 } from '../api/group-chat';
 import { listTools, Tool } from '../api/tools';
+import { safeRandomUUID } from '../utils/uuid';
 
 const ROLES: { value: AgentRole; label: string; hint: string }[] = [
   { value: 'facilitator', label: 'Facilitator', hint: 'Keeps the discussion on track' },
@@ -138,7 +139,7 @@ export default function CreateGroupDialog({ open, onClose, onCreated }: Props) {
     setAgents(prev => [
       ...prev,
       {
-        uiId: crypto.randomUUID(),
+        uiId: safeRandomUUID(),
         agentName: `${prov.name} ${prev.length + 1}`,
         providerId: prov.id,
         modelId: prov.modelId,
