@@ -114,9 +114,9 @@ export interface ConsensusResult {
 export interface GroupAgentInput {
   agentName: string;
   providerId: string;
-  modelId?: string;
+  modelId?: string | null;
   role: AgentRole;
-  systemPrompt?: string;
+  systemPrompt?: string | null;
   position?: number;
   isActive?: boolean;
 }

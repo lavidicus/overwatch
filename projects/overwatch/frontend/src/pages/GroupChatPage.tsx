@@ -25,6 +25,7 @@ import {
 } from '@mui/material';
 import AddIcon from '@mui/icons-material/Add';
 import DeleteIcon from '@mui/icons-material/Delete';
+import EditIcon from '@mui/icons-material/Edit';
 import SendIcon from '@mui/icons-material/Send';
 import MenuIcon from '@mui/icons-material/Menu';
 import ExpandLessIcon from '@mui/icons-material/ExpandLess';
@@ -190,6 +191,16 @@ export default function GroupChatPage() {
   const [running, setRunning] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [showCreate, setShowCreate] = useState(false);
+  const [editingGroup, setEditingGroup] = useState<{
+    id: string;
+    name: string;
+    description: string | null;
+    maxRounds: number;
+    allowToolCalls: boolean;
+    requireToolApproval: boolean;
+    allowedToolIds: string[] | null;
+    agents: { agentName: string; providerId: string; modelId: string | null; role: 'facilitator' | 'analyst' | 'critic' | 'advisor'; systemPrompt: string | null; position?: number }[];
+  } | null>(null);
   const [drawerOpen, setDrawerOpen] = useState(!isMobile);
   const [expandedRounds, setExpandedRounds] = useState<Record<string, boolean>>({});
   const [pendingApprovals, setPendingApprovals] = useState<Record<string, ToolEvent>>({});
@@ -467,6 +478,20 @@ export default function GroupChatPage() {
     await loadGroup(groupId);
   };
 
+  const handleEdit = (group: ChatGroupDetail) => {
+    setEditingGroup({
+      id: group.id,
+      name: group.name,
+      description: group.description,
+      maxRounds: group.maxRounds,
+      allowToolCalls: group.allowToolCalls,
+      requireToolApproval: group.requireToolApproval,
+      allowedToolIds: group.allowedToolIds,
+      agents: group.agents,
+    });
+    setShowCreate(true);
+  };
+
   const handleDelete = async (groupId: string) => {
     if (!confirm('Delete this panel and all its rounds?')) return;
     try {
@@ -672,21 +697,28 @@ export default function GroupChatPage() {
             )}
           </Box>
           {currentGroup && (
-            <Stack direction="row" spacing={0.5}>
-              {liveOrCurrentAgents.map(a => (
-                <Tooltip key={a.id} title={`${a.agentName} · ${a.role}`}>
-                  <Avatar
-                    sx={{
-                      bgcolor: colorFor(a.agentName),
-                      width: 32,
-                      height: 32,
-                      fontSize: 13,
-                    }}
-                  >
-                    {initialsFor(a.agentName)}
-                  </Avatar>
-                </Tooltip>
-              ))}
+            <Stack direction="row" spacing={0.5} alignItems="center">
+              <Stack direction="row" spacing={0.5}>
+                {liveOrCurrentAgents.map(a => (
+                  <Tooltip key={a.id} title={`${a.agentName} · ${a.role}`}>
+                    <Avatar
+                      sx={{
+                        bgcolor: colorFor(a.agentName),
+                        width: 32,
+                        height: 32,
+                        fontSize: 13,
+                      }}
+                    >
+                      {initialsFor(a.agentName)}
+                    </Avatar>
+                  </Tooltip>
+                ))}
+              </Stack>
+              <Tooltip title="Edit panel">
+                <IconButton size="small" onClick={() => handleEdit(currentGroup)}>
+                  <EditIcon fontSize="small" />
+                </IconButton>
+              </Tooltip>
             </Stack>
           )}
         </Box>
@@ -810,8 +842,9 @@ export default function GroupChatPage() {
 
       <CreateGroupDialog
         open={showCreate}
-        onClose={() => setShowCreate(false)}
+        onClose={() => { setEditingGroup(null); setShowCreate(false); }}
         onCreated={handleCreated}
+        editData={editingGroup ?? undefined}
       />
     </Box>
   );

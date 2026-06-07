@@ -32,6 +32,7 @@ import {
   AgentRole,
 } from '../api/group-chat';
 import { listTools, Tool } from '../api/tools';
+import { updateGroup } from '../api/group-chat';
 import { safeRandomUUID } from '../utils/uuid';
 
 const ROLES: { value: AgentRole; label: string; hint: string }[] = [
@@ -41,9 +42,11 @@ const ROLES: { value: AgentRole; label: string; hint: string }[] = [
   { value: 'advisor', label: 'Advisor', hint: 'General contributor' },
 ];
 
-interface AgentDraft extends GroupAgentInput {
+interface AgentDraft extends Omit<GroupAgentInput, 'systemPrompt' | 'modelId'> {
   uiId: string;
   providerId: string;
+  modelId: string | null;
+  systemPrompt: string | null;
 }
 
 interface ProviderSummary {
@@ -54,13 +57,26 @@ interface ProviderSummary {
   modelName: string;
 }
 
+export interface EditGroupData {
+  id: string;
+  name: string;
+  description: string | null;
+  maxRounds: number;
+  allowToolCalls: boolean;
+  requireToolApproval: boolean;
+  allowedToolIds: string[] | null;
+  agents: { agentName: string; providerId: string; modelId: string | null; role: AgentRole; systemPrompt: string | null; position?: number }[];
+}
+
 interface Props {
   open: boolean;
   onClose: () => void;
   onCreated: (groupId: string) => void;
+  editData?: EditGroupData;
 }
 
-export default function CreateGroupDialog({ open, onClose, onCreated }: Props) {
+export default function CreateGroupDialog({ open, onClose, onCreated, editData }: Props) {
+  const isEditing = !!editData;
   const [name, setName] = useState('');
   const [description, setDescription] = useState('');
   const [maxRounds, setMaxRounds] = useState(5);
@@ -107,7 +123,7 @@ export default function CreateGroupDialog({ open, onClose, onCreated }: Props) {
     [selectedToolIds, tools],
   );
 
-  // Force re-render after dialog opens
+  // Populate or reset form fields when dialog opens/closes
   useEffect(() => {
     if (open) {
       setRendered(true);
@@ -122,6 +138,36 @@ export default function CreateGroupDialog({ open, onClose, onCreated }: Props) {
       listTools()
         .then(r => setTools(r.tools.filter(t => t.enabled)))
         .catch(() => setTools([]));
+
+      // Populate from editData in edit mode
+      if (editData) {
+        setName(editData.name);
+        setDescription(editData.description || '');
+        setMaxRounds(editData.maxRounds);
+        setAllowToolCalls(editData.allowToolCalls);
+        setRequireToolApproval(editData.requireToolApproval);
+        const toolIds = editData.allowedToolIds ?? [];
+        setSelectedToolIds(toolIds);
+        setAllToolsSelected(toolIds.length === 0);
+        setAgents(editData.agents.map(a => ({
+          uiId: a.providerId + a.modelId + a.agentName + safeRandomUUID(),
+          agentName: a.agentName,
+          providerId: a.providerId,
+          modelId: a.modelId || '',
+          role: a.role,
+          systemPrompt: a.systemPrompt || null,
+          position: a.position,
+        })));
+      } else {
+        setName('');
+        setDescription('');
+        setMaxRounds(5);
+        setAgents([]);
+        setAllowToolCalls(true);
+        setRequireToolApproval(true);
+        setSelectedToolIds([]);
+        setAllToolsSelected(true);
+      }
     } else {
       setName('');
       setDescription('');
@@ -132,7 +178,7 @@ export default function CreateGroupDialog({ open, onClose, onCreated }: Props) {
       setSelectedToolIds([]);
       setAllToolsSelected(true);
     }
-  }, [open]);
+  }, [open, editData]);
 
   // Reset error when dialog re-opens
   useEffect(() => {
@@ -152,6 +198,7 @@ export default function CreateGroupDialog({ open, onClose, onCreated }: Props) {
         providerId: prov.id,
         modelId: models.length > 0 ? models[0].modelId : prov.modelId,
         role: prev.length === 0 ? 'facilitator' : 'advisor',
+        systemPrompt: null,
         position: prev.length,
       },
     ]);
@@ -187,21 +234,38 @@ export default function CreateGroupDialog({ open, onClose, onCreated }: Props) {
     setSubmitting(true);
     setError(null);
     try {
-      const result = await createGroup({
-        name: name.trim(),
-        description: description.trim() || undefined,
-        maxRounds,
-        allowToolCalls,
-        requireToolApproval,
-        allowedToolIds:
-          !allowToolCalls || allToolsSelected || validSelectedToolIds.length === 0
-            ? null
-            : validSelectedToolIds,
-        agents: agents.map(({ uiId: _uiId, ...rest }, idx) => ({ ...rest, position: idx })),
-      });
-      onCreated(result.group.id);
+      const agentPayload = agents.map(({ uiId: _uiId, ...rest }, idx) => ({ ...rest, position: idx }));
+      if (isEditing && editData) {
+        await updateGroup(editData.id, {
+          name: name.trim(),
+          description: description.trim() || undefined,
+          maxRounds,
+          allowToolCalls,
+          requireToolApproval,
+          allowedToolIds:
+            !allowToolCalls || allToolsSelected || validSelectedToolIds.length === 0
+              ? null
+              : validSelectedToolIds,
+          agents: agentPayload,
+        });
+        onClose();
+      } else {
+        const result = await createGroup({
+          name: name.trim(),
+          description: description.trim() || undefined,
+          maxRounds,
+          allowToolCalls,
+          requireToolApproval,
+          allowedToolIds:
+            !allowToolCalls || allToolsSelected || validSelectedToolIds.length === 0
+              ? null
+              : validSelectedToolIds,
+          agents: agentPayload,
+        });
+        onCreated(result.group.id);
+      }
     } catch (err) {
-      setError(err instanceof Error ? err.message : 'Failed to create group');
+      setError(err instanceof Error ? err.message : 'Failed to save panel');
     } finally {
       setSubmitting(false);
     }
@@ -212,7 +276,7 @@ export default function CreateGroupDialog({ open, onClose, onCreated }: Props) {
 
   return (
     <Dialog open={open} onClose={onClose} maxWidth="md" fullWidth>
-      <DialogTitle>New AI Panel</DialogTitle>
+      <DialogTitle>{isEditing ? 'Edit AI Panel' : 'New AI Panel'}</DialogTitle>
       <DialogContent dividers>
         {error && <Alert severity="error" sx={{ mb: 2 }}>{error}</Alert>}
         <Stack spacing={2}>
@@ -504,13 +568,13 @@ export default function CreateGroupDialog({ open, onClose, onCreated }: Props) {
         </Stack>
       </DialogContent>
       <DialogActions>
-        <Button onClick={onClose}>Cancel</Button>
+        <Button onClick={onClose}>{isEditing ? 'Cancel' : 'Cancel'}</Button>
         <Button
           variant="contained"
           onClick={handleSubmit}
           disabled={submitting || agents.length === 0 || !name.trim()}
         >
-          {submitting ? 'Creating…' : 'Create panel'}
+          {submitting ? 'Saving…' : isEditing ? 'Save panel' : 'Create panel'}
         </Button>
       </DialogActions>
     </Dialog>
