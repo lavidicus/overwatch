@@ -320,3 +320,26 @@
 {"level":"info","message":"Built-in tools synced","timestamp":"2026-06-07T16:49:49.499Z"}
 {"level":"info","message":"Queue system initialized","timestamp":"2026-06-07T16:49:49.512Z"}
 {"level":"info","message":"Memory subsystem initialized","timestamp":"2026-06-07T16:49:49.517Z"}
+{"level":"info","message":"Client connected: lrpyDQs1FO2ZZR3nAAAB (user: admin@overwatch.local)","timestamp":"2026-06-07T16:50:50.982Z"}
+{"level":"info","message":"Socket lrpyDQs1FO2ZZR3nAAAB joined group room group:d0be2014-1732-4f6a-830d-6062a4a371c1","timestamp":"2026-06-07T16:51:29.220Z"}
+{"level":"info","message":"Client disconnected: lrpyDQs1FO2ZZR3nAAAB","timestamp":"2026-06-07T16:52:30.662Z"}
+{"level":"info","message":"Overwatch backend running on port 3000","timestamp":"2026-06-07T16:54:45.922Z"}
+{"level":"info","message":"Environment: development","timestamp":"2026-06-07T16:54:45.925Z"}
+{"level":"info","message":"Built-in tools synced","timestamp":"2026-06-07T16:54:46.119Z"}
+{"level":"info","message":"Queue system initialized","timestamp":"2026-06-07T16:54:46.132Z"}
+{"level":"info","message":"Memory subsystem initialized","timestamp":"2026-06-07T16:54:46.138Z"}
+{"level":"info","message":"Overwatch backend running on port 3000","timestamp":"2026-06-07T17:01:55.474Z"}
+{"level":"info","message":"Environment: development","timestamp":"2026-06-07T17:01:55.477Z"}
+{"level":"info","message":"Built-in tools synced","timestamp":"2026-06-07T17:01:55.671Z"}
+{"level":"info","message":"Queue system initialized","timestamp":"2026-06-07T17:01:55.685Z"}
+{"level":"info","message":"Memory subsystem initialized","timestamp":"2026-06-07T17:01:55.690Z"}
+{"level":"info","message":"Overwatch backend running on port 3000","timestamp":"2026-06-07T17:04:50.908Z"}
+{"level":"info","message":"Environment: development","timestamp":"2026-06-07T17:04:50.911Z"}
+{"level":"info","message":"Built-in tools synced","timestamp":"2026-06-07T17:04:51.107Z"}
+{"level":"info","message":"Queue system initialized","timestamp":"2026-06-07T17:04:51.120Z"}
+{"level":"info","message":"Memory subsystem initialized","timestamp":"2026-06-07T17:04:51.125Z"}
+{"level":"info","message":"Overwatch backend running on port 3000","timestamp":"2026-06-07T17:05:59.853Z"}
+{"level":"info","message":"Environment: development","timestamp":"2026-06-07T17:05:59.856Z"}
+{"level":"info","message":"Built-in tools synced","timestamp":"2026-06-07T17:06:00.037Z"}
+{"level":"info","message":"Queue system initialized","timestamp":"2026-06-07T17:06:00.050Z"}
+{"level":"info","message":"Memory subsystem initialized","timestamp":"2026-06-07T17:06:00.055Z"}
