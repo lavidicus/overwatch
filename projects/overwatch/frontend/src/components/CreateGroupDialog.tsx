@@ -250,10 +250,7 @@ export default function CreateGroupDialog({ open, onClose, onCreated, editData }
       setError('Panel name is required');
       return;
     }
-    if (agents.length === 0) {
-      setError('Add at least one advisor');
-      return;
-    }
+    // Judge-only panels are allowed (agents can be empty)
     const submitJudgeProviderId = judgeProviderId || selectedJudgeProviderId;
     // judgeModelId is auto-derived from provider, no need to validate separately
     if (!submitJudgeProviderId) {
@@ -666,7 +663,7 @@ export default function CreateGroupDialog({ open, onClose, onCreated, editData }
         <Button
           variant="contained"
           onClick={handleSubmit}
-          disabled={submitting || agents.length === 0 || !name.trim()}
+          disabled={submitting || !name.trim() || !judgeProviderId}
         >
           {submitting ? 'Saving…' : isEditing ? 'Save panel' : 'Create panel'}
         </Button>

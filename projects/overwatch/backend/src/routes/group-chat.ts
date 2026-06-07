@@ -38,7 +38,7 @@ const createGroupSchema = z.object({
   allowToolCalls: z.boolean().optional(),
   requireToolApproval: z.boolean().optional(),
   allowedToolIds: z.array(z.string().uuid()).nullable().optional(),
-  agents: z.array(agentSchema).min(1).max(8),
+  agents: z.array(agentSchema).min(0).max(8),
 });
 
 const updateGroupSchema = z.object({

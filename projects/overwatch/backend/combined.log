@@ -273,3 +273,19 @@
 {"level":"info","message":"Environment: development","timestamp":"2026-06-06T11:51:44.769Z"}
 {"level":"info","message":"Overwatch backend running on port 3000","timestamp":"2026-06-06T11:55:19.633Z"}
 {"level":"info","message":"Environment: development","timestamp":"2026-06-06T11:55:19.635Z"}
+{"level":"info","message":"Overwatch backend running on port 3000","timestamp":"2026-06-07T16:25:34.687Z"}
+{"level":"info","message":"Environment: development","timestamp":"2026-06-07T16:25:34.690Z"}
+{"level":"info","message":"Built-in tools synced","timestamp":"2026-06-07T16:25:34.873Z"}
+{"level":"info","message":"Queue system initialized","timestamp":"2026-06-07T16:25:34.886Z"}
+{"level":"info","message":"Memory subsystem initialized","timestamp":"2026-06-07T16:25:34.900Z"}
+{"clientVersion":"6.19.3","code":"P2021","level":"error","message":"Unhandled error: \nInvalid `prisma.advisorProfile.findMany()` invocation:\n\n\nThe table `main.advisor_profiles` does not exist in the current database.","meta":{"modelName":"AdvisorProfile","table":"main.advisor_profiles"},"name":"PrismaClientKnownRequestError","stack":"PrismaClientKnownRequestError: \nInvalid `prisma.advisorProfile.findMany()` invocation:\n\n\nThe table `main.advisor_profiles` does not exist in the current database.\n    at ei.handleRequestError (/home/localadmin/.openclaw/workspace/projects/overwatch/node_modules/.pnpm/@prisma+client@6.19.3_prisma@6.19.3_typescript@5.9.3__typescript@5.9.3/node_modules/@prisma/client/runtime/library.js:121:7268)\n    at ei.handleAndLogRequestError (/home/localadmin/.openclaw/workspace/projects/overwatch/node_modules/.pnpm/@prisma+client@6.19.3_prisma@6.19.3_typescript@5.9.3__typescript@5.9.3/node_modules/@prisma/client/runtime/library.js:121:6593)\n    at ei.request (/home/localadmin/.openclaw/workspace/projects/overwatch/node_modules/.pnpm/@prisma+client@6.19.3_prisma@6.19.3_typescript@5.9.3__typescript@5.9.3/node_modules/@prisma/client/runtime/library.js:121:6300)\n    at async a (/home/localadmin/.openclaw/workspace/projects/overwatch/node_modules/.pnpm/@prisma+client@6.19.3_prisma@6.19.3_typescript@5.9.3__typescript@5.9.3/node_modules/@prisma/client/runtime/library.js:130:9551)\n    at async file:///home/localadmin/.openclaw/workspace/projects/overwatch/backend/dist/routes/advisors.js:30:22","timestamp":"2026-06-07T16:25:36.796Z"}
+{"level":"info","message":"Overwatch backend running on port 3000","timestamp":"2026-06-07T16:25:58.314Z"}
+{"level":"info","message":"Environment: development","timestamp":"2026-06-07T16:25:58.317Z"}
+{"level":"info","message":"Built-in tools synced","timestamp":"2026-06-07T16:25:58.504Z"}
+{"level":"info","message":"Queue system initialized","timestamp":"2026-06-07T16:25:58.516Z"}
+{"level":"info","message":"Memory subsystem initialized","timestamp":"2026-06-07T16:25:58.521Z"}
+{"level":"info","message":"Overwatch backend running on port 3000","timestamp":"2026-06-07T16:26:34.399Z"}
+{"level":"info","message":"Environment: development","timestamp":"2026-06-07T16:26:34.401Z"}
+{"level":"info","message":"Built-in tools synced","timestamp":"2026-06-07T16:26:34.581Z"}
+{"level":"info","message":"Queue system initialized","timestamp":"2026-06-07T16:26:34.593Z"}
+{"level":"info","message":"Memory subsystem initialized","timestamp":"2026-06-07T16:26:34.599Z"}
