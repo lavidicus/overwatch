@@ -236,3 +236,4 @@ httpServer.listen(PORT, async () => {
 export const getIO = () => io;
 
 export { app, io, logger };
+// Note: advisor-generate is mounted under /api/advisors in the advisors router

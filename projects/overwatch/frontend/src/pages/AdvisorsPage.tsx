@@ -18,9 +18,11 @@ import {
   CircularProgress,
   MenuItem,
   Chip,
+  Stack,
+  Paper,
 } from '@mui/material';
-import { Edit, Delete, Add } from '@mui/icons-material';
-import { AdvisorProfile, listAdvisors, createAdvisor, updateAdvisor, deleteAdvisor, listProviders, Provider } from '../api/advisors';
+import { Edit, Delete, Add, Construction, RocketLaunch } from '@mui/icons-material';
+import { AdvisorProfile, listAdvisors, createAdvisor, updateAdvisor, deleteAdvisor, listProviders, Provider, generateAdvisor } from '../api/advisors';
 
 export default function AdvisorsPage() {
   const [advisors, setAdvisors] = useState<AdvisorProfile[]>([]);
@@ -35,6 +37,13 @@ export default function AdvisorsPage() {
     providerId: '',
     model: '',
   });
+
+  // AI generation state
+  const [genInstruction, setGenInstruction] = useState('');
+  const [genProviderId, setGenProviderId] = useState('');
+  const [generating, setGenerating] = useState(false);
+  const [genResult, setGenResult] = useState<string | null>(null);
+  const [genError, setGenError] = useState<string | null>(null);
   const [deletingId, setDeletingId] = useState<string | null>(null);
 
   const loadData = async () => {
@@ -71,6 +80,10 @@ export default function AdvisorsPage() {
         model: '',
       });
     }
+    setGenInstruction('');
+    setGenProviderId('');
+    setGenResult(null);
+    setGenError(null);
     setDialogOpen(true);
   };
 
@@ -110,6 +123,34 @@ export default function AdvisorsPage() {
       setError(e.message);
     } finally {
       setDeletingId(null);
+    }
+  };
+
+  const handleGenerate = async () => {
+    if (!genInstruction.trim()) {
+      setGenError('Please describe what kind of advisor you want to create.');
+      return;
+    }
+    setGenerating(true);
+    setGenError(null);
+    setGenResult(null);
+    try {
+      const result = await generateAdvisor({
+        instruction: genInstruction,
+        providerId: genProviderId || undefined,
+      });
+      setGenResult(result.generatedPrompt);
+    } catch (e: any) {
+      setGenError(e.message || 'Generation failed');
+    } finally {
+      setGenerating(false);
+    }
+  };
+
+  const handleAcceptPrompt = () => {
+    if (genResult) {
+      setFormData(prev => ({ ...prev, systemPrompt: genResult }));
+      setGenResult(null);
     }
   };
 
@@ -171,18 +212,14 @@ export default function AdvisorsPage() {
                 {advisor.provider ? (
                   <Chip label={advisor.provider.name} size="small" />
                 ) : (
-                  <Typography variant="body2" color="text.secondary">
-                    —
-                  </Typography>
+                  <Typography variant="body2" color="text.secondary">—</Typography>
                 )}
               </TableCell>
               <TableCell>
                 {advisor.model ? (
                   <Chip label={advisor.model} size="small" variant="outlined" />
                 ) : (
-                  <Typography variant="body2" color="text.secondary">
-                    —
-                  </Typography>
+                  <Typography variant="body2" color="text.secondary">—</Typography>
                 )}
               </TableCell>
               <TableCell align="right">
@@ -206,8 +243,79 @@ export default function AdvisorsPage() {
       {/* Create/Edit Dialog */}
       <Dialog open={dialogOpen} onClose={handleCloseDialog} maxWidth="md" fullWidth>
         <DialogTitle>{editingAdvisor ? 'Edit Advisor' : 'Create New Advisor'}</DialogTitle>
-        <DialogContent>
-          <Box sx={{ display: 'flex', flexDirection: 'column', gap: 2, pt: 1 }}>
+        <DialogContent sx={{ pt: 2 }}>
+          {/* --- AI Assistance Section --- */}
+          <Paper variant="outlined" sx={{ p: 2, mb: 2, bgcolor: 'background.default' }}>
+            <Stack direction="row" alignItems="center" spacing={1} mb={1}>
+              <Construction fontSize="small" color="primary" />
+              <Typography variant="subtitle2" fontWeight={600}>AI-Assisted Profile Generation</Typography>
+            </Stack>
+            <Typography variant="caption" color="text.secondary" sx={{ display: 'block', mb: 1 }}>
+              Describe what your advisor should do and the AI will generate the system prompt for you.
+            </Typography>
+            <TextField
+              label="Describe your advisor"
+              value={genInstruction}
+              onChange={(e) => setGenInstruction(e.target.value)}
+              fullWidth
+              multiline
+              rows={3}
+              placeholder="e.g., Create a security review advisor that specializes in AWS cloud infrastructure, checks for CIS benchmarks, and recommends remediations."
+              sx={{ mb: 1 }}
+            />
+            <TextField
+              label="Provider (optional — auto-selects first connected provider)"
+              select
+              value={genProviderId}
+              onChange={(e) => setGenProviderId(e.target.value)}
+              fullWidth
+              size="small"
+              sx={{ mb: 1 }}
+            >
+              <MenuItem value=""><em>Auto-select</em></MenuItem>
+              {providers.map((provider) => (
+                <MenuItem key={provider.id} value={provider.id}>
+                  {provider.name} ({provider.type})
+                </MenuItem>
+              ))}
+            </TextField>
+            {genError && <Typography color="error" variant="caption" sx={{ display: 'block', mb: 1 }}>{genError}</Typography>}
+            <Button
+              variant="outlined"
+              startIcon={generating ? <CircularProgress size={16} /> : <RocketLaunch />}
+              onClick={handleGenerate}
+              disabled={generating || !genInstruction.trim()}
+              fullWidth
+            >
+              {generating ? 'Generating...' : 'Generate Advisor Profile'}
+            </Button>
+          </Paper>
+
+          {/* Generated Result */}
+          {genResult && (
+            <Paper variant="outlined" sx={{ p: 2, mb: 2, bgcolor: 'success.lighter' }}>
+              <Stack direction="row" alignItems="center" justifyContent="space-between">
+                <Typography variant="subtitle2" color="success.dark">
+                  ✅ Generated successfully
+                </Typography>
+                <Stack direction="row" spacing={1}>
+                  <Button size="small" variant="outlined" onClick={() => setGenResult(null)}>Discard</Button>
+                  <Button size="small" variant="contained" onClick={handleAcceptPrompt}>Use This Prompt</Button>
+                </Stack>
+              </Stack>
+              <TextField
+                fullWidth
+                multiline
+                rows={6}
+                value={genResult}
+                InputProps={{ readOnly: true }}
+                sx={{ mt: 1 }}
+              />
+            </Paper>
+          )}
+
+          {/* --- Manual Form --- */}
+          <Box sx={{ display: 'flex', flexDirection: 'column', gap: 2 }}>
             <TextField
               label="Name"
               value={formData.name}
@@ -233,9 +341,7 @@ export default function AdvisorsPage() {
               onChange={(e) => setFormData({ ...formData, providerId: e.target.value })}
               fullWidth
             >
-              <MenuItem value="">
-                <em>Default Provider</em>
-              </MenuItem>
+              <MenuItem value=""><em>Default Provider</em></MenuItem>
               {providers.map((provider) => (
                 <MenuItem key={provider.id} value={provider.id}>
                   {provider.name} ({provider.type})
