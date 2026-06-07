@@ -1,4 +1,5 @@
-import { useEffect, useState, useMemo } from 'react';
+import { Component, useEffect, useState, useMemo } from 'react';
+import type { ReactNode } from 'react';
 import {
   Dialog,
   DialogTitle,
@@ -40,6 +41,55 @@ const ROLES: { value: AgentRole; label: string; hint: string }[] = [
   { value: 'critic', label: 'Critic', hint: 'Challenges assumptions, surfaces risks' },
   { value: 'advisor', label: 'Advisor', hint: 'General contributor' },
 ];
+
+const DEFAULT_ROLE: AgentRole = 'advisor';
+const VALID_ROLE_VALUES = new Set<AgentRole>(ROLES.map(r => r.value));
+
+function normalizeRole(role: AgentRole): AgentRole {
+  return VALID_ROLE_VALUES.has(role) ? role : DEFAULT_ROLE;
+}
+
+interface DialogErrorBoundaryProps {
+  children: ReactNode;
+  resetKey: string;
+}
+
+interface DialogErrorBoundaryState {
+  hasError: boolean;
+  message: string;
+}
+
+class CreateGroupDialogErrorBoundary extends Component<
+  DialogErrorBoundaryProps,
+  DialogErrorBoundaryState
+> {
+  state: DialogErrorBoundaryState = { hasError: false, message: '' };
+
+  static getDerivedStateFromError(error: unknown): DialogErrorBoundaryState {
+    return {
+      hasError: true,
+      message: error instanceof Error ? error.message : 'Unexpected dialog error',
+    };
+  }
+
+  componentDidUpdate(prevProps: DialogErrorBoundaryProps) {
+    if (prevProps.resetKey !== this.props.resetKey && this.state.hasError) {
+      this.setState({ hasError: false, message: '' });
+    }
+  }
+
+  render() {
+    if (this.state.hasError) {
+      return (
+        <Alert severity="error">
+          The panel form could not be displayed. {this.state.message}
+        </Alert>
+      );
+    }
+
+    return this.props.children;
+  }
+}
 
 interface AgentDraft extends GroupAgentInput {
   uiId: string;
@@ -94,6 +144,11 @@ export default function CreateGroupDialog({ open, onClose, onCreated }: Props) {
       }));
   }, [available]);
 
+  const selectedToolIdsForSelect = useMemo(
+    () => selectedToolIds.filter(id => tools.some(t => t.id === id)),
+    [selectedToolIds, tools],
+  );
+
   useEffect(() => {
     if (!open) return;
     setError(null);
@@ -121,6 +176,32 @@ export default function CreateGroupDialog({ open, onClose, onCreated }: Props) {
     }
   }, [open]);
 
+  useEffect(() => {
+    if (providers.length === 0) return;
+
+    setAgents(prev =>
+      prev.map(agent => {
+        const provider = providers.find(p => p.id === agent.providerId) || providers[0];
+        const role = normalizeRole(agent.role);
+
+        if (
+          provider.id === agent.providerId &&
+          provider.modelId === agent.modelId &&
+          role === agent.role
+        ) {
+          return agent;
+        }
+
+        return {
+          ...agent,
+          providerId: provider.id,
+          modelId: provider.modelId,
+          role,
+        };
+      }),
+    );
+  }, [providers]);
+
   const addAgent = () => {
     if (providers.length === 0) return;
     // Pick the first provider
@@ -142,7 +223,13 @@ export default function CreateGroupDialog({ open, onClose, onCreated }: Props) {
     setAgents(prev => prev.filter(a => a.uiId !== uiId));
 
   const updateAgent = (uiId: string, patch: Partial<AgentDraft>) =>
-    setAgents(prev => prev.map(a => (a.uiId === uiId ? { ...a, ...patch } : a)));
+    setAgents(prev =>
+      prev.map(a =>
+        a.uiId === uiId
+          ? { ...a, ...patch, role: patch.role ? normalizeRole(patch.role) : a.role }
+          : a,
+      ),
+    );
 
   const handleSubmit = async () => {
     if (!name.trim()) {
@@ -178,9 +265,9 @@ export default function CreateGroupDialog({ open, onClose, onCreated }: Props) {
         allowToolCalls,
         requireToolApproval,
         allowedToolIds:
-          !allowToolCalls || allToolsSelected || selectedToolIds.length === 0
+          !allowToolCalls || allToolsSelected || selectedToolIdsForSelect.length === 0
             ? null
-            : selectedToolIds,
+            : selectedToolIdsForSelect,
         agents: agents.map(({ uiId: _uiId, ...rest }, idx) => ({
           ...rest,
           position: idx,
@@ -198,8 +285,9 @@ export default function CreateGroupDialog({ open, onClose, onCreated }: Props) {
     <Dialog open={open} onClose={onClose} maxWidth="md" fullWidth>
       <DialogTitle>New AI Panel</DialogTitle>
       <DialogContent dividers>
-        {error && <Alert severity="error" sx={{ mb: 2 }}>{error}</Alert>}
-        <Stack spacing={2}>
+        <CreateGroupDialogErrorBoundary resetKey={open ? 'open' : 'closed'}>
+          {error && <Alert severity="error" sx={{ mb: 2 }}>{error}</Alert>}
+          <Stack spacing={2}>
           <TextField
             label="Panel name"
             value={name}
@@ -279,8 +367,9 @@ export default function CreateGroupDialog({ open, onClose, onCreated }: Props) {
                     <FormControl size="small" fullWidth>
                       <InputLabel>Allowed tools</InputLabel>
                       <Select
+                        key={tools.length}
                         multiple
-                        value={selectedToolIds}
+                        value={selectedToolIdsForSelect}
                         input={<OutlinedInput label="Allowed tools" />}
                         onChange={e => {
                           const v = e.target.value;
@@ -297,7 +386,7 @@ export default function CreateGroupDialog({ open, onClose, onCreated }: Props) {
                       >
                         {tools.map(t => (
                           <MenuItem key={t.id} value={t.id}>
-                            <Checkbox checked={selectedToolIds.includes(t.id)} />
+                            <Checkbox checked={selectedToolIdsForSelect.includes(t.id)} />
                             <ListItemText
                               primary={t.name}
                               secondary={
@@ -349,7 +438,11 @@ export default function CreateGroupDialog({ open, onClose, onCreated }: Props) {
 
             <Stack spacing={1.5}>
               {agents.map(agent => {
-                const role = ROLES.find(r => r.value === agent.role);
+                const agentRole = normalizeRole(agent.role);
+                const role = ROLES.find(r => r.value === agentRole);
+                const providerValue = providers.some(p => p.id === agent.providerId)
+                  ? agent.providerId
+                  : providers[0]?.id || '';
                 return (
                   <Box
                     key={agent.uiId}
@@ -369,34 +462,34 @@ export default function CreateGroupDialog({ open, onClose, onCreated }: Props) {
                         sx={{ flex: 1, minWidth: 120 }}
                       />
                       {providers.length > 0 ? (
-                        <FormControl size="small" sx={{ minWidth: 220, flex: 2 }}>
-                          <InputLabel>Provider</InputLabel>
-                          <Select
-                            label="Provider"
-                            value={agent.providerId}
-                            onChange={e => {
-                              const p = providers.find(x => x.id === e.target.value);
-                              if (!p) return;
-                              updateAgent(agent.uiId, {
-                                providerId: p.id,
-                                modelId: p.modelId,
-                              });
-                            }}
-                          >
-                            {providers.map(p => (
-                              <MenuItem key={p.id} value={p.id}>
-                                {p.name}
-                                <Typography
-                                  variant="caption"
-                                  color="text.secondary"
-                                  sx={{ ml: 1 }}
-                                >
-                                  ({p.type} — {p.modelName})
-                                </Typography>
-                              </MenuItem>
-                            ))}
-                          </Select>
-                        </FormControl>
+                        <Select
+                          size="small"
+                          label="Provider"
+                          value={providers.length > 0 ? providerValue : ''}
+                          defaultValue=""
+                          onChange={e => {
+                            const p = providers.find(x => x.id === e.target.value);
+                            if (!p) return;
+                            updateAgent(agent.uiId, {
+                              providerId: p.id,
+                              modelId: p.modelId,
+                            });
+                          }}
+                          sx={{ minWidth: 220, flex: 2 }}
+                        >
+                          {providers.map(p => (
+                            <MenuItem key={p.id} value={p.id}>
+                              {p.name}
+                              <Typography
+                                variant="caption"
+                                color="text.secondary"
+                                sx={{ ml: 1 }}
+                              >
+                                ({p.type} — {p.modelName})
+                              </Typography>
+                            </MenuItem>
+                          ))}
+                        </Select>
                       ) : (
                         <TextField
                           size="small"
@@ -406,22 +499,22 @@ export default function CreateGroupDialog({ open, onClose, onCreated }: Props) {
                           sx={{ minWidth: 220, flex: 2 }}
                         />
                       )}
-                      <FormControl size="small" sx={{ minWidth: 140 }}>
-                        <InputLabel>Role</InputLabel>
-                        <Select
-                          label="Role"
-                          value={agent.role}
-                          onChange={e =>
-                            updateAgent(agent.uiId, { role: e.target.value as AgentRole })
-                          }
-                        >
-                          {ROLES.map(r => (
-                            <MenuItem key={r.value} value={r.value}>
-                              {r.label}
-                            </MenuItem>
-                          ))}
-                        </Select>
-                      </FormControl>
+                      <Select
+                        size="small"
+                        label="Role"
+                        value={agentRole}
+                        disabled={loadingModels}
+                        onChange={e =>
+                          updateAgent(agent.uiId, { role: e.target.value as AgentRole })
+                        }
+                        sx={{ minWidth: 140 }}
+                      >
+                        {ROLES.map(r => (
+                          <MenuItem key={r.value} value={r.value}>
+                            {r.label}
+                          </MenuItem>
+                        ))}
+                      </Select>
                       <IconButton
                         size="small"
                         onClick={() => removeAgent(agent.uiId)}
@@ -457,7 +550,8 @@ export default function CreateGroupDialog({ open, onClose, onCreated }: Props) {
               })}
             </Stack>
           </Box>
-        </Stack>
+          </Stack>
+        </CreateGroupDialogErrorBoundary>
       </DialogContent>
       <DialogActions>
         <Button onClick={onClose}>Cancel</Button>

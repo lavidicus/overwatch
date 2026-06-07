@@ -46,6 +46,9 @@ export interface ChatGroupDetail {
   maxRounds: number;
   judgeProviderId: string | null;
   judgeModelId: string | null;
+  allowToolCalls: boolean;
+  requireToolApproval: boolean;
+  allowedToolIds: string[] | null;
   createdAt: string;
   updatedAt: string;
   agents: AgentParticipant[];
@@ -71,12 +74,20 @@ export interface AvailableAgent {
   providerStatus: string;
 }
 
+export interface ConsensusToolCallRef {
+  name: string;
+  ok: boolean;
+  status: 'EXECUTED' | 'AUTO_REJECTED' | 'REJECTED' | 'TIMEOUT' | 'UNKNOWN_TOOL';
+  invocationId?: string;
+}
+
 export interface ConsensusTurn {
   agentName: string;
   role: string;
   message: string;
   durationMs: number;
   error?: string | null;
+  toolCalls?: ConsensusToolCallRef[];
 }
 
 export interface RoundTranscript {
@@ -116,6 +127,9 @@ export interface CreateGroupInput {
   maxRounds?: number;
   judgeProviderId?: string;
   judgeModelId?: string;
+  allowToolCalls?: boolean;
+  requireToolApproval?: boolean;
+  allowedToolIds?: string[] | null;
   agents: GroupAgentInput[];
 }
 
